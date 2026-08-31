@@ -1,0 +1,101 @@
+name: Refine Hero Scroll
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refine-hero-scroll.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Refine hero scroll motion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          start_marker = "    const start=window.scrollY;"
+          end_marker = "    rafId=requestAnimationFrame(frame);"
+          i = s.find(start_marker)
+          if i < 0:
+              raise SystemExit('Scroll start marker not found')
+          j = s.find(end_marker, i)
+          if j < 0:
+              raise SystemExit('Scroll end marker not found')
+          j += len(end_marker)
+          new = """    const start=window.scrollY;
+    const end=target.getBoundingClientRect().top+start;
+    const distance=end-start;
+    const travel=Math.abs(distance);
+    const direction=Math.sign(distance)||1;
+
+    // Movimento natural: pequena aceleração/desaceleração nas pontas
+    // e velocidade praticamente constante durante a maior parte do percurso.
+    const averageSpeed=760; // px/s
+    const duration=Math.max(800,Math.min(1300,(travel/averageSpeed)*1000));
+    const edge=.14;
+    const maxVelocity=1/(1-edge);
+    let started=null;
+    let rafId=0;
+    let cancelled=false;
+
+    const cancel=()=>{
+      cancelled=true;
+      if(rafId)cancelAnimationFrame(rafId);
+      removeEventListener('wheel',cancel);
+      removeEventListener('touchstart',cancel);
+      removeEventListener('keydown',cancel);
+    };
+
+    addEventListener('wheel',cancel,{passive:true,once:true});
+    addEventListener('touchstart',cancel,{passive:true,once:true});
+    addEventListener('keydown',cancel,{once:true});
+
+    const motion=t=>{
+      if(t<edge)return maxVelocity*t*t/(2*edge);
+      if(t<=1-edge)return maxVelocity*(edge/2+(t-edge));
+      const remaining=1-t;
+      return 1-maxVelocity*remaining*remaining/(2*edge);
+    };
+
+    const frame=time=>{
+      if(cancelled)return;
+      if(started===null)started=time;
+      const progress=Math.min((time-started)/duration,1);
+      const position=start+direction*travel*motion(progress);
+      window.scrollTo(0,progress===1?end:position);
+      if(progress<1){
+        rafId=requestAnimationFrame(frame);
+      }else{
+        removeEventListener('wheel',cancel);
+        removeEventListener('touchstart',cancel);
+        removeEventListener('keydown',cancel);
+        history.replaceState(null,'','#inicio-conteudo');
+      }
+    };
+    rafId=requestAnimationFrame(frame);"""
+          p.write_text(s[:i] + new + s[j:], encoding='utf-8')
+          PY
+
+      - name: Verify refined scroll
+        run: |
+          grep -q 'const averageSpeed=760' index.html
+          grep -q 'const edge=.14' index.html
+          grep -q 'const motion=t=>' index.html
+
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Refine hero scroll motion"
+          git push
