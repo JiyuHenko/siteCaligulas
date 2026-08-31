@@ -1,0 +1,37 @@
+name: Hero Scroll 600ms
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hero-scroll-600ms.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set hero scroll to 600ms
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = "const duration=Math.max(800,Math.min(1300,(travel/averageSpeed)*1000));"
+          new = "const duration=600;"
+          if old not in s:
+              raise SystemExit('Expected duration line not found')
+          p.write_text(s.replace(old,new,1), encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Set hero scroll duration to 600ms"
+          git push
