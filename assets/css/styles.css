@@ -726,3 +726,24 @@ figure{margin:0;min-width:0}
 .creator-credit{color:#aaa297}
 .creator-credit img{opacity:.9}
 iframe[data-map-embed]:not([src]){background:radial-gradient(circle at 50% 45%,rgba(199,162,88,.08),transparent 34%),#0b0a09}
+
+
+/* V7 — mobile render stability */
+@media (max-width:699px){
+  /* Preserve the glass look with opacity, but avoid expensive full-surface blur
+     while the hero is the LCP candidate on mobile GPUs. */
+  .glass,.nav-shell{
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important
+  }
+  .nav-shell{background:rgba(9,9,8,.91)}
+  .hero-glass{
+    background:linear-gradient(145deg,rgba(34,28,22,.93),rgba(8,8,7,.96));
+    box-shadow:inset 0 1px rgba(255,255,255,.055),0 18px 46px rgba(0,0,0,.28)
+  }
+  [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}
+  main>.section{
+    content-visibility:auto;
+    contain-intrinsic-size:auto 720px
+  }
+}

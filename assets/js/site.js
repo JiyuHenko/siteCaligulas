@@ -2,6 +2,8 @@
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
   const cfg=window.CALIGULAS_CONFIG||{};
   const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const compact=matchMedia("(max-width: 699px)").matches;
+  const finePointer=matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   // public links
   $$("[data-instagram]").forEach(a=>{a.href=cfg.instagram||"#";a.target="_blank";a.rel="noopener"});
@@ -38,17 +40,19 @@
   });
   $$("#mobileNav a").forEach(a=>a.addEventListener("click",()=>{mobileNav.classList.remove("open");document.body.classList.remove("menu-open");menuBtn?.setAttribute("aria-expanded","false")}));
 
-  // controlled reveal
+  // controlled reveal: mobile renders immediately; desktop keeps restrained motion.
   const reveals=$$("[data-reveal]");
-  if(!reduce&&"IntersectionObserver"in window){
+  if(!compact&&!reduce&&"IntersectionObserver"in window){
     const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("is-visible");io.unobserve(e.target)}}),{threshold:.12});
     reveals.forEach(e=>io.observe(e));
   }else reveals.forEach(e=>e.classList.add("is-visible"));
 
-  // restrained spotlight only where explicitly enabled
-  $$("[data-spotlight]").forEach(card=>card.addEventListener("pointermove",e=>{
-    const r=card.getBoundingClientRect();card.style.setProperty("--mx",`${e.clientX-r.left}px`);card.style.setProperty("--my",`${e.clientY-r.top}px`);
-  }));
+  // Spotlight is a pointer/desktop enhancement; registering it on touch devices is wasted work.
+  if(finePointer){
+    $$("[data-spotlight]").forEach(card=>card.addEventListener("pointermove",e=>{
+      const r=card.getBoundingClientRect();card.style.setProperty("--mx",`${e.clientX-r.left}px`);card.style.setProperty("--my",`${e.clientY-r.top}px`);
+    }));
+  }
 
   // Hero V3: intentionally static. The premium treatment comes from framing,
   // glass and crop rather than a full-viewport shrink effect.
@@ -62,9 +66,10 @@
   lb?.addEventListener("click",e=>{if(e.target===lb||e.target.closest("[data-close-lightbox]"))closeLb()});
   addEventListener("keydown",e=>{if(e.key==="Escape")closeLb()});
 
-  // home ranking preview
+  // Home ranking preview is below the fold. Build it when the main thread is idle.
   const preview=$("#rankingPreview");
-  if(preview&&window.CaligulasAPI){
+  const renderRankingPreview=()=>{
+    if(!preview||!window.CaligulasAPI)return;
     CaligulasAPI.getRanking().then(data=>{
       const rows=data.rows.slice(0,3);
       preview.innerHTML=rows.map((r,i)=>`<article class="rank-tile glass ${i===0?"first":""}">
@@ -75,6 +80,10 @@
       const status=$("#homeRankingStatus");
       if(status) status.innerHTML=`<span class="live-dot ${data.source==="local-fallback"?"demo":""}"></span>${data.source==="local-fallback"?"Prévia local":"Atualizado "+CaligulasAPI.fmtDate(data.updatedAt)}`;
     });
+  };
+  if(preview){
+    if("requestIdleCallback" in window) requestIdleCallback(renderRankingPreview,{timeout:2200});
+    else setTimeout(renderRankingPreview,500);
   }
 
   // gallery filter
