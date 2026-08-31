@@ -158,14 +158,14 @@
     if(!target)return;
     event.preventDefault();
     if(matchMedia('(prefers-reduced-motion: reduce)').matches){target.scrollIntoView();return;}
+
     const start=window.scrollY;
     const end=target.getBoundingClientRect().top+start;
     const distance=end-start;
     const travel=Math.abs(distance);
     const direction=Math.sign(distance)||1;
 
-    // Movimento natural: pequena aceleração/desaceleração nas pontas
-    // e velocidade praticamente constante durante a maior parte do percurso.
+    // Natural scroll: a short soft start/end with a calm, nearly constant middle.
     const averageSpeed=760;
     const duration=Math.max(800,Math.min(1300,(travel/averageSpeed)*1000));
     const edge=.14;
@@ -174,12 +174,15 @@
     let rafId=0;
     let cancelled=false;
 
-    const cancel=()=>{
-      cancelled=true;
-      if(rafId)cancelAnimationFrame(rafId);
+    const cleanup=()=>{
       removeEventListener('wheel',cancel);
       removeEventListener('touchstart',cancel);
       removeEventListener('keydown',cancel);
+    };
+    const cancel=()=>{
+      cancelled=true;
+      if(rafId)cancelAnimationFrame(rafId);
+      cleanup();
     };
 
     addEventListener('wheel',cancel,{passive:true,once:true});
@@ -202,17 +205,7 @@
       if(progress<1){
         rafId=requestAnimationFrame(frame);
       }else{
-        removeEventListener('wheel',cancel);
-        removeEventListener('touchstart',cancel);
-        removeEventListener('keydown',cancel);
-        history.replaceState(null,'','#inicio-conteudo');
-      }
-    };
-    rafId=requestAnimationFrame(frame);
-      }else{
-        removeEventListener('wheel',cancel);
-        removeEventListener('touchstart',cancel);
-        removeEventListener('keydown',cancel);
+        cleanup();
         history.replaceState(null,'','#inicio-conteudo');
       }
     };
