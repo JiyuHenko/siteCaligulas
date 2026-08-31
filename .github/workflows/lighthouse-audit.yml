@@ -1,0 +1,43 @@
+name: Audit Caligulas Lighthouse
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lighthouse-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for GitHub Pages propagation
+        run: sleep 20
+      - name: Run Lighthouse mobile
+        run: |
+          npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
+            --quiet --chrome-flags='--headless --no-sandbox' \
+            --output=json --output-path=/tmp/mobile.json
+      - name: Run Lighthouse desktop
+        run: |
+          npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
+            --quiet --preset=desktop --chrome-flags='--headless --no-sandbox' \
+            --output=json --output-path=/tmp/desktop.json
+      - name: Print score summary
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          for (const mode of ['mobile','desktop']) {
+            const r=JSON.parse(fs.readFileSync(`/tmp/${mode}.json`,'utf8'));
+            const c=r.categories, a=r.audits;
+            const pct=k=>Math.round(c[k].score*100);
+            console.log(`LIGHTHOUSE_${mode.toUpperCase()} performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
+            console.log(`METRICS_${mode.toUpperCase()} FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue} SI=${a['speed-index'].displayValue}`);
+            for (const id of ['render-blocking-resources','unused-css-rules','unused-javascript','uses-responsive-images','uses-optimized-images','uses-long-cache-ttl']) {
+              if (a[id] && a[id].score !== 1) console.log(`AUDIT_${mode.toUpperCase()} ${id}: score=${a[id].score} ${a[id].displayValue||''}`);
+            }
+          }
+          NODE
