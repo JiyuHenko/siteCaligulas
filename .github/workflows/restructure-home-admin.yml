@@ -1,4 +1,4 @@
-name: Restructure Home Programming
+name: Fix Home Programming Markup
 
 on:
   push:
@@ -10,45 +10,33 @@ permissions:
   contents: write
 
 jobs:
-  apply:
+  fix:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Update home programming
+      - name: Remove extra closing div
         run: |
           python - <<'PY'
           from pathlib import Path
-          import base64
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          s=s.replace('const duration=600;','const duration=300;',1)
-          block=base64.b64decode('PGRpdiBjbGFzcz0icHJvZ3JhbS1ncmlkIj4KPGFydGljbGUgY2xhc3M9InByb2dyYW0tY2FyZCBwcm9ncmFtLXByaW1lIiBkYXRhLXJldmVhbD0iIj4KICA8ZmlndXJlIGNsYXNzPSJwcm9ncmFtLXBvc3RlciI+PGltZyBzcmM9ImFzc2V0cy9pbWcvZXZlbnRzL3Byb2dyYW1hY2FvLXNlZ3VuZGEtcHJpbWUud2VicCIgYWx0PSJTZWd1bmRhIFByaW1lIOKAlCAxLjJLIEdURCIgd2lkdGg9IjExMjIiIGhlaWdodD0iMTQwMiIgbG9hZGluZz0ibGF6eSIgZGVjb2Rpbmc9ImFzeW5jIj48L2ZpZ3VyZT4KICA8ZGl2IGNsYXNzPSJwcm9ncmFtLWJvZHkiPgogICAgPHAgY2xhc3M9InByb2dyYW0tbGFiZWwiPlNlZ3VuZGEtZmVpcmE8L3A+CiAgICA8aDM+U2VndW5kYSBQcmltZTwvaDM+CiAgICA8ZGwgY2xhc3M9InByb2dyYW0tc3BlY3MiPgogICAgICA8ZGl2PjxkdD5HVEQ8L2R0PjxkZD5SJCAxLjIwMCwwMDwvZGQ+PC9kaXY+CiAgICAgIDxkaXY+PGR0PkJ1eS1pbjwvZHQ+PGRkPlIkIDIwLDAwIDxzbWFsbD5Ub3JuZWlvIGNvbSBkdXBsbyBlIGFkZG9uPC9zbWFsbD48L2RkPjwvZGl2PgogICAgICA8ZGl2PjxkdD5Ib3LDoXJpbzwvZHQ+PGRkPjE5OjMwPC9kZD48L2Rpdj4KICAgIDwvZGw+CiAgPC9kaXY+CjwvYXJ0aWNsZT4KPGFydGljbGUgY2xhc3M9InByb2dyYW0tY2FyZCBwcm9ncmFtLWZyZWUiIGRhdGEtcmV2ZWFsPSIiPgogIDxmaWd1cmUgY2xhc3M9InByb2dyYW0tcG9zdGVyIj48aW1nIHNyYz0iYXNzZXRzL2ltZy9ldmVudHMvcHJvZ3JhbWFjYW8tcXVhcnRhLWZyZWUud2VicCIgYWx0PSJRdWFydGEgRnJlZSBGcmVlcm9sbCDigJQgMUsgR1REIiB3aWR0aD0iMTEyMiIgaGVpZ2h0PSIxNDAyIiBsb2FkaW5nPSJsYXp5IiBkZWNvZGluZz0iYXN5bmMiPjwvZmlndXJlPgogIDxkaXYgY2xhc3M9InByb2dyYW0tYm9keSI+CiAgICA8cCBjbGFzcz0icHJvZ3JhbS1sYWJlbCI+UXVhcnRhLWZlaXJhPC9wPgogICAgPGgzPlF1YXJ0YSBGcmVlPC9oMz4KICAgIDxkbCBjbGFzcz0icHJvZ3JhbS1zcGVjcyI+CiAgICAgIDxkaXY+PGR0PkdURDwvZHQ+PGRkPlIkIDEuMDAwLDAwPC9kZD48L2Rpdj4KICAgICAgPGRpdj48ZHQ+QnV5LWluPC9kdD48ZGQ+R3LDoXRpcyA8c21hbGw+VG9ybmVpbyBjb20gcmVidXkgZHVwbG8gZSBhZGRvbjwvc21hbGw+PC9kZD48L2Rpdj4KICAgICAgPGRpdj48ZHQ+SG9yw6FyaW88L2R0PjxkZD4xOTozMDwvZGQ+PC9kaXY+CiAgICA8L2RsPgogIDwvZGl2Pgo8L2FydGljbGU+CjxhcnRpY2xlIGNsYXNzPSJwcm9ncmFtLWNhcmQgcHJvZ3JhbS1zcGVjaWFsIiBkYXRhLXJldmVhbD0iIj4KICA8ZGl2IGNsYXNzPSJwcm9ncmFtLXBsYWNlaG9sZGVyIiBhcmlhLWxhYmVsPSJCYW5uZXIgZG8gRG9taW5nbyBFc3BlY2lhbCBlbSBicmV2ZSI+CiAgICA8aW1nIHNyYz0iYXNzZXRzL2ltZy9wZXJmL2RlY29yL3Ryb3BoeS0xMjAud2VicCIgYWx0PSIiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTQ0IiBsb2FkaW5nPSJsYXp5IiBkZWNvZGluZz0iYXN5bmMiPgogICAgPHNwYW4+UHLDs3hpbW8gZXNwZWNpYWw8L3NwYW4+PHN0cm9uZz5ET01JTkdPPC9zdHJvbmc+PGVtPkJhbm5lciBlbSBicmV2ZTwvZW0+CiAgPC9kaXY+CiAgPGRpdiBjbGFzcz0icHJvZ3JhbS1ib2R5Ij4KICAgIDxwIGNsYXNzPSJwcm9ncmFtLWxhYmVsIj5EYXRhIHNlbGVjaW9uYWRhPC9wPgogICAgPGgzPkRvbWluZ28gRXNwZWNpYWw8L2gzPgogICAgPGRsIGNsYXNzPSJwcm9ncmFtLXNwZWNzIj4KICAgICAgPGRpdj48ZHQ+R1REPC9kdD48ZGQ+QSBjb25maXJtYXI8L2RkPjwvZGl2PgogICAgICA8ZGl2PjxkdD5CdXktaW48L2R0PjxkZD5BIGNvbmZpcm1hciA8c21hbGw+VG9ybmVpbyBjb20gZHVwbG8gZSBhZGRvbjwvc21hbGw+PC9kZD48L2Rpdj4KICAgICAgPGRpdj48ZHQ+RGF0YTwvZHQ+PGRkPkEgY29uZmlybWFyPC9kZD48L2Rpdj4KICAgICAgPGRpdj48ZHQ+SG9yw6FyaW88L2R0PjxkZD4xMDowMDwvZGQ+PC9kaXY+CiAgICA8L2RsPgogIDwvZGl2Pgo8L2FydGljbGU+CjwvZGl2Pg==').decode()
-          css=base64.b64decode('Ci8qIFdlZWtseSBwcm9ncmFtbWluZyDigJQgcG9zdGVyICsgZmFjdHVhbCBkZXRhaWxzICovCi5wcm9ncmFtLWdyaWR7ZGlzcGxheTpncmlkO2dyaWQtdGVtcGxhdGUtY29sdW1uczpyZXBlYXQoMyxtaW5tYXgoMCwxZnIpKTtnYXA6MThweDthbGlnbi1pdGVtczpzdGFydH0KLnByb2dyYW0tY2FyZHtvdmVyZmxvdzpoaWRkZW47Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDI1NSwyNTUsMjU1LC4xMCk7Ym9yZGVyLXJhZGl1czoyNHB4O2JhY2tncm91bmQ6bGluZWFyLWdyYWRpZW50KDE1MGRlZyxyZ2JhKDI1NSwyNTUsMjU1LC4wNTUpLHJnYmEoMjU1LDI1NSwyNTUsLjAxOCkpO2JveC1zaGFkb3c6MCAyNHB4IDcwcHggcmdiYSgwLDAsMCwuMTgpfQoucHJvZ3JhbS1wb3N0ZXJ7bWFyZ2luOjA7YXNwZWN0LXJhdGlvOjExMjIvMTQwMjtvdmVyZmxvdzpoaWRkZW47YmFja2dyb3VuZDojMTExfQoucHJvZ3JhbS1wb3N0ZXIgaW1ne2Rpc3BsYXk6YmxvY2s7d2lkdGg6MTAwJTtoZWlnaHQ6MTAwJTtvYmplY3QtZml0OmNvdmVyfQoucHJvZ3JhbS1ib2R5e3BhZGRpbmc6MjJweCAyMnB4IDI0cHh9Ci5wcm9ncmFtLWxhYmVse21hcmdpbjowIDAgN3B4O2NvbG9yOnZhcigtLWdvbGQtc29mdCk7Zm9udC1zaXplOi42MnJlbTtmb250LXdlaWdodDo3MDA7bGV0dGVyLXNwYWNpbmc6LjE4ZW07dGV4dC10cmFuc2Zvcm06dXBwZXJjYXNlfQoucHJvZ3JhbS1ib2R5IGgze21hcmdpbjowIDAgMjBweDtjb2xvcjojZjRlZmU2O2ZvbnQtZmFtaWx5OidDaW56ZWwnLHNlcmlmO2ZvbnQtc2l6ZTpjbGFtcCgxLjQ1cmVtLDJ2dywyLjE1cmVtKTtsaW5lLWhlaWdodDoxfQoucHJvZ3JhbS1zcGVjc3ttYXJnaW46MDtkaXNwbGF5OmdyaWQ7Z2FwOjB9Ci5wcm9ncmFtLXNwZWNzPmRpdntkaXNwbGF5OmdyaWQ7Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOjgycHggbWlubWF4KDAsMWZyKTtnYXA6MTJweDthbGlnbi1pdGVtczpzdGFydDtwYWRkaW5nOjEycHggMDtib3JkZXItdG9wOjFweCBzb2xpZCByZ2JhKDI1NSwyNTUsMjU1LC4wOCl9Ci5wcm9ncmFtLXNwZWNzIGR0e2NvbG9yOiM4Zjg4N2Y7Zm9udC1zaXplOi42M3JlbTtmb250LXdlaWdodDo3MDA7bGV0dGVyLXNwYWNpbmc6LjEyZW07dGV4dC10cmFuc2Zvcm06dXBwZXJjYXNlfQoucHJvZ3JhbS1zcGVjcyBkZHttYXJnaW46MDtjb2xvcjojZjVmMGU2O2ZvbnQtc2l6ZTouOXJlbTtmb250LXdlaWdodDo3MDB9Ci5wcm9ncmFtLXNwZWNzIHNtYWxse2Rpc3BsYXk6YmxvY2s7bWFyZ2luLXRvcDo0cHg7Y29sb3I6Izk0OGQ4Mztmb250LXNpemU6LjYxcmVtO2ZvbnQtd2VpZ2h0OjUwMDtsaW5lLWhlaWdodDoxLjQ1O3RleHQtdHJhbnNmb3JtOnVwcGVyY2FzZTtsZXR0ZXItc3BhY2luZzouMDQ1ZW19Ci5wcm9ncmFtLXBsYWNlaG9sZGVye2FzcGVjdC1yYXRpbzoxMTIyLzE0MDI7ZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjthbGlnbi1pdGVtczpjZW50ZXI7anVzdGlmeS1jb250ZW50OmNlbnRlcjtnYXA6OHB4O3BhZGRpbmc6MzBweDt0ZXh0LWFsaWduOmNlbnRlcjtiYWNrZ3JvdW5kOnJhZGlhbC1ncmFkaWVudChjaXJjbGUgYXQgNTAlIDM4JSxyZ2JhKDE5OSwxNjIsODgsLjE0KSx0cmFuc3BhcmVudCA0MiUpLGxpbmVhci1ncmFkaWVudCgxNDVkZWcsIzEyMTEwZiwjMDkwOTA4KTtwb3NpdGlvbjpyZWxhdGl2ZTtvdmVyZmxvdzpoaWRkZW59Ci5wcm9ncmFtLXBsYWNlaG9sZGVyOmJlZm9yZXtjb250ZW50OiIiO3Bvc2l0aW9uOmFic29sdXRlO2luc2V0OjIwcHg7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDE5OSwxNjIsODgsLjIwKTtib3JkZXItcmFkaXVzOjE4cHh9Ci5wcm9ncmFtLXBsYWNlaG9sZGVyIGltZ3t3aWR0aDo4OHB4O2hlaWdodDphdXRvO29wYWNpdHk6LjU7bWFyZ2luLWJvdHRvbToxMnB4fQoucHJvZ3JhbS1wbGFjZWhvbGRlciBzcGFuLC5wcm9ncmFtLXBsYWNlaG9sZGVyIGVte3Bvc2l0aW9uOnJlbGF0aXZlO2NvbG9yOiM5MThhODA7Zm9udC1zaXplOi42MXJlbTtmb250LXN0eWxlOm5vcm1hbDtmb250LXdlaWdodDo3MDA7bGV0dGVyLXNwYWNpbmc6LjE4ZW07dGV4dC10cmFuc2Zvcm06dXBwZXJjYXNlfQoucHJvZ3JhbS1wbGFjZWhvbGRlciBzdHJvbmd7cG9zaXRpb246cmVsYXRpdmU7Y29sb3I6dmFyKC0tZ29sZC1zb2Z0KTtmb250LWZhbWlseTonQ2luemVsJyxzZXJpZjtmb250LXNpemU6Mi41cmVtO2xpbmUtaGVpZ2h0OjF9CkBtZWRpYShtYXgtd2lkdGg6OTM5cHgpey5wcm9ncmFtLWdyaWR7Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOjFmcjtnYXA6MThweH0ucHJvZ3JhbS1jYXJke2Rpc3BsYXk6Z3JpZDtncmlkLXRlbXBsYXRlLWNvbHVtbnM6bWlubWF4KDAsNDIlKSBtaW5tYXgoMCw1OCUpO2JvcmRlci1yYWRpdXM6MjBweH0ucHJvZ3JhbS1wb3N0ZXIsLnByb2dyYW0tcGxhY2Vob2xkZXJ7YXNwZWN0LXJhdGlvOjQvNTtoZWlnaHQ6MTAwJTttaW4taGVpZ2h0OjM0MHB4fS5wcm9ncmFtLWJvZHl7cGFkZGluZzoyMHB4fS5wcm9ncmFtLWJvZHkgaDN7Zm9udC1zaXplOjEuNTVyZW19LnByb2dyYW0tc3BlY3M+ZGl2e2dyaWQtdGVtcGxhdGUtY29sdW1uczo3MHB4IG1pbm1heCgwLDFmcik7cGFkZGluZzoxMHB4IDB9fQpAbWVkaWEobWF4LXdpZHRoOjYyMHB4KXsucHJvZ3JhbS1jYXJke2Rpc3BsYXk6YmxvY2t9LnByb2dyYW0tcG9zdGVyLC5wcm9ncmFtLXBsYWNlaG9sZGVye3dpZHRoOjEwMCU7aGVpZ2h0OmF1dG87bWluLWhlaWdodDowO2FzcGVjdC1yYXRpbzo0LzV9LnByb2dyYW0tYm9keXtwYWRkaW5nOjIwcHggMThweCAyMnB4fS5wcm9ncmFtLWJvZHkgaDN7Zm9udC1zaXplOjEuNjVyZW07bWFyZ2luLWJvdHRvbToxNnB4fS5wcm9ncmFtLXNwZWNzPmRpdntncmlkLXRlbXBsYXRlLWNvbHVtbnM6NzZweCBtaW5tYXgoMCwxZnIpfS5wcm9ncmFtLXBsYWNlaG9sZGVyIHN0cm9uZ3tmb250LXNpemU6Mi4ycmVtfX0K').decode()
-          start=s.find('<div class="home-agenda">')
-          end_marker='</div>\n</div>\n</section>\n<div class="rule-line"></div>'
-          end=s.find(end_marker,start)
-          if start<0 or end<0:
-              raise SystemExit('programming markers not found')
-          s=s[:start]+block+'\n'+s[end:]
-          if '/* Weekly programming — poster + factual details */' not in s:
-              marker='</style>\n<title>'
-              if marker not in s:
-                  raise SystemExit('style marker not found')
-              s=s.replace(marker,css+'\n</style>\n<title>',1)
-          p.write_text(s,encoding='utf-8')
+          old='</article>\n</div>\n</div>\n</div>\n</section>\n<div class="rule-line"></div>'
+          new='</article>\n</div>\n</div>\n</section>\n<div class="rule-line"></div>'
+          if old not in s:
+              raise SystemExit('Expected extra closing div pattern not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
       - name: Verify
         run: |
           grep -q 'const duration=300' index.html
           grep -q 'programacao-segunda-prime.webp' index.html
           grep -q 'programacao-quarta-free.webp' index.html
-          grep -q 'Domingo Especial' index.html
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Rebuild weekly programming section and speed hero scroll"
+          git commit -m "Fix weekly programming markup"
           git push
