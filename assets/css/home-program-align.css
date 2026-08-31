@@ -1,1 +1,12 @@
-.program-special .program-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.program-special .program-specs>div{grid-column:1/-1}.program-special .program-specs>div:nth-child(3),.program-special .program-specs>div:nth-child(4){grid-column:auto;display:block}.program-special .program-specs>div:nth-child(3){padding-right:12px}.program-special .program-specs>div:nth-child(4){padding-left:12px;border-left:1px solid rgba(255,255,255,.08)}.program-special .program-specs>div:nth-child(3) dt,.program-special .program-specs>div:nth-child(4) dt{margin-bottom:5px}
+@media (min-width:940px){
+  .program-grid{align-items:stretch}
+  .program-card{height:100%}
+  .program-special .program-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .program-special .program-specs>div{grid-column:1/-1}
+  .program-special .program-specs>div:nth-child(3),
+  .program-special .program-specs>div:nth-child(4){grid-column:auto;display:block;padding-top:12px;padding-bottom:12px}
+  .program-special .program-specs>div:nth-child(3){padding-right:12px}
+  .program-special .program-specs>div:nth-child(4){padding-left:12px;border-left:1px solid rgba(255,255,255,.08)}
+  .program-special .program-specs>div:nth-child(3) dt,
+  .program-special .program-specs>div:nth-child(4) dt{margin-bottom:5px}
+}
