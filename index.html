@@ -163,11 +163,10 @@
     const distance=end-start;
     const duration=1200;
     let started=null;
-    const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
     const frame=time=>{
       if(started===null)started=time;
       const progress=Math.min((time-started)/duration,1);
-      window.scrollTo(0,start+distance*ease(progress));
+      window.scrollTo(0,start+distance*progress);
       if(progress<1)requestAnimationFrame(frame);
       else history.replaceState(null,'','#inicio-conteudo');
     };
