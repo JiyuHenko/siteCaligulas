@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Substitua https://SEU-DOMINIO/ quando o domínio estiver configurado. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://SEU-DOMINIO/</loc></url>
+  <url><loc>https://SEU-DOMINIO/casa.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/agenda.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/ranking.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/galeria.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/premiacoes.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/regulamento.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/cps.html</loc></url>
+  <url><loc>https://SEU-DOMINIO/eventos.html</loc></url>
+</urlset>

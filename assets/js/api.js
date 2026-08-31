@@ -1,0 +1,63 @@
+(function(){
+  const cfg=window.CALIGULAS_CONFIG||{};
+  const fallback=window.CALIGULAS_RANKING_FALLBACK||{version:1,rows:[]};
+  const REGULAR=[15,12,10,8,7,6,5,4,3];
+  const SPECIAL=[20,18,16,14,13,12,11,10,9];
+
+  function configured(){return /^https:\/\/script\.google\.com\//.test(String(cfg.appsScriptUrl||"")) || /^https:\/\/script\.googleusercontent\.com\//.test(String(cfg.appsScriptUrl||""))}
+  function factorFor(presences){
+    const p=Math.max(0,Math.floor(Number(presences)||0));
+    if(p>=36)return 2; if(p>=30)return 1.5; if(p>=25)return 1.4; if(p>=20)return 1.3; if(p>=15)return 1.2; if(p>=10)return 1.1; return 1;
+  }
+  function cleanFinishes(value){
+    const arr=Array.isArray(value)?value:[];
+    return Array.from({length:9},(_,i)=>Math.max(0,Math.floor(Number(arr[i])||0)));
+  }
+  function compute(row){
+    const points=Math.max(0,Number(row.points??row.pontos)||0);
+    const presences=Math.max(0,Math.floor(Number(row.presences??row.presencas)||0));
+    const factor=factorFor(presences);
+    const finalPoints=Math.round(((points+presences)*factor)*10)/10;
+    return {...row,points,presences,factor,finalPoints,finishes:cleanFinishes(row.finishes)};
+  }
+  function compareRows(a,b){
+    const A=compute(a),B=compute(b);
+    if(B.finalPoints!==A.finalPoints)return B.finalPoints-A.finalPoints;
+    for(let i=0;i<9;i++){ if(B.finishes[i]!==A.finishes[i]) return B.finishes[i]-A.finishes[i]; }
+    return String(A.name||"").localeCompare(String(B.name||""),"pt-BR");
+  }
+  function normalizeRows(rows){return (rows||[]).map(compute).sort(compareRows)}
+  function pointsFor(type,placement){
+    const pos=Number(placement);
+    if(!Number.isInteger(pos)||pos<1||pos>9)return 0;
+    return (type==="special"?SPECIAL:REGULAR)[pos-1];
+  }
+  function tieSummary(row,max=3){
+    const f=cleanFinishes(row.finishes); const out=[];
+    for(let i=0;i<f.length&&out.length<max;i++) if(f[i]) out.push(`${f[i]}× ${i+1}º`);
+    return out.join(" · ");
+  }
+  async function getRanking(){
+    if(!configured()){
+      return {...fallback,rows:normalizeRows(fallback.rows),source:"local-fallback"};
+    }
+    try{
+      const u=new URL(cfg.appsScriptUrl); u.searchParams.set("action","ranking"); u.searchParams.set("_",Date.now());
+      const r=await fetch(u,{cache:"no-store"}); const data=await r.json();
+      if(!data.ok)throw new Error(data.message||"Falha ao carregar ranking.");
+      data.rows=normalizeRows(data.rows); return data;
+    }catch(err){
+      console.warn("Ranking remoto indisponível; usando fallback.",err);
+      return {...fallback,rows:normalizeRows(fallback.rows),source:"local-fallback",error:String(err.message||err)};
+    }
+  }
+  async function post(payload){
+    if(!configured())throw new Error("Google Apps Script ainda não configurado.");
+    const r=await fetch(cfg.appsScriptUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+    const data=await r.json(); if(!data.ok){const e=new Error(data.message||"Erro no servidor.");e.code=data.code;throw e} return data;
+  }
+  function fmt(n){return new Intl.NumberFormat("pt-BR",{maximumFractionDigits:1}).format(Number(n)||0)}
+  function fmtDate(s){if(!s)return "—";try{return new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short"}).format(new Date(s))}catch{return s}}
+
+  window.CaligulasAPI={configured,factorFor,cleanFinishes,compute,compareRows,normalizeRows,pointsFor,tieSummary,getRanking,post,fmt,fmtDate,REGULAR,SPECIAL};
+})();
