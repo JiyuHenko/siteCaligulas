@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Wait for GitHub Pages propagation
-        run: sleep 20
+        run: sleep 10
       - name: Run Lighthouse mobile
         run: |
           npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
@@ -26,7 +26,7 @@ jobs:
           npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
             --quiet --preset=desktop --chrome-flags='--headless --no-sandbox' \
             --output=json --output-path=/tmp/desktop.json
-      - name: Print score summary
+      - name: Print detailed score summary
         run: |
           node - <<'NODE'
           const fs=require('fs');
@@ -36,8 +36,16 @@ jobs:
             const pct=k=>Math.round(c[k].score*100);
             console.log(`LIGHTHOUSE_${mode.toUpperCase()} performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
             console.log(`METRICS_${mode.toUpperCase()} FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue} SI=${a['speed-index'].displayValue}`);
-            for (const id of ['render-blocking-resources','unused-css-rules','unused-javascript','uses-responsive-images','uses-optimized-images','uses-long-cache-ttl']) {
-              if (a[id] && a[id].score !== 1) console.log(`AUDIT_${mode.toUpperCase()} ${id}: score=${a[id].score} ${a[id].displayValue||''}`);
+            for (const catKey of ['performance','accessibility','best-practices','seo']) {
+              const refs=c[catKey].auditRefs||[];
+              const failed=refs.filter(ref=>ref.weight>0 && a[ref.id] && a[ref.id].score!==null && a[ref.id].score<1)
+                .map(ref=>({id:ref.id,weight:ref.weight,score:a[ref.id].score,title:a[ref.id].title,display:a[ref.id].displayValue||''}));
+              if(failed.length){
+                console.log(`FAILED_${mode.toUpperCase()}_${catKey.toUpperCase()}`);
+                failed.forEach(x=>console.log(`  ${x.id} weight=${x.weight} score=${x.score} ${x.display} :: ${x.title}`));
+              }
             }
+            const diagnostics=['mainthread-work-breakdown','bootup-time','network-requests','total-byte-weight','third-party-summary','long-tasks','largest-contentful-paint-element','render-blocking-resources','unused-css-rules','unused-javascript','uses-responsive-images','uses-optimized-images','uses-long-cache-ttl'];
+            diagnostics.forEach(id=>{const x=a[id]; if(x && x.score!==1) console.log(`DIAG_${mode.toUpperCase()} ${id} score=${x.score} ${x.displayValue||''}`)});
           }
           NODE
