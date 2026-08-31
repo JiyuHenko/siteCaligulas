@@ -17,16 +17,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Refine regulation desktop and footer
+      - name: Refine regulation markup
         run: |
           python - <<'PY'
           from pathlib import Path
-
-          root = Path('.')
-
-          # Regulation: preserve the mobile structure, but give desktop semantic hooks.
-          reg = root / 'regulamento.html'
+          reg = Path('regulamento.html')
           html = reg.read_text(encoding='utf-8')
+
           if 'class="regulamento-page"' not in html:
               html = html.replace('</head><body>', '</head><body class="regulamento-page">', 1)
 
@@ -36,8 +33,7 @@ jobs:
               html = html.replace(first, replacement, 1)
 
               marker = '<section class="section" style="padding-top:10px">'
-              names = ['regulation-factor', 'regulation-tiebreak', 'regulation-prizes', 'regulation-details']
-              for name in names:
+              for name in ['regulation-factor', 'regulation-tiebreak', 'regulation-prizes', 'regulation-details']:
                   html = html.replace(marker, f'<section class="section {name}" style="padding-top:10px">', 1)
 
               idx = html.rfind('</main>')
@@ -45,304 +41,19 @@ jobs:
                   html = html[:idx] + '</div>\n' + html[idx:]
 
           reg.write_text(html, encoding='utf-8')
+          PY
 
-          css = r'''
-
-/* V8 — premium regulation desktop + unified footer */
-.regulation-content{display:block}
-
-.site-footer{
-  margin-top:34px;
-  padding:0;
-  border-top:1px solid rgba(255,255,255,.075);
-  background:
-    radial-gradient(circle at 10% 0,rgba(199,162,88,.055),transparent 26rem),
-    linear-gradient(180deg,#060605 0%,#040403 100%)
-}
-.site-footer>.container{
-  padding-top:40px;
-  padding-bottom:22px;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  grid-template-areas:"top top" "bottom credit";
-  column-gap:26px
-}
-.site-footer .footer-top{
-  grid-area:top;
-  display:grid;
-  grid-template-columns:minmax(150px,220px) minmax(0,1fr);
-  align-items:start;
-  gap:52px;
-  padding-bottom:27px;
-  border-bottom:1px solid rgba(255,255,255,.075)
-}
-.site-footer .footer-logo{width:158px;margin:0}
-.site-footer .footer-nav{
-  justify-self:end;
-  width:min(100%,560px);
-  display:grid;
-  grid-template-columns:repeat(3,minmax(110px,1fr));
-  gap:8px 28px
-}
-.site-footer .footer-nav a{
-  position:relative;
-  width:max-content;
-  max-width:100%;
-  padding:2px 0;
-  color:#aaa297;
-  font-size:.73rem;
-  transition:color .2s ease,transform .2s ease
-}
-.site-footer .footer-nav a:hover{color:var(--gold-soft);transform:translateX(2px)}
-.site-footer .footer-bottom{
-  grid-area:bottom;
-  margin:0;
-  padding:16px 0 0;
-  border:0;
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:18px;
-  color:#8f887f;
-  font-size:.65rem
-}
-.site-footer .creator-credit{
-  grid-area:credit;
-  justify-self:end;
-  align-self:start;
-  margin:0;
-  padding:11px 0 0;
-  border:0;
-  width:auto;
-  max-width:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:9px;
-  color:#8f887f;
-  font-size:.61rem
-}
-.site-footer .creator-credit span{white-space:nowrap}
-.site-footer .creator-credit img{
-  width:112px;
-  max-height:30px;
-  opacity:.8;
-  object-fit:contain;
-  object-position:right center
-}
-.site-footer .creator-credit:hover{color:#c6beb2}
-.site-footer .creator-credit:hover img{opacity:1}
-
-@media(min-width:940px){
-  .regulamento-page .page-hero{
-    padding:118px 0 34px;
-    border-bottom:1px solid rgba(255,255,255,.055)
-  }
-  .regulamento-page .page-hero .container{width:min(calc(100% - 48px),1080px)}
-  .regulamento-page .page-hero-mark{width:185px;right:8px;bottom:-64px;opacity:.055}
-  .regulamento-page .display-small{font-size:3rem}
-
-  .regulamento-page .regulation-content{
-    width:min(calc(100% - 48px),1080px);
-    margin:0 auto;
-    padding:30px 0 74px;
-    display:grid;
-    grid-template-columns:minmax(0,1.18fr) minmax(330px,.82fr);
-    gap:18px
-  }
-  .regulamento-page .regulation-content>.section{
-    padding:0!important;
-    min-width:0
-  }
-  .regulamento-page .regulation-content>.section>.narrow{
-    width:100%;
-    max-width:none;
-    margin:0
-  }
-  .regulamento-page .regulation-points{grid-column:1/-1}
-  .regulamento-page .regulation-factor{grid-column:1}
-  .regulamento-page .regulation-tiebreak{grid-column:2}
-  .regulamento-page .regulation-prizes,
-  .regulamento-page .regulation-details{grid-column:1/-1}
-
-  .regulamento-page .regulation-content .section-head{
-    margin:0 0 12px;
-    align-items:end
-  }
-  .regulamento-page .regulation-content .section-title{font-size:2rem}
-  .regulamento-page .regulation-content .kicker{font-size:.63rem;margin-bottom:6px}
-
-  .regulamento-page .rule-card{
-    position:relative;
-    border-radius:18px;
-    padding:23px;
-    background:linear-gradient(145deg,rgba(255,255,255,.052),rgba(255,255,255,.014));
-    border-color:rgba(255,255,255,.085);
-    box-shadow:inset 0 1px rgba(255,255,255,.045),0 16px 46px rgba(0,0,0,.18)
-  }
-  .regulamento-page .regulation-points .rules-layout{gap:14px}
-  .regulamento-page .regulation-points .rule-card:before{
-    content:"";
-    position:absolute;
-    left:23px;
-    top:0;
-    width:64px;
-    height:1px;
-    background:linear-gradient(90deg,var(--gold-soft),transparent)
-  }
-  .regulamento-page .regulation-points .rule-card h3{font-size:1.05rem;margin-bottom:6px}
-  .regulamento-page .points-grid{gap:7px;margin-top:16px}
-  .regulamento-page .point-pill{
-    padding:11px 5px;
-    border-radius:12px;
-    background:rgba(0,0,0,.16);
-    border-color:rgba(255,255,255,.075)
-  }
-  .regulamento-page .point-pill strong{font-size:.93rem}
-
-  .regulamento-page .regulation-factor,
-  .regulamento-page .regulation-tiebreak{display:flex}
-  .regulamento-page .regulation-factor>.narrow,
-  .regulamento-page .regulation-tiebreak>.narrow{
-    display:flex;
-    flex-direction:column;
-    min-height:100%
-  }
-  .regulamento-page .regulation-factor .rule-card,
-  .regulamento-page .regulation-tiebreak .rule-card{flex:1}
-  .regulamento-page .factor-list{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    column-gap:24px;
-    align-content:start
-  }
-  .regulamento-page .factor-row{padding:13px 0;font-size:.79rem}
-  .regulamento-page .factor-row:nth-child(5){border-bottom:1px solid var(--line)!important}
-  .regulamento-page .regulation-tiebreak .rule-card{
-    min-height:100%;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    overflow:hidden;
-    padding:28px
-  }
-  .regulamento-page .regulation-tiebreak .rule-card:after{
-    content:"";
-    position:absolute;
-    width:190px;
-    height:190px;
-    right:-48px;
-    bottom:-62px;
-    background:url('../img/perf/decor/chip-neutral-260.webp') center/contain no-repeat;
-    opacity:.035;
-    pointer-events:none
-  }
-  .regulamento-page .regulation-tiebreak .rule-card h3{font-size:1.22rem}
-  .regulamento-page .regulation-tiebreak .rule-card p{max-width:390px;line-height:1.7}
-
-  .regulamento-page .regulation-prizes .rules-layout{
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:10px
-  }
-  .regulamento-page .regulation-prizes .rules-layout .rule-card{
-    min-height:108px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    text-align:center;
-    padding:18px
-  }
-  .regulamento-page .regulation-prizes .rules-layout .rule-card h3{
-    margin-bottom:8px;
-    color:#a79f94;
-    font-family:'Manrope',system-ui,sans-serif;
-    font-size:.64rem;
-    text-transform:uppercase;
-    letter-spacing:.15em
-  }
-  .regulamento-page .regulation-prizes .rules-layout .rule-card p{
-    color:var(--ink);
-    font-family:'Cinzel',serif;
-    font-size:1.18rem
-  }
-  .regulamento-page .regulation-prizes>.narrow>article.rule-card{
-    margin-top:10px!important;
-    display:grid;
-    grid-template-columns:160px 1fr;
-    align-items:center;
-    gap:24px
-  }
-  .regulamento-page .regulation-prizes>.narrow>article.rule-card h3{margin:0}
-
-  .regulamento-page .regulation-details>.narrow{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:9px
-  }
-  .regulamento-page .regulation-details details.rule-details{
-    margin:0!important;
-    border-radius:15px;
-    background:rgba(255,255,255,.018)
-  }
-  .regulamento-page .regulation-details details.rule-details summary{padding:15px 0;font-size:.78rem}
-}
-
-@media(max-width:699px){
-  .site-footer{margin-top:20px}
-  .site-footer>.container{
-    padding-top:32px;
-    padding-bottom:18px;
-    display:block
-  }
-  .site-footer .footer-top{
-    display:block;
-    padding-bottom:22px;
-    border-bottom:1px solid rgba(255,255,255,.07)
-  }
-  .site-footer .footer-logo{width:128px;margin-bottom:24px}
-  .site-footer .footer-nav{
-    width:100%;
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:0 24px
-  }
-  .site-footer .footer-nav a{
-    width:100%;
-    padding:9px 0;
-    border-bottom:1px solid rgba(255,255,255,.045);
-    font-size:.72rem
-  }
-  .site-footer .footer-bottom{
-    margin:0;
-    padding-top:15px;
-    border:0;
-    display:flex;
-    justify-content:space-between;
-    gap:10px 16px;
-    color:#8f887f;
-    font-size:.62rem
-  }
-  .site-footer .creator-credit{
-    margin:11px 0 0;
-    padding:0;
-    border:0;
-    width:auto;
-    max-width:100%;
-    display:inline-flex;
-    justify-content:flex-start;
-    gap:8px;
-    color:#817a71;
-    font-size:.58rem
-  }
-  .site-footer .creator-credit img{width:100px;max-height:27px;object-position:left center}
-}
-'''
-
+      - name: Append final styles
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          patch = Path('assets/css/v8-polish.css').read_text(encoding='utf-8')
+          marker = '/* V8 — premium regulation desktop + unified footer */'
           for rel in ['assets/css/styles.css', 'assets/css/styles.min.css']:
-              p = root / rel
+              p = Path(rel)
               txt = p.read_text(encoding='utf-8')
-              marker = '/* V8 — premium regulation desktop + unified footer */'
               if marker not in txt:
-                  txt += css
+                  txt += '\n' + patch
               p.write_text(txt, encoding='utf-8')
           PY
 
