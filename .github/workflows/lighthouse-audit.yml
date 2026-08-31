@@ -16,37 +16,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: Wait for Pages
         run: sleep 8
-      - name: Run Lighthouse mobile diagnostics
+      - name: Run Lighthouse mobile
         run: |
           npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
             --quiet --chrome-flags='--headless --no-sandbox' \
             --output=json --output-path=/tmp/mobile.json
-      - name: Print diagnostics
+      - name: Run Lighthouse desktop
+        run: |
+          npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
+            --quiet --preset=desktop --chrome-flags='--headless --no-sandbox' \
+            --output=json --output-path=/tmp/desktop.json
+      - name: Print final summary
         run: |
           node - <<'NODE'
           const fs=require('fs');
-          const r=JSON.parse(fs.readFileSync('/tmp/mobile.json','utf8'));
-          const a=r.audits,c=r.categories;
-          const pct=k=>Math.round(c[k].score*100);
-          console.log(`SCORES performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
-          console.log(`METRICS FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} SI=${a['speed-index'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue}`);
-          const dump=(id,fields=[])=>{
-            const x=a[id]; if(!x)return;
-            console.log(`\n=== ${id} :: ${x.title} :: ${x.displayValue||''} ===`);
-            const items=x.details?.items||[];
-            items.slice(0,20).forEach((it,i)=>{
-              const out={};
-              for(const f of fields) if(it[f]!==undefined) out[f]=it[f];
-              if(!fields.length) Object.assign(out,it);
-              console.log(i,JSON.stringify(out).slice(0,1600));
-            });
-          };
-          dump('image-aspect-ratio',['url','displayedAspectRatio','actualAspectRatio','node']);
-          dump('image-size-responsive',['url','sourceWidth','sourceHeight','displayedWidth','displayedHeight','node']);
-          dump('uses-responsive-images',['url','totalBytes','wastedBytes','wastedPercent','node']);
-          dump('long-tasks',['url','duration','startTime']);
-          dump('bootup-time',['url','total','scripting','scriptParseCompile']);
-          dump('mainthread-work-breakdown',['group','groupLabel','duration']);
-          dump('largest-contentful-paint-element');
-          dump('network-requests',['url','resourceType','transferSize','startTime','endTime']);
+          for(const mode of ['mobile','desktop']){
+            const r=JSON.parse(fs.readFileSync(`/tmp/${mode}.json`,'utf8'));
+            const a=r.audits,c=r.categories;
+            const pct=k=>Math.round(c[k].score*100);
+            console.log(`FINAL_${mode.toUpperCase()} performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
+            console.log(`METRICS_${mode.toUpperCase()} FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} SI=${a['speed-index'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue}`);
+            console.log(`RESPONSIVE_IMAGES_${mode.toUpperCase()} ${a['uses-responsive-images']?.displayValue||'ok'}`);
+            console.log(`CACHE_${mode.toUpperCase()} ${a['uses-long-cache-ttl']?.displayValue||'ok'}`);
+          }
           NODE
