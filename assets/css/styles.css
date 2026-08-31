@@ -31,7 +31,7 @@ body.menu-open{overflow:hidden}
 a{color:inherit;text-decoration:none}
 button,input,select{font:inherit}
 button{color:inherit}
-img{display:block;max-width:100%}
+img{display:block;max-width:100%;height:auto}
 ::selection{background:rgba(199,162,88,.28)}
 .container{width:min(calc(100% - 28px),var(--max));margin-inline:auto}
 .narrow{width:min(calc(100% - 28px),880px);margin-inline:auto}
