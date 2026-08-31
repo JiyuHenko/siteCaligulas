@@ -161,16 +161,43 @@
     const start=window.scrollY;
     const end=target.getBoundingClientRect().top+start;
     const distance=end-start;
-    const duration=1200;
-    let started=null;
-    const frame=time=>{
-      if(started===null)started=time;
-      const progress=Math.min((time-started)/duration,1);
-      window.scrollTo(0,start+distance*progress);
-      if(progress<1)requestAnimationFrame(frame);
-      else history.replaceState(null,'','#inicio-conteudo');
+    const direction=Math.sign(distance)||1;
+    const speed=560; // pixels por segundo: constante do início ao fim
+    let current=start;
+    let lastTime=null;
+    let rafId=0;
+    let cancelled=false;
+
+    const cancel=()=>{
+      cancelled=true;
+      if(rafId)cancelAnimationFrame(rafId);
+      removeEventListener('wheel',cancel);
+      removeEventListener('touchstart',cancel);
+      removeEventListener('keydown',cancel);
     };
-    requestAnimationFrame(frame);
+
+    addEventListener('wheel',cancel,{passive:true,once:true});
+    addEventListener('touchstart',cancel,{passive:true,once:true});
+    addEventListener('keydown',cancel,{once:true});
+
+    const frame=time=>{
+      if(cancelled)return;
+      if(lastTime===null)lastTime=time;
+      const delta=Math.min((time-lastTime)/1000,0.05);
+      lastTime=time;
+      current+=direction*speed*delta;
+      const reached=direction>0?current>=end:current<=end;
+      window.scrollTo(0,reached?end:current);
+      if(!reached){
+        rafId=requestAnimationFrame(frame);
+      }else{
+        removeEventListener('wheel',cancel);
+        removeEventListener('touchstart',cancel);
+        removeEventListener('keydown',cancel);
+        history.replaceState(null,'','#inicio-conteudo');
+      }
+    };
+    rafId=requestAnimationFrame(frame);
   });
 })();
 </script>
