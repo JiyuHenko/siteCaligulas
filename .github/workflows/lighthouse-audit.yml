@@ -14,38 +14,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for GitHub Pages propagation
-        run: sleep 10
-      - name: Run Lighthouse mobile
+      - name: Wait for Pages
+        run: sleep 8
+      - name: Run Lighthouse mobile diagnostics
         run: |
           npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
             --quiet --chrome-flags='--headless --no-sandbox' \
             --output=json --output-path=/tmp/mobile.json
-      - name: Run Lighthouse desktop
-        run: |
-          npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
-            --quiet --preset=desktop --chrome-flags='--headless --no-sandbox' \
-            --output=json --output-path=/tmp/desktop.json
-      - name: Print detailed score summary
+      - name: Print diagnostics
         run: |
           node - <<'NODE'
           const fs=require('fs');
-          for (const mode of ['mobile','desktop']) {
-            const r=JSON.parse(fs.readFileSync(`/tmp/${mode}.json`,'utf8'));
-            const c=r.categories, a=r.audits;
-            const pct=k=>Math.round(c[k].score*100);
-            console.log(`LIGHTHOUSE_${mode.toUpperCase()} performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
-            console.log(`METRICS_${mode.toUpperCase()} FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue} SI=${a['speed-index'].displayValue}`);
-            for (const catKey of ['performance','accessibility','best-practices','seo']) {
-              const refs=c[catKey].auditRefs||[];
-              const failed=refs.filter(ref=>ref.weight>0 && a[ref.id] && a[ref.id].score!==null && a[ref.id].score<1)
-                .map(ref=>({id:ref.id,weight:ref.weight,score:a[ref.id].score,title:a[ref.id].title,display:a[ref.id].displayValue||''}));
-              if(failed.length){
-                console.log(`FAILED_${mode.toUpperCase()}_${catKey.toUpperCase()}`);
-                failed.forEach(x=>console.log(`  ${x.id} weight=${x.weight} score=${x.score} ${x.display} :: ${x.title}`));
-              }
-            }
-            const diagnostics=['mainthread-work-breakdown','bootup-time','network-requests','total-byte-weight','third-party-summary','long-tasks','largest-contentful-paint-element','render-blocking-resources','unused-css-rules','unused-javascript','uses-responsive-images','uses-optimized-images','uses-long-cache-ttl'];
-            diagnostics.forEach(id=>{const x=a[id]; if(x && x.score!==1) console.log(`DIAG_${mode.toUpperCase()} ${id} score=${x.score} ${x.displayValue||''}`)});
-          }
+          const r=JSON.parse(fs.readFileSync('/tmp/mobile.json','utf8'));
+          const a=r.audits,c=r.categories;
+          const pct=k=>Math.round(c[k].score*100);
+          console.log(`SCORES performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
+          console.log(`METRICS FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} SI=${a['speed-index'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue}`);
+          const dump=(id,fields=[])=>{
+            const x=a[id]; if(!x)return;
+            console.log(`\n=== ${id} :: ${x.title} :: ${x.displayValue||''} ===`);
+            const items=x.details?.items||[];
+            items.slice(0,20).forEach((it,i)=>{
+              const out={};
+              for(const f of fields) if(it[f]!==undefined) out[f]=it[f];
+              if(!fields.length) Object.assign(out,it);
+              console.log(i,JSON.stringify(out).slice(0,1600));
+            });
+          };
+          dump('image-aspect-ratio',['url','displayedAspectRatio','actualAspectRatio','node']);
+          dump('image-size-responsive',['url','sourceWidth','sourceHeight','displayedWidth','displayedHeight','node']);
+          dump('uses-responsive-images',['url','totalBytes','wastedBytes','wastedPercent','node']);
+          dump('long-tasks',['url','duration','startTime']);
+          dump('bootup-time',['url','total','scripting','scriptParseCompile']);
+          dump('mainthread-work-breakdown',['group','groupLabel','duration']);
+          dump('largest-contentful-paint-element');
+          dump('network-requests',['url','resourceType','transferSize','startTime','endTime']);
           NODE
