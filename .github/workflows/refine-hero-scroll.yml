@@ -18,73 +18,10 @@ jobs:
           fetch-depth: 0
 
       - name: Refine hero scroll motion
+        env:
+          NEW_BLOCK_B64: "ICAgIGNvbnN0IHN0YXJ0PXdpbmRvdy5zY3JvbGxZOwogICAgY29uc3QgZW5kPXRhcmdldC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKS50b3Arc3RhcnQ7CiAgICBjb25zdCBkaXN0YW5jZT1lbmQtc3RhcnQ7CiAgICBjb25zdCB0cmF2ZWw9TWF0aC5hYnMoZGlzdGFuY2UpOwogICAgY29uc3QgZGlyZWN0aW9uPU1hdGguc2lnbihkaXN0YW5jZSl8fDE7CgogICAgLy8gTW92aW1lbnRvIG5hdHVyYWw6IHBlcXVlbmEgYWNlbGVyYcOnw6NvL2Rlc2FjZWxlcmHDp8OjbyBuYXMgcG9udGFzCiAgICAvLyBlIHZlbG9jaWRhZGUgcHJhdGljYW1lbnRlIGNvbnN0YW50ZSBkdXJhbnRlIGEgbWFpb3IgcGFydGUgZG8gcGVyY3Vyc28uCiAgICBjb25zdCBhdmVyYWdlU3BlZWQ9NzYwOwogICAgY29uc3QgZHVyYXRpb249TWF0aC5tYXgoODAwLE1hdGgubWluKDEzMDAsKHRyYXZlbC9hdmVyYWdlU3BlZWQpKjEwMDApKTsKICAgIGNvbnN0IGVkZ2U9LjE0OwogICAgY29uc3QgbWF4VmVsb2NpdHk9MS8oMS1lZGdlKTsKICAgIGxldCBzdGFydGVkPW51bGw7CiAgICBsZXQgcmFmSWQ9MDsKICAgIGxldCBjYW5jZWxsZWQ9ZmFsc2U7CgogICAgY29uc3QgY2FuY2VsPSgpPT57CiAgICAgIGNhbmNlbGxlZD10cnVlOwogICAgICBpZihyYWZJZCljYW5jZWxBbmltYXRpb25GcmFtZShyYWZJZCk7CiAgICAgIHJlbW92ZUV2ZW50TGlzdGVuZXIoJ3doZWVsJyxjYW5jZWwpOwogICAgICByZW1vdmVFdmVudExpc3RlbmVyKCd0b3VjaHN0YXJ0JyxjYW5jZWwpOwogICAgICByZW1vdmVFdmVudExpc3RlbmVyKCdrZXlkb3duJyxjYW5jZWwpOwogICAgfTsKCiAgICBhZGRFdmVudExpc3RlbmVyKCd3aGVlbCcsY2FuY2VsLHtwYXNzaXZlOnRydWUsb25jZTp0cnVlfSk7CiAgICBhZGRFdmVudExpc3RlbmVyKCd0b3VjaHN0YXJ0JyxjYW5jZWwse3Bhc3NpdmU6dHJ1ZSxvbmNlOnRydWV9KTsKICAgIGFkZEV2ZW50TGlzdGVuZXIoJ2tleWRvd24nLGNhbmNlbCx7b25jZTp0cnVlfSk7CgogICAgY29uc3QgbW90aW9uPXQ9PnsKICAgICAgaWYodDxlZGdlKXJldHVybiBtYXhWZWxvY2l0eSp0KnQvKDIqZWRnZSk7CiAgICAgIGlmKHQ8PTEtZWRnZSlyZXR1cm4gbWF4VmVsb2NpdHkqKGVkZ2UvMisodC1lZGdlKSk7CiAgICAgIGNvbnN0IHJlbWFpbmluZz0xLXQ7CiAgICAgIHJldHVybiAxLW1heFZlbG9jaXR5KnJlbWFpbmluZypyZW1haW5pbmcvKDIqZWRnZSk7CiAgICB9OwoKICAgIGNvbnN0IGZyYW1lPXRpbWU9PnsKICAgICAgaWYoY2FuY2VsbGVkKXJldHVybjsKICAgICAgaWYoc3RhcnRlZD09PW51bGwpc3RhcnRlZD10aW1lOwogICAgICBjb25zdCBwcm9ncmVzcz1NYXRoLm1pbigodGltZS1zdGFydGVkKS9kdXJhdGlvbiwxKTsKICAgICAgY29uc3QgcG9zaXRpb249c3RhcnQrZGlyZWN0aW9uKnRyYXZlbCptb3Rpb24ocHJvZ3Jlc3MpOwogICAgICB3aW5kb3cuc2Nyb2xsVG8oMCxwcm9ncmVzcz09PTE/ZW5kOnBvc2l0aW9uKTsKICAgICAgaWYocHJvZ3Jlc3M8MSl7CiAgICAgICAgcmFmSWQ9cmVxdWVzdEFuaW1hdGlvbkZyYW1lKGZyYW1lKTsKICAgICAgfWVsc2V7CiAgICAgICAgcmVtb3ZlRXZlbnRMaXN0ZW5lcignd2hlZWwnLGNhbmNlbCk7CiAgICAgICAgcmVtb3ZlRXZlbnRMaXN0ZW5lcigndG91Y2hzdGFydCcsY2FuY2VsKTsKICAgICAgICByZW1vdmVFdmVudExpc3RlbmVyKCdrZXlkb3duJyxjYW5jZWwpOwogICAgICAgIGhpc3RvcnkucmVwbGFjZVN0YXRlKG51bGwsJycsJyNpbmljaW8tY29udGV1ZG8nKTsKICAgICAgfQogICAgfTsKICAgIHJhZklkPXJlcXVlc3RBbmltYXRpb25GcmFtZShmcmFtZSk7"
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          start_marker = "    const start=window.scrollY;"
-          end_marker = "    rafId=requestAnimationFrame(frame);"
-          i = s.find(start_marker)
-          if i < 0:
-              raise SystemExit('Scroll start marker not found')
-          j = s.find(end_marker, i)
-          if j < 0:
-              raise SystemExit('Scroll end marker not found')
-          j += len(end_marker)
-          new = """    const start=window.scrollY;
-    const end=target.getBoundingClientRect().top+start;
-    const distance=end-start;
-    const travel=Math.abs(distance);
-    const direction=Math.sign(distance)||1;
-
-    // Movimento natural: pequena aceleração/desaceleração nas pontas
-    // e velocidade praticamente constante durante a maior parte do percurso.
-    const averageSpeed=760; // px/s
-    const duration=Math.max(800,Math.min(1300,(travel/averageSpeed)*1000));
-    const edge=.14;
-    const maxVelocity=1/(1-edge);
-    let started=null;
-    let rafId=0;
-    let cancelled=false;
-
-    const cancel=()=>{
-      cancelled=true;
-      if(rafId)cancelAnimationFrame(rafId);
-      removeEventListener('wheel',cancel);
-      removeEventListener('touchstart',cancel);
-      removeEventListener('keydown',cancel);
-    };
-
-    addEventListener('wheel',cancel,{passive:true,once:true});
-    addEventListener('touchstart',cancel,{passive:true,once:true});
-    addEventListener('keydown',cancel,{once:true});
-
-    const motion=t=>{
-      if(t<edge)return maxVelocity*t*t/(2*edge);
-      if(t<=1-edge)return maxVelocity*(edge/2+(t-edge));
-      const remaining=1-t;
-      return 1-maxVelocity*remaining*remaining/(2*edge);
-    };
-
-    const frame=time=>{
-      if(cancelled)return;
-      if(started===null)started=time;
-      const progress=Math.min((time-started)/duration,1);
-      const position=start+direction*travel*motion(progress);
-      window.scrollTo(0,progress===1?end:position);
-      if(progress<1){
-        rafId=requestAnimationFrame(frame);
-      }else{
-        removeEventListener('wheel',cancel);
-        removeEventListener('touchstart',cancel);
-        removeEventListener('keydown',cancel);
-        history.replaceState(null,'','#inicio-conteudo');
-      }
-    };
-    rafId=requestAnimationFrame(frame);"""
-          p.write_text(s[:i] + new + s[j:], encoding='utf-8')
-          PY
+          python -c "from pathlib import Path; import os,base64; p=Path('index.html'); s=p.read_text(encoding='utf-8'); a='    const start=window.scrollY;'; b='    rafId=requestAnimationFrame(frame);'; i=s.find(a); j=s.find(b,i); assert i>=0 and j>=0; j+=len(b); n=base64.b64decode(os.environ['NEW_BLOCK_B64']).decode('utf-8'); p.write_text(s[:i]+n+s[j:],encoding='utf-8')"
 
       - name: Verify refined scroll
         run: |
