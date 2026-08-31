@@ -1,0 +1,243 @@
+name: Restructure Home and Admin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/restructure-home-admin.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rebuild programming section and set 300ms scroll
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace('const duration=600;','const duration=300;',1)
+
+          start=s.find('<div class="home-agenda">')
+          end_marker='</div>\n</div>\n</section>\n<div class="rule-line"></div>'
+          end=s.find(end_marker,start)
+          if start < 0 or end < 0:
+              raise SystemExit('Home programming block markers not found')
+
+          block='''<div class="program-grid">
+<article class="program-card program-prime" data-reveal="">
+  <figure class="program-poster"><img src="assets/img/events/programacao-segunda-prime.webp" alt="Segunda Prime — 1.2K GTD" width="1122" height="1402" loading="lazy" decoding="async"></figure>
+  <div class="program-body">
+    <p class="program-label">Segunda-feira</p>
+    <h3>Segunda Prime</h3>
+    <dl class="program-specs">
+      <div><dt>GTD</dt><dd>R$ 1.200,00</dd></div>
+      <div><dt>Buy-in</dt><dd>R$ 20,00 <small>Torneio com duplo e addon</small></dd></div>
+      <div><dt>Horário</dt><dd>19:30</dd></div>
+    </dl>
+  </div>
+</article>
+<article class="program-card program-free" data-reveal="">
+  <figure class="program-poster"><img src="assets/img/events/programacao-quarta-free.webp" alt="Quarta Free Freeroll — 1K GTD" width="1122" height="1402" loading="lazy" decoding="async"></figure>
+  <div class="program-body">
+    <p class="program-label">Quarta-feira</p>
+    <h3>Quarta Free</h3>
+    <dl class="program-specs">
+      <div><dt>GTD</dt><dd>R$ 1.000,00</dd></div>
+      <div><dt>Buy-in</dt><dd>Grátis <small>Torneio com rebuy duplo e addon</small></dd></div>
+      <div><dt>Horário</dt><dd>19:30</dd></div>
+    </dl>
+  </div>
+</article>
+<article class="program-card program-special" data-reveal="">
+  <div class="program-placeholder" aria-label="Banner do Domingo Especial em breve">
+    <img src="assets/img/perf/decor/trophy-120.webp" alt="" width="120" height="144" loading="lazy" decoding="async">
+    <span>Próximo especial</span><strong>DOMINGO</strong><em>Banner em breve</em>
+  </div>
+  <div class="program-body">
+    <p class="program-label">Data selecionada</p>
+    <h3>Domingo Especial</h3>
+    <dl class="program-specs">
+      <div><dt>GTD</dt><dd>A confirmar</dd></div>
+      <div><dt>Buy-in</dt><dd>A confirmar <small>Torneio com duplo e addon</small></dd></div>
+      <div><dt>Data</dt><dd>A confirmar</dd></div>
+      <div><dt>Horário</dt><dd>10:00</dd></div>
+    </dl>
+  </div>
+</article>
+</div>'''
+
+          s=s[:start]+block+'\n'+s[end:]
+
+          css='''
+/* Weekly programming — poster + factual details */
+.program-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
+.program-card{overflow:hidden;border:1px solid rgba(255,255,255,.10);border-radius:24px;background:linear-gradient(150deg,rgba(255,255,255,.055),rgba(255,255,255,.018));box-shadow:0 24px 70px rgba(0,0,0,.18)}
+.program-poster{margin:0;aspect-ratio:1122/1402;overflow:hidden;background:#111}
+.program-poster img{display:block;width:100%;height:100%;object-fit:cover}
+.program-body{padding:22px 22px 24px}
+.program-label{margin:0 0 7px;color:var(--gold-soft);font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.program-body h3{margin:0 0 20px;color:#f4efe6;font-family:'Cinzel',serif;font-size:clamp(1.45rem,2vw,2.15rem);line-height:1}
+.program-specs{margin:0;display:grid;gap:0}
+.program-specs>div{display:grid;grid-template-columns:82px minmax(0,1fr);gap:12px;align-items:start;padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}
+.program-specs dt{color:#8f887f;font-size:.63rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.program-specs dd{margin:0;color:#f5f0e6;font-size:.9rem;font-weight:700}
+.program-specs small{display:block;margin-top:4px;color:#948d83;font-size:.61rem;font-weight:500;line-height:1.45;text-transform:uppercase;letter-spacing:.045em}
+.program-placeholder{aspect-ratio:1122/1402;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:30px;text-align:center;background:radial-gradient(circle at 50% 38%,rgba(199,162,88,.14),transparent 42%),linear-gradient(145deg,#12110f,#090908);position:relative;overflow:hidden}
+.program-placeholder:before{content:"";position:absolute;inset:20px;border:1px solid rgba(199,162,88,.20);border-radius:18px}
+.program-placeholder img{width:88px;height:auto;opacity:.5;margin-bottom:12px}
+.program-placeholder span,.program-placeholder em{position:relative;color:#918a80;font-size:.61rem;font-style:normal;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.program-placeholder strong{position:relative;color:var(--gold-soft);font-family:'Cinzel',serif;font-size:2.5rem;line-height:1}
+@media(max-width:939px){.program-grid{grid-template-columns:1fr;gap:18px}.program-card{display:grid;grid-template-columns:minmax(0,42%) minmax(0,58%);border-radius:20px}.program-poster,.program-placeholder{aspect-ratio:4/5;height:100%;min-height:340px}.program-body{padding:20px}.program-body h3{font-size:1.55rem}.program-specs>div{grid-template-columns:70px minmax(0,1fr);padding:10px 0}}
+@media(max-width:620px){.program-card{display:block}.program-poster,.program-placeholder{width:100%;height:auto;min-height:0;aspect-ratio:4/5}.program-body{padding:20px 18px 22px}.program-body h3{font-size:1.65rem;margin-bottom:16px}.program-specs>div{grid-template-columns:76px minmax(0,1fr)}.program-placeholder strong{font-size:2.2rem}}
+'''
+          marker='</style>\n<title>'
+          if marker not in s:
+              raise SystemExit('Style marker not found')
+          if '/* Weekly programming — poster + factual details */' not in s:
+              s=s.replace(marker,css+'\n</style>\n<title>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Rebuild admin HTML
+        run: |
+          cat > admin/index.html <<'HTML'
+          <!doctype html>
+          <html lang="pt-BR">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+          <meta name="theme-color" content="#070706">
+          <link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon-32.png">
+          <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+          <link rel="manifest" href="../site.webmanifest">
+          <link rel="stylesheet" href="../assets/css/styles.css">
+          <link rel="stylesheet" href="../assets/css/admin.css">
+          <meta name="robots" content="noindex,nofollow">
+          <title>Admin | Caligulas Poker Live</title>
+          <meta name="description" content="Área administrativa do ranking.">
+          </head>
+          <body class="admin-body">
+          <div class="admin-app">
+            <header class="admin-topbar">
+              <div class="admin-container admin-topbar-inner">
+                <a class="admin-brand" href="../index.html" aria-label="Voltar ao Caligulas Poker Live">
+                  <img class="admin-logo" src="../assets/img/brand/logo-caligulas-white.png" alt="Caligulas Poker Live">
+                  <span><small>Painel</small><strong>Ranking 2026</strong></span>
+                </a>
+                <div class="admin-top-actions"><span class="admin-badge" id="modeBadge">ADMIN</span></div>
+              </div>
+            </header>
+
+            <main class="admin-container admin-content">
+              <section class="login-panel" id="loginView">
+                <div class="login-layout">
+                  <div class="login-intro">
+                    <p class="admin-eyebrow">Área restrita</p>
+                    <h1>Gestão simples.<br>Publicação segura.</h1>
+                    <p>Atualize jogadores, registre torneios e revise a prévia antes de publicar o ranking.</p>
+                  </div>
+                  <div class="admin-card login-card">
+                    <div class="login-card-head"><span class="login-lock">●</span><div><p class="admin-eyebrow">Acesso</p><h2>Entrar no painel</h2></div></div>
+                    <form class="login-form" id="loginForm">
+                      <label class="admin-field-label" for="adminPassword">Senha</label>
+                      <input class="admin-input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
+                      <button class="btn btn-gold login-submit" type="submit">Entrar</button>
+                    </form>
+                    <div class="status-line" id="loginMsg"></div>
+                    <button class="btn demo-btn" id="demoLogin" type="button">Modo demonstração</button>
+                    <div class="demo-warning">Sem a URL do Apps Script configurada, o modo demonstração não publica alterações.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section id="adminView" hidden>
+                <div class="dashboard-head">
+                  <div><p class="admin-eyebrow">Administração</p><h1>Ranking Caligulas</h1><p>Edite o rascunho, confira a prévia e publique somente quando estiver pronto.</p></div>
+                  <div class="dashboard-head-actions"><a class="btn btn-small" href="../ranking.html" target="_blank" rel="noopener">Ver ranking público</a><button class="btn btn-small" id="logoutBtn">Sair</button></div>
+                </div>
+
+                <div class="admin-grid">
+                  <div class="admin-main">
+                    <section class="admin-card players-panel">
+                      <div class="panel-head"><div><p class="admin-eyebrow">Base atual</p><h2>Jogadores</h2></div><button class="btn btn-gold" id="roundBtn">Registrar torneio</button></div>
+                      <div class="admin-toolbar">
+                        <input class="search-field admin-search" id="playerSearch" type="search" placeholder="Buscar jogador">
+                        <div class="admin-actions"><button class="btn btn-small" id="addPlayerBtn">+ Jogador</button><button class="btn btn-small" id="saveDraftBtn">Salvar rascunho</button><button class="btn btn-small danger-soft" id="discardDraftBtn">Descartar</button></div>
+                      </div>
+                      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Pos.</th><th>Nome</th><th>Pontos</th><th>Pres.</th><th>Fator</th><th>Final</th><th>Desempate</th><th></th></tr></thead><tbody id="adminRows"></tbody></table></div>
+                      <div class="player-list" id="playerCards"></div>
+                    </section>
+
+                    <section class="publish-bar">
+                      <div class="publish-copy"><span class="publish-status-dot"></span><div><div class="publish-title">Publicação em lote</div><div class="publish-meta" id="draftMeta">Rascunho local</div></div></div>
+                      <div class="admin-actions publish-actions"><button class="btn btn-small" id="exportBtn">Exportar</button><label class="btn btn-small" for="importInput">Importar</label><input id="importInput" type="file" accept="application/json" hidden><button class="btn btn-gold" id="publishBtn">Publicar ranking</button></div>
+                    </section>
+                  </div>
+
+                  <aside class="admin-side">
+                    <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Ao vivo</p><h3>Prévia do Top 10</h3></div><a class="side-link" href="../ranking.html" target="_blank" rel="noopener">Abrir ↗</a></div><div class="preview-list" id="previewRows"></div></section>
+                    <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Versões</p><h3>Histórico</h3></div></div><div class="history-list" id="historyList"></div></section>
+                  </aside>
+                </div>
+              </section>
+            </main>
+          </div>
+
+          <dialog id="playerDialog"><form class="dialog-inner" id="addPlayerForm"><div class="dialog-heading"><p class="admin-eyebrow">Novo cadastro</p><h2>Adicionar jogador</h2></div><div class="dialog-grid two"><label>Nome<input class="admin-input" id="newPlayerName" required></label><label>Pontos atuais<input class="admin-input" id="newPlayerPoints" type="number" min="0" step="1" value="0"></label><label>Presenças atuais<input class="admin-input" id="newPlayerPresences" type="number" min="0" step="1" value="0"></label></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Adicionar</button></div></form></dialog>
+          <dialog id="finishesDialog"><form class="dialog-inner" id="finishForm"><div class="dialog-heading"><p class="admin-eyebrow">Desempate</p><h2 id="finishTitle">Colocações</h2></div><p class="round-note">Use estes campos para preencher ou corrigir o histórico de colocações do jogador.</p><div class="finishes-grid" id="finishesGrid"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Salvar colocações</button></div></form></dialog>
+          <dialog id="roundDialog"><form class="dialog-inner round-dialog-inner" id="roundForm"><div class="dialog-heading"><p class="admin-eyebrow">Pontuação</p><h2>Registrar torneio</h2></div><div class="round-tools"><label>Tipo<select class="admin-select" id="roundType"><option value="regular">Segunda / Quarta</option><option value="special">Domingo / Especial</option></select></label><label>Buscar jogador<input class="admin-input" id="roundSearch" type="search" placeholder="Filtrar jogadores"></label></div><p class="round-note">Marque presença. A colocação é opcional; sem colocação, o jogador recebe apenas o ponto de presença.</p><div class="round-list" id="roundList"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Aplicar ao rascunho</button></div></form></dialog>
+          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+          <script src="../config.js"></script><script src="../assets/js/ranking-fallback.js"></script><script src="../assets/js/api.js"></script><script src="../assets/js/admin.js"></script>
+          </body></html>
+          HTML
+
+      - name: Rebuild admin CSS
+        run: |
+          cat > assets/css/admin.css <<'CSS'
+          .admin-body{margin:0;background:#070706;color:var(--ink);min-height:100vh}
+          .admin-app{min-height:100vh;background:radial-gradient(circle at 18% 0%,rgba(199,162,88,.055),transparent 28%),#070706}
+          .admin-container{width:min(calc(100% - 32px),1440px);margin-inline:auto}
+          .admin-topbar{position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(7,7,6,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+          .admin-topbar-inner{height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+          .admin-brand{display:flex;align-items:center;gap:15px;color:inherit;text-decoration:none}.admin-logo{width:142px;height:auto}.admin-brand>span{display:grid;gap:1px;padding-left:15px;border-left:1px solid rgba(255,255,255,.10)}.admin-brand small{color:#777168;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase}.admin-brand strong{font-size:.76rem;font-weight:700}
+          .admin-top-actions{display:flex;align-items:center;gap:10px}.admin-badge{font-size:.59rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft);border:1px solid rgba(199,162,88,.28);border-radius:999px;padding:8px 12px;background:rgba(199,162,88,.04)}
+          .admin-content{padding:42px 0 74px}
+          .login-panel{min-height:calc(100vh - 194px);display:grid;align-items:center}.login-layout{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:clamp(50px,9vw,150px);align-items:center;width:min(100%,1120px);margin:auto}.login-intro{max-width:570px}.admin-eyebrow{margin:0 0 9px!important;color:var(--gold-soft)!important;font-size:.59rem!important;font-weight:700!important;letter-spacing:.20em!important;text-transform:uppercase}.login-intro h1,.dashboard-head h1{margin:0;color:#f4efe6;font-family:'Cinzel',serif;line-height:.98}.login-intro h1{font-size:clamp(2.8rem,5.1vw,5.2rem);letter-spacing:-.045em}.login-intro>p:last-child{max-width:480px;margin:22px 0 0;color:#928b82;font-size:.92rem;line-height:1.7}
+          .admin-card{border:1px solid rgba(255,255,255,.10);border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.052),rgba(255,255,255,.017));box-shadow:0 24px 80px rgba(0,0,0,.25)}.login-card{padding:30px}.login-card-head{display:flex;align-items:center;gap:14px;margin-bottom:25px}.login-card-head h2{margin:0;color:#f3ede3;font-family:'Cinzel',serif;font-size:1.65rem}.login-lock{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;color:var(--gold-soft);background:rgba(199,162,88,.08);border:1px solid rgba(199,162,88,.18);font-size:.45rem}.login-form{display:grid;gap:9px}.admin-field-label{color:#817a72;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.admin-input,.admin-select,.admin-table input,.admin-table select{width:100%;min-height:44px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.035);color:var(--ink);padding:0 13px;outline:none;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}.admin-input:focus,.admin-select:focus,.admin-table input:focus,.admin-table select:focus{border-color:rgba(226,201,133,.52);background:rgba(255,255,255,.05);box-shadow:0 0 0 3px rgba(199,162,88,.07)}.admin-select option,.admin-table select option{background:#12100e;color:#fff}.login-submit{width:100%;margin-top:5px;min-height:46px}.status-line{min-height:18px;margin-top:10px;color:#b2aaa0;font-size:.71rem}.demo-btn{width:100%;margin-top:8px}.demo-warning{margin-top:13px;color:#736d65;font-size:.67rem;line-height:1.5}
+          .dashboard-head{display:flex;justify-content:space-between;gap:30px;align-items:flex-end;margin:8px 0 28px}.dashboard-head h1{font-size:clamp(2.2rem,3.2vw,3.5rem)}.dashboard-head>div>p:last-child{margin:9px 0 0;color:#898279;font-size:.79rem}.dashboard-head-actions{display:flex;gap:8px;flex:0 0 auto}
+          .admin-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}.admin-main{display:grid;gap:14px;min-width:0}.players-panel{padding:22px;overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.panel-head h2{margin:0;color:#f4efe6;font-family:'Cinzel',serif;font-size:1.55rem}.admin-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 18px;border-top:1px solid rgba(255,255,255,.07)}.admin-search{max-width:320px}.admin-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.danger-soft{color:#d89993;border-color:rgba(214,122,114,.20)!important}
+          .admin-table-wrap{overflow:auto;border:1px solid rgba(255,255,255,.075);border-radius:16px}.admin-table{width:100%;border-collapse:collapse;min-width:930px}.admin-table th{padding:12px 10px;text-align:left;color:#777168;background:rgba(255,255,255,.018);font-size:.58rem;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap}.admin-table td{padding:9px 8px;border-top:1px solid rgba(255,255,255,.065);font-size:.73rem;vertical-align:middle}.admin-table tbody tr{transition:background .15s ease}.admin-table tbody tr:hover{background:rgba(255,255,255,.018)}.admin-table input{min-height:36px;padding:0 9px;border-radius:9px}.admin-table .num{width:84px}.admin-table .name{min-width:190px}.admin-readonly{color:#9b948a}.player-list{display:none}
+          .publish-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 16px;border:1px solid rgba(199,162,88,.26);border-radius:18px;background:linear-gradient(90deg,rgba(199,162,88,.055),rgba(255,255,255,.018));box-shadow:0 16px 46px rgba(0,0,0,.16)}.publish-copy{display:flex;align-items:center;gap:10px;min-width:0}.publish-status-dot{width:8px;height:8px;border-radius:50%;background:var(--gold-soft);box-shadow:0 0 16px rgba(226,201,133,.36)}.publish-title{font-size:.74rem;font-weight:700}.publish-meta{margin-top:2px;color:#817a72;font-size:.63rem}.publish-actions{justify-content:flex-end;flex:0 0 auto}
+          .admin-side{display:grid;gap:14px;position:sticky;top:96px}.side-card{padding:18px}.admin-side-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:13px}.admin-side-head h3{margin:0;color:#f0e9df;font-family:'Cinzel',serif;font-size:1.05rem}.side-link{color:var(--gold-soft);font-size:.65rem;text-decoration:none}.preview-list,.history-list{display:grid;gap:7px}.preview-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 11px;border:1px solid rgba(255,255,255,.075);border-radius:11px;background:rgba(255,255,255,.012);font-size:.69rem}.preview-row .pos{color:var(--gold-soft);font-family:'Cinzel',serif}.preview-row strong{font-size:.7rem}.history-row{border:1px solid rgba(255,255,255,.075);border-radius:11px;padding:10px;display:flex;justify-content:space-between;gap:10px;align-items:center}.history-row strong{font-size:.7rem}.history-row span{display:block;margin-top:2px;color:#817a72;font-size:.61rem}.admin-empty{padding:22px 12px;text-align:center;color:#817a72;font-size:.72rem}
+          dialog{padding:0;border:1px solid rgba(255,255,255,.10);border-radius:22px;background:#0d0c0b;color:var(--ink);width:min(calc(100% - 24px),720px);box-shadow:0 35px 120px #000}dialog::backdrop{background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}.dialog-inner{padding:26px}.dialog-heading{margin-bottom:17px}.dialog-heading h2{margin:0;color:#f3ede3;font-family:'Cinzel',serif;font-size:1.65rem}.dialog-grid{display:grid;gap:12px}.dialog-grid.two{grid-template-columns:1fr 1fr}.dialog-grid label,.round-tools label{color:#8b847b;font-size:.67rem}.dialog-grid input,.dialog-grid select,.round-tools input,.round-tools select{margin-top:6px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px}.finishes-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.finish-field{border:1px solid rgba(255,255,255,.075);border-radius:12px;padding:9px}.finish-field label{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.69rem}.finish-field input{margin-top:5px}.round-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.round-list{max-height:52vh;overflow:auto;display:grid;gap:7px;padding-right:3px}.round-player{display:grid;grid-template-columns:auto 1fr 96px;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.075);border-radius:12px;padding:10px}.round-player input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}.round-player .rname{font-size:.75rem;font-weight:700}.round-player select{min-height:35px;font-size:.7rem}.round-note{color:#8b847b;font-size:.68rem;line-height:1.55}.danger{border-color:rgba(214,122,114,.25);color:#e5a09a}
+          @media(max-width:1100px){.admin-grid{grid-template-columns:minmax(0,1fr) 300px}.admin-toolbar{align-items:stretch;flex-direction:column}.admin-search{max-width:none}.admin-actions{justify-content:flex-start}}
+          @media(max-width:860px){.admin-topbar-inner{height:68px}.admin-logo{width:120px}.admin-brand>span{display:none}.admin-content{padding:26px 0 56px}.login-panel{min-height:calc(100vh - 145px)}.login-layout{grid-template-columns:1fr;gap:30px;width:min(100%,520px)}.login-intro{text-align:center}.login-intro h1{font-size:2.8rem}.login-intro>p:last-child{margin-inline:auto}.dashboard-head{align-items:flex-start;flex-direction:column}.dashboard-head-actions{width:100%}.dashboard-head-actions .btn{flex:1}.admin-grid{grid-template-columns:1fr}.admin-side{position:static;grid-template-columns:1fr 1fr}.admin-table-wrap{display:none}.player-list{display:grid;gap:9px}.player-card{border:1px solid rgba(255,255,255,.075);border-radius:15px;padding:13px;background:rgba(255,255,255,.014)}.player-card-head{display:flex;justify-content:space-between;gap:10px;align-items:start}.player-card-pos{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.85rem}.player-card-name{font-weight:700;font-size:.82rem}.player-card-score{font-family:'Cinzel',serif}.player-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.player-card-grid label{font-size:.59rem;color:#817a72;text-transform:uppercase;letter-spacing:.09em}.player-card-grid input{margin-top:4px}.player-card-bottom{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px}.tie-mini{font-size:.62rem;color:#817a72;flex:1}.publish-bar{align-items:stretch;flex-direction:column}.publish-actions{justify-content:flex-start}.publish-actions .btn{flex:1}}
+          @media(max-width:580px){.admin-container{width:min(calc(100% - 20px),1440px)}.admin-content{padding-top:20px}.login-intro{display:none}.login-card{padding:22px}.players-panel{padding:14px}.panel-head{align-items:stretch;flex-direction:column}.panel-head .btn{width:100%}.admin-actions .btn{flex:1}.admin-side{grid-template-columns:1fr}.dialog-inner{padding:19px}.dialog-grid.two,.round-tools{grid-template-columns:1fr}.finishes-grid{grid-template-columns:repeat(3,1fr)}.round-player{grid-template-columns:auto minmax(0,1fr) 82px}.publish-actions{display:grid;grid-template-columns:1fr 1fr}.publish-actions #publishBtn{grid-column:1/-1}.dashboard-head h1{font-size:2.15rem}}
+          CSS
+
+      - name: Verify changes
+        run: |
+          grep -q 'const duration=300' index.html
+          grep -q 'programacao-segunda-prime.webp' index.html
+          grep -q 'programacao-quarta-free.webp' index.html
+          grep -q 'Segunda Prime' index.html
+          grep -q 'Quarta Free' index.html
+          grep -q 'Gestão simples' admin/index.html
+          grep -q 'position:sticky;top:96px' assets/css/admin.css
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html admin/index.html assets/css/admin.css
+          git commit -m "Restructure weekly programming and admin dashboard"
+          git push
