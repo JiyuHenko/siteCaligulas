@@ -1,4 +1,4 @@
-name: Apply Caligulas V5
+name: Apply Caligulas responsive fix
 
 on:
   push:
@@ -10,22 +10,21 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ !contains(github.event.head_commit.message, '[v5 applied]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install image tooling
-        run: python -m pip install --disable-pip-version-check pillow
-      - name: Apply V5
+      - name: Apply responsive fix
         run: python scripts/apply_v5.py
       - name: Commit site update
         run: |
           rm -rf .github/v5_payload .github/apply-v5.trigger scripts/apply_v5.py
+          rm -f .github/workflows/apply-v5.yml
+          rmdir scripts 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Refine layout and optimize PageSpeed [v5 applied]"
+          git commit -m "Fix mobile galleries and tournament cards"
           git push
