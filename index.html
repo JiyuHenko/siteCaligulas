@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"/>
@@ -9,13 +8,63 @@
 <link href="assets/icons/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="site.webmanifest" rel="manifest"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" media="print" onload="this.media='all'" rel="stylesheet"/><noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/></noscript><link href="assets/css/styles.min.css" rel="stylesheet"/>
+<style>
+/* Homepage editorial hero — isolated from internal pages */
+.home-redesign .site-header{inset:18px 0 auto}
+.home-redesign .nav-shell{width:min(calc(100% - 44px),1500px);height:66px;padding:7px 12px 7px 18px;background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.home-redesign .site-header.scrolled .nav-shell{background:rgba(7,7,6,.88);border-color:rgba(255,255,255,.09);box-shadow:0 16px 52px rgba(0,0,0,.34);backdrop-filter:blur(18px) saturate(125%);-webkit-backdrop-filter:blur(18px) saturate(125%)}
+.home-redesign .desktop-nav a{color:rgba(255,255,255,.78)}
+.home-redesign .desktop-nav a:hover{color:#fff;background:rgba(255,255,255,.06)}
+.home-redesign .nav-actions .btn-ghost{background:rgba(4,4,4,.18);border-color:rgba(255,255,255,.16)}
+.home-redesign .home-hero{height:auto;padding:0}
+.home-redesign .home-hero .hero-frame{position:relative;top:auto;width:100%;height:100svh;min-height:650px;max-height:none;margin:0;border-radius:0;display:flex;align-items:center;overflow:hidden;isolation:isolate;background:#050505;transform:none!important}
+.home-redesign .home-hero .hero-media{position:absolute;inset:0;z-index:-3}
+.home-redesign .home-hero .hero-media picture,.home-redesign .home-hero .hero-media img{width:100%;height:100%}
+.home-redesign .home-hero .hero-media img{object-fit:cover;object-position:center 43%;filter:saturate(.72) contrast(1.05) brightness(.78)}
+.home-redesign .home-hero .hero-frame:before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(4,4,4,.28) 0%,rgba(4,4,4,.14) 23%,rgba(4,4,4,.34) 62%,rgba(4,4,4,.78) 100%),linear-gradient(90deg,rgba(4,4,4,.28) 0%,rgba(4,4,4,.12) 36%,rgba(4,4,4,.58) 100%)}
+.home-redesign .home-hero .hero-frame:after{content:"";position:absolute;inset:auto 0 0;height:180px;z-index:-1;background:linear-gradient(180deg,transparent,#070706);pointer-events:none}
+.home-hero-copy{width:min(calc(100% - 48px),900px);margin:54px auto 0;text-align:center;position:relative;z-index:2}
+.home-hero-kicker{margin:0 0 18px;color:var(--gold-soft);font-size:.68rem;font-weight:700;letter-spacing:.32em;text-transform:uppercase}
+.home-hero-title{margin:0;color:#fff;font-family:'Manrope',system-ui,sans-serif;font-size:clamp(3.25rem,5.9vw,6.2rem);font-weight:700;letter-spacing:-.055em;line-height:.91;text-transform:uppercase;text-wrap:balance;text-shadow:0 10px 42px rgba(0,0,0,.42)}
+.home-hero-title span{display:block}
+.home-hero-action{margin:34px auto 0;width:min(100%,510px);min-height:54px;padding:0 24px;display:flex;align-items:center;justify-content:center;gap:14px;border:1px solid rgba(226,201,133,.56);background:rgba(5,5,4,.16);color:#fff;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;transition:.24s ease}
+.home-hero-action:after{content:"↓";color:var(--gold-soft);font-size:.95rem;transition:transform .24s ease}
+.home-hero-action:hover{background:rgba(226,201,133,.08);border-color:var(--gold-soft)}
+.home-hero-action:hover:after{transform:translateY(3px)}
+.home-hero-scroll{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:3;width:1px;height:38px;background:linear-gradient(180deg,var(--gold-soft),transparent);opacity:.62}
+@media(min-width:940px){
+.home-redesign .nav-logo img{width:150px}
+.home-redesign .desktop-nav{gap:4px}
+.home-redesign .desktop-nav a{font-size:.72rem;padding-inline:10px}
+.home-redesign .home-hero .hero-frame{min-height:680px}
+}
+@media(max-width:939px){
+.home-redesign .site-header{inset:10px 0 auto}
+.home-redesign .nav-shell{width:calc(100% - 20px);height:56px;padding:6px 7px 6px 13px;background:linear-gradient(180deg,rgba(5,5,4,.46),rgba(5,5,4,.14));border-color:rgba(255,255,255,.08);border-radius:999px}
+.home-redesign .site-header.scrolled .nav-shell{background:rgba(7,7,6,.93)}
+.home-redesign .home-hero .hero-frame{height:88svh;min-height:590px;border-radius:0}
+.home-redesign .home-hero .hero-media img{object-position:48% 38%;filter:saturate(.76) contrast(1.04) brightness(.72)}
+.home-redesign .home-hero .hero-frame:before{background:linear-gradient(180deg,rgba(4,4,4,.26),rgba(4,4,4,.18) 28%,rgba(4,4,4,.52) 70%,rgba(4,4,4,.88) 100%)}
+.home-hero-copy{width:min(calc(100% - 34px),560px);margin-top:42px;padding-top:46px}
+.home-hero-kicker{margin-bottom:14px;font-size:.58rem;letter-spacing:.27em}
+.home-hero-title{font-size:clamp(2.35rem,12vw,4.2rem);line-height:.94;letter-spacing:-.05em}
+.home-hero-action{width:min(100%,360px);min-height:50px;margin-top:27px;font-size:.64rem}
+.home-hero-scroll{bottom:18px;height:30px}
+}
+@media(max-width:420px){
+.home-redesign .home-hero .hero-frame{height:84svh;min-height:560px}
+.home-hero-copy{padding-top:34px}
+.home-hero-title{font-size:clamp(2.2rem,11.5vw,3rem)}
+}
+</style>
 <title>Caligulas Poker Live | Passos/MG</title>
 <meta content="Caligulas Poker Live em Passos/MG. Agenda, ranking, galeria, premiações e informações da casa." name="description"/>
-<link as="image" data-hero-preload="mobile" fetchpriority="high" href="assets/img/perf/photos/hero-mobile-720.webp" media="(max-width: 939px)" rel="preload"/><link as="image" data-hero-preload="desktop" fetchpriority="high" href="assets/img/perf/photos/hero-desktop-1440.webp" media="(min-width: 940px)" rel="preload"/></head>
-<body>
+<link as="image" data-hero-preload="mobile" fetchpriority="high" href="assets/img/perf/photos/hero-mobile-720.webp" media="(max-width: 939px)" rel="preload"/><link as="image" data-hero-preload="desktop" fetchpriority="high" href="assets/img/perf/photos/hero-desktop-1440.webp" media="(min-width: 940px)" rel="preload"/>
+</head>
+<body class="home-redesign">
 <header class="site-header">
 <div class="nav-shell">
-<a aria-label="Caligulas Poker Live — início" class="nav-logo" href="index.html"><img alt="Caligulas Poker Live" decoding="async" height="168" sizes="(max-width:939px) 126px, 138px" src="assets/img/perf/brand/logo-caligulas-white-360.webp" srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w" width="360"/></a>
+<a aria-label="Caligulas Poker Live — início" class="nav-logo" href="index.html"><img alt="Caligulas Poker Live" decoding="async" height="168" sizes="(max-width:939px) 126px, 150px" src="assets/img/perf/brand/logo-caligulas-white-360.webp" srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w" width="360"/></a>
 <nav aria-label="Navegação principal" class="desktop-nav"><a href="casa.html">A casa</a><a href="agenda.html">Agenda</a><a class="nav-cps" href="cps.html">CPS</a><a href="ranking.html">Ranking</a><a href="galeria.html">Galeria</a><a href="premiacoes.html">Premiações</a><a href="regulamento.html">Regulamento</a></nav>
 <div class="nav-actions"><a class="btn btn-small btn-ghost" data-instagram="" href="#">Instagram</a><button aria-expanded="false" aria-label="Abrir menu" class="menu-btn" id="menuBtn" type="button"><span></span></button></div>
 </div>
@@ -24,7 +73,7 @@
 <div class="mobile-meta"><span>SEG &amp; QUA · 19H30</span><span>Passos / MG</span><a class="btn btn-gold" data-whatsapp="" href="#">WhatsApp</a></div>
 </nav>
 <main>
-<section class="hero-stage">
+<section class="hero-stage home-hero">
 <div class="hero-frame">
 <div class="hero-media">
 <picture>
@@ -32,24 +81,15 @@
 <img alt="Noite de poker no Caligulas Poker Live" decoding="async" fetchpriority="high" height="960" src="assets/img/perf/photos/hero-mobile-720.webp" width="720"/>
 </picture>
 </div>
-<div class="hero-content">
-<div class="hero-glass glass">
-<img alt="Caligulas Poker Live" class="hero-brand" decoding="async" height="168" sizes="(max-width:699px) 265px, (max-width:939px) 265px, 315px" src="assets/img/perf/brand/logo-caligulas-white-360.webp" srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w" width="360"/>
-<div class="hero-subline"><span>Passos / MG</span><span class="hero-dot"></span><span>Poker ao vivo</span></div>
-<div class="hero-schedule">
-<div class="hero-schedule-item"><strong>SEG · 19H30</strong><span>Torneio + Cash</span></div>
-<div class="hero-schedule-item"><strong>QUA · 19H30</strong><span>Freeroll + Cash</span></div>
+<div class="home-hero-copy">
+<p class="home-hero-kicker">Caligulas Poker Live</p>
+<h1 class="home-hero-title">O poker de Passos <span>tem casa.</span></h1>
+<a class="home-hero-action" href="#inicio-conteudo">Conheça o Caligulas</a>
 </div>
-<div class="hero-buttons">
-<a class="btn btn-gold" href="agenda.html">Agenda</a>
-<a class="btn btn-ghost" data-instagram="" href="#">Instagram</a>
-</div>
-<div class="scroll-cue">Conheça a casa</div>
-</div>
-</div>
+<div aria-hidden="true" class="home-hero-scroll"></div>
 </div>
 </section>
-<section class="section section-tight">
+<section class="section section-tight" id="inicio-conteudo">
 <div class="container">
 <div class="section-head" data-reveal="">
 <div class="section-head-copy"><p class="kicker">Agenda</p><h2 class="section-title">Mesa aberta.</h2></div>
