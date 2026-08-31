@@ -161,10 +161,16 @@
     const start=window.scrollY;
     const end=target.getBoundingClientRect().top+start;
     const distance=end-start;
+    const travel=Math.abs(distance);
     const direction=Math.sign(distance)||1;
-    const speed=560; // pixels por segundo: constante do início ao fim
-    let current=start;
-    let lastTime=null;
+
+    // Movimento natural: pequena aceleração/desaceleração nas pontas
+    // e velocidade praticamente constante durante a maior parte do percurso.
+    const averageSpeed=760;
+    const duration=Math.max(800,Math.min(1300,(travel/averageSpeed)*1000));
+    const edge=.14;
+    const maxVelocity=1/(1-edge);
+    let started=null;
     let rafId=0;
     let cancelled=false;
 
@@ -180,16 +186,29 @@
     addEventListener('touchstart',cancel,{passive:true,once:true});
     addEventListener('keydown',cancel,{once:true});
 
+    const motion=t=>{
+      if(t<edge)return maxVelocity*t*t/(2*edge);
+      if(t<=1-edge)return maxVelocity*(edge/2+(t-edge));
+      const remaining=1-t;
+      return 1-maxVelocity*remaining*remaining/(2*edge);
+    };
+
     const frame=time=>{
       if(cancelled)return;
-      if(lastTime===null)lastTime=time;
-      const delta=Math.min((time-lastTime)/1000,0.05);
-      lastTime=time;
-      current+=direction*speed*delta;
-      const reached=direction>0?current>=end:current<=end;
-      window.scrollTo(0,reached?end:current);
-      if(!reached){
+      if(started===null)started=time;
+      const progress=Math.min((time-started)/duration,1);
+      const position=start+direction*travel*motion(progress);
+      window.scrollTo(0,progress===1?end:position);
+      if(progress<1){
         rafId=requestAnimationFrame(frame);
+      }else{
+        removeEventListener('wheel',cancel);
+        removeEventListener('touchstart',cancel);
+        removeEventListener('keydown',cancel);
+        history.replaceState(null,'','#inicio-conteudo');
+      }
+    };
+    rafId=requestAnimationFrame(frame);
       }else{
         removeEventListener('wheel',cancel);
         removeEventListener('touchstart',cancel);
