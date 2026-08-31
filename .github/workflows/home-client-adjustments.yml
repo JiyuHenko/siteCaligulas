@@ -1,0 +1,126 @@
+name: Home Client Adjustments
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/home-client-adjustments.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply homepage refinements
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index = Path('index.html')
+          html = index.read_text(encoding='utf-8')
+
+          html = html.replace(
+              '<div class="section-head-copy"><p class="kicker">Agenda</p><h2 class="section-title">Mesa aberta.</h2></div>',
+              '<div class="section-head-copy"><p class="kicker">Agenda</p><h2 class="section-title">Programações.</h2></div>',
+              1
+          )
+
+          award_block = '''<section class="section section-quiet">
+          <div class="container">
+          <article class="home-award-strip glass" data-reveal="">
+          <div class="home-award-copy">
+          <p class="kicker">Premiações</p>
+          <h2 class="section-title">Campeões &amp; troféus.</h2>
+          <div class="award-row"><a class="btn btn-gold" href="premiacoes.html">Ver registros</a><a class="btn" href="ranking.html">Ranking 2026</a></div>
+          </div>
+          <img alt="" class="home-award-asset" decoding="async" height="384" loading="lazy" src="assets/img/perf/decor/trophy-320.webp" width="320"/>
+          </article>
+          </div>
+          </section>
+          '''
+          html = html.replace(award_block, '', 1)
+
+          old_location = '<article class="house-summary glass" data-reveal=""><div class="home-location-copy"><p class="kicker">A casa</p><h2 class="section-title">Passos / MG.</h2><p class="house-summary-address" data-address=""></p><div class="award-row"><a class="btn btn-gold" href="casa.html">Ver a casa</a><a class="btn" data-map="" href="#">Como chegar</a></div></div><div class="home-map-frame"><iframe allowfullscreen="" data-map-embed="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa do Caligulas Poker Live"></iframe></div></article>'
+          new_location = '<article class="house-summary glass" data-reveal=""><div class="home-location-copy"><p class="kicker">Localização Caligulas Poker Club</p><h2 class="section-title">Passos / MG.</h2><p class="house-summary-address" data-address=""></p><div class="award-row"><a class="btn btn-gold" data-map="" href="#">Como chegar</a></div></div><div class="home-map-frame"><iframe allowfullscreen="" data-map-embed="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa do Caligulas Poker Live"></iframe></div></article>'
+          html = html.replace(old_location, new_location, 1)
+
+          html = html.replace(
+              '<a class="home-hero-action" href="#inicio-conteudo">Conheça o Caligulas</a>',
+              '<a class="home-hero-action" data-slow-scroll href="#inicio-conteudo">Conheça o Caligulas</a>',
+              1
+          )
+
+          slow_scroll = '''<script>
+          (()=>{
+            const trigger=document.querySelector('[data-slow-scroll]');
+            if(!trigger)return;
+            trigger.addEventListener('click',event=>{
+              const target=document.querySelector(trigger.getAttribute('href'));
+              if(!target)return;
+              event.preventDefault();
+              if(matchMedia('(prefers-reduced-motion: reduce)').matches){target.scrollIntoView();return;}
+              const start=window.scrollY;
+              const end=target.getBoundingClientRect().top+start;
+              const distance=end-start;
+              const duration=1200;
+              let started=null;
+              const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+              const frame=time=>{
+                if(started===null)started=time;
+                const progress=Math.min((time-started)/duration,1);
+                window.scrollTo(0,start+distance*ease(progress));
+                if(progress<1)requestAnimationFrame(frame);
+                else history.replaceState(null,'','#inicio-conteudo');
+              };
+              requestAnimationFrame(frame);
+            });
+          })();
+          </script>
+          '''
+          html = html.replace('<script defer="" src="config.js"></script>', slow_scroll + '<script defer="" src="config.js"></script>', 1)
+
+          index.write_text(html, encoding='utf-8')
+
+          source = Path('assets/js/site.js')
+          js = source.read_text(encoding='utf-8')
+          js = js.replace(
+              '${r.presences} presenças${CaligulasAPI.tieSummary(r)?` · ${esc(CaligulasAPI.tieSummary(r,1))}`:""}',
+              '${r.presences} presenças'
+          )
+          source.write_text(js, encoding='utf-8')
+
+          mini = Path('assets/js/site.min.js')
+          mjs = mini.read_text(encoding='utf-8')
+          mjs = mjs.replace(
+              '${r.presences} presenças${CaligulasAPI.tieSummary(r)?`· ${esc(CaligulasAPI.tieSummary(r,1))}`:""}',
+              '${r.presences} presenças'
+          )
+          mini.write_text(mjs, encoding='utf-8')
+          PY
+
+      - name: Verify requested changes
+        run: |
+          grep -q 'Programações.' index.html
+          grep -q 'Localização Caligulas Poker Club' index.html
+          grep -q 'data-slow-scroll' index.html
+          ! grep -q 'Campeões &amp; troféus.' index.html
+          ! grep -q 'Ver a casa' index.html
+          ! grep -q 'tieSummary(r)?' assets/js/site.min.js
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/js/site.js assets/js/site.min.js
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Refine homepage content and scroll behavior"
+            git push
+          fi
