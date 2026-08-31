@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
-
 :root{
   --bg:#070706;
   --bg-2:#0b0a09;
@@ -150,7 +148,7 @@ img{display:block;max-width:100%}
 .rank-tile .name{font-weight:700}
 .rank-tile .small{font-size:.72rem;color:var(--muted);margin-top:2px}
 .rank-tile .score{font-family:'Cinzel',serif;font-size:1.18rem}
-.rank-tile.first:after{content:"";position:absolute;right:-42px;bottom:-58px;width:150px;height:150px;background:url('../img/decor/laurel.webp') center/contain no-repeat;opacity:.06}
+.rank-tile.first:after{content:"";position:absolute;right:-42px;bottom:-58px;width:150px;height:150px;background:url('../img/perf/decor/laurel-220.webp') center/contain no-repeat;opacity:.06}
 
 /* home gallery */
 .home-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:150px;gap:8px}
@@ -182,7 +180,7 @@ img{display:block;max-width:100%}
 
 /* pages */
 .page-hero{padding:138px 0 54px;position:relative;overflow:hidden;background:#090807}
-.page-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,7,6,.96),rgba(7,7,6,.74)),url('../img/decor/marble.webp') center/cover;opacity:.6}
+.page-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,7,6,.96),rgba(7,7,6,.74)),url('../img/perf/decor/marble-960.webp') center/cover;opacity:.6}
 .page-hero .container,.page-hero .narrow{position:relative}
 .page-hero-mark{position:absolute;width:220px;right:-60px;bottom:-70px;opacity:.08;pointer-events:none}
 .page-hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
@@ -436,7 +434,7 @@ body.menu-open:before{
   position:relative;overflow:hidden;border-radius:26px;isolation:isolate
 }
 .home-award-strip:before,.award-intro:before,.house-summary:before{
-  content:"";position:absolute;inset:0;z-index:-2;background:url('../img/decor/marble.webp') center/cover;opacity:.20
+  content:"";position:absolute;inset:0;z-index:-2;background:url('../img/perf/decor/marble-960.webp') center/cover;opacity:.20
 }
 .home-award-strip:after,.award-intro:after,.house-summary:after{
   content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,rgba(9,9,8,.95),rgba(9,9,8,.70) 62%,rgba(62,45,20,.24))
@@ -584,7 +582,7 @@ body.menu-open:before{
 /* agenda + CPS spotlight */
 .agenda-cps-section{padding-top:48px!important;padding-bottom:32px!important}
 .cps-callout{border-radius:26px;min-height:300px;padding:28px;position:relative;overflow:hidden;display:flex;align-items:center}
-.cps-callout:before{content:"";position:absolute;inset:0;background:url('../img/decor/marble.webp') center/cover;opacity:.16}
+.cps-callout:before{content:"";position:absolute;inset:0;background:url('../img/perf/decor/marble-960.webp') center/cover;opacity:.16}
 .cps-callout:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,8,7,.98) 0%,rgba(8,8,7,.90) 54%,rgba(8,8,7,.30) 100%)}
 .cps-callout-copy{position:relative;z-index:2;max-width:600px}
 .cps-callout-meta{display:flex;align-items:baseline;gap:12px;margin-top:18px}
@@ -720,3 +718,11 @@ figure{margin:0;min-width:0}
   }
 }
 
+
+
+/* V6 — PageSpeed delivery */
+.footer-nav a{color:#b7afa4}
+.footer-bottom{color:#aaa297}
+.creator-credit{color:#aaa297}
+.creator-credit img{opacity:.9}
+iframe[data-map-embed]:not([src]){background:radial-gradient(circle at 50% 45%,rgba(199,162,88,.08),transparent 34%),#0b0a09}

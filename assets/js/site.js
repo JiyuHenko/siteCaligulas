@@ -13,10 +13,19 @@
     a.href=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cfg.mapsQuery||cfg.address||"")}`;a.target="_blank";a.rel="noopener";
   });
   $$("[data-address]").forEach(el=>el.textContent=cfg.address||"");
-  $$('iframe[data-map-embed]').forEach(frame=>{
+  const mapFrames=$$('iframe[data-map-embed]');
+  const loadMap=frame=>{
+    if(frame.dataset.mapLoaded==='1')return;
     const q=encodeURIComponent(cfg.mapsQuery||cfg.address||'Caligulas Poker Live, Passos, MG');
     frame.src=`https://www.google.com/maps?q=${q}&output=embed`;
-  });
+    frame.dataset.mapLoaded='1';
+  };
+  if(mapFrames.length&&'IntersectionObserver'in window){
+    const mapObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+      if(entry.isIntersecting){loadMap(entry.target);mapObserver.unobserve(entry.target)}
+    }),{rootMargin:'100px 0px',threshold:.01});
+    mapFrames.forEach(frame=>mapObserver.observe(frame));
+  }else mapFrames.forEach(loadMap);
   $$(".js-year").forEach(el=>el.textContent=new Date().getFullYear());
 
   // navigation
@@ -47,7 +56,7 @@
   // generic lightbox
   const lb=$("#lightbox"),lbImg=$("#lightboxImg");
   $$("[data-lightbox]").forEach(img=>img.addEventListener("click",()=>{
-    if(!lb||!lbImg)return;lbImg.src=img.currentSrc||img.src;lbImg.alt=img.alt||"";lb.classList.add("open");
+    if(!lb||!lbImg)return;lbImg.src=img.dataset.full||img.currentSrc||img.src;lbImg.alt=img.alt||"";lb.classList.add("open");
   }));
   function closeLb(){lb?.classList.remove("open")}
   lb?.addEventListener("click",e=>{if(e.target===lb||e.target.closest("[data-close-lightbox]"))closeLb()});
