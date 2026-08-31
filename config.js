@@ -11,6 +11,6 @@ window.CALIGULAS_CONFIG = Object.freeze({
 if (document.querySelector('.program-special')) {
   const programAlignStyles = document.createElement('link');
   programAlignStyles.rel = 'stylesheet';
-  programAlignStyles.href = 'assets/css/home-program-align.css';
+  programAlignStyles.href = 'assets/css/home-program-align.css?v=2';
   document.head.appendChild(programAlignStyles);
 }
