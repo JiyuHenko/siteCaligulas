@@ -56,6 +56,28 @@
 .home-hero-copy{padding-top:34px}
 .home-hero-title{font-size:clamp(2.2rem,11.5vw,3rem)}
 }
+
+/* Weekly programming — poster + factual details */
+.program-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
+.program-card{overflow:hidden;border:1px solid rgba(255,255,255,.10);border-radius:24px;background:linear-gradient(150deg,rgba(255,255,255,.055),rgba(255,255,255,.018));box-shadow:0 24px 70px rgba(0,0,0,.18)}
+.program-poster{margin:0;aspect-ratio:1122/1402;overflow:hidden;background:#111}
+.program-poster img{display:block;width:100%;height:100%;object-fit:cover}
+.program-body{padding:22px 22px 24px}
+.program-label{margin:0 0 7px;color:var(--gold-soft);font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.program-body h3{margin:0 0 20px;color:#f4efe6;font-family:'Cinzel',serif;font-size:clamp(1.45rem,2vw,2.15rem);line-height:1}
+.program-specs{margin:0;display:grid;gap:0}
+.program-specs>div{display:grid;grid-template-columns:82px minmax(0,1fr);gap:12px;align-items:start;padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}
+.program-specs dt{color:#8f887f;font-size:.63rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.program-specs dd{margin:0;color:#f5f0e6;font-size:.9rem;font-weight:700}
+.program-specs small{display:block;margin-top:4px;color:#948d83;font-size:.61rem;font-weight:500;line-height:1.45;text-transform:uppercase;letter-spacing:.045em}
+.program-placeholder{aspect-ratio:1122/1402;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:30px;text-align:center;background:radial-gradient(circle at 50% 38%,rgba(199,162,88,.14),transparent 42%),linear-gradient(145deg,#12110f,#090908);position:relative;overflow:hidden}
+.program-placeholder:before{content:"";position:absolute;inset:20px;border:1px solid rgba(199,162,88,.20);border-radius:18px}
+.program-placeholder img{width:88px;height:auto;opacity:.5;margin-bottom:12px}
+.program-placeholder span,.program-placeholder em{position:relative;color:#918a80;font-size:.61rem;font-style:normal;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.program-placeholder strong{position:relative;color:var(--gold-soft);font-family:'Cinzel',serif;font-size:2.5rem;line-height:1}
+@media(max-width:939px){.program-grid{grid-template-columns:1fr;gap:18px}.program-card{display:grid;grid-template-columns:minmax(0,42%) minmax(0,58%);border-radius:20px}.program-poster,.program-placeholder{aspect-ratio:4/5;height:100%;min-height:340px}.program-body{padding:20px}.program-body h3{font-size:1.55rem}.program-specs>div{grid-template-columns:70px minmax(0,1fr);padding:10px 0}}
+@media(max-width:620px){.program-card{display:block}.program-poster,.program-placeholder{width:100%;height:auto;min-height:0;aspect-ratio:4/5}.program-body{padding:20px 18px 22px}.program-body h3{font-size:1.65rem;margin-bottom:16px}.program-specs>div{grid-template-columns:76px minmax(0,1fr)}.program-placeholder strong{font-size:2.2rem}}
+
 </style>
 <title>Caligulas Poker Live | Passos/MG</title>
 <meta content="Caligulas Poker Live em Passos/MG. Agenda, ranking, galeria, premiações e informações da casa." name="description"/>
@@ -95,10 +117,48 @@
 <div class="section-head-copy"><p class="kicker">Agenda</p><h2 class="section-title">Programações.</h2></div>
 <a class="spear-link" href="agenda.html"><span>Ver agenda</span><img alt="" decoding="async" height="32" loading="lazy" src="assets/img/perf/decor/spear-96.webp" width="96"/></a>
 </div>
-<div class="home-agenda">
-<article class="day-card glass" data-reveal="" data-spotlight=""><div class="day">Segunda</div><div class="time">19:30</div><div class="kind">Torneio · Cash Game</div><img alt="" decoding="async" height="80" loading="lazy" src="assets/img/perf/decor/cash-game-120.webp" width="120"/></article>
-<article class="day-card glass" data-reveal="" data-spotlight=""><div class="day">Quarta</div><div class="time">19:30</div><div class="kind">Freeroll · Cash Game</div><img alt="" decoding="async" height="100" loading="lazy" src="assets/img/perf/decor/freeroll-120.webp" width="120"/></article>
-<article class="day-card glass" data-reveal="" data-spotlight=""><div class="day">Domingos</div><div class="time">ESPECIAIS</div><div class="kind">Datas selecionadas</div><img alt="" decoding="async" height="144" loading="lazy" src="assets/img/perf/decor/trophy-120.webp" width="120"/></article>
+<div class="program-grid">
+<article class="program-card program-prime" data-reveal="">
+  <figure class="program-poster"><img src="assets/img/events/programacao-segunda-prime.webp" alt="Segunda Prime — 1.2K GTD" width="1122" height="1402" loading="lazy" decoding="async"></figure>
+  <div class="program-body">
+    <p class="program-label">Segunda-feira</p>
+    <h3>Segunda Prime</h3>
+    <dl class="program-specs">
+      <div><dt>GTD</dt><dd>R$ 1.200,00</dd></div>
+      <div><dt>Buy-in</dt><dd>R$ 20,00 <small>Torneio com duplo e addon</small></dd></div>
+      <div><dt>Horário</dt><dd>19:30</dd></div>
+    </dl>
+  </div>
+</article>
+<article class="program-card program-free" data-reveal="">
+  <figure class="program-poster"><img src="assets/img/events/programacao-quarta-free.webp" alt="Quarta Free Freeroll — 1K GTD" width="1122" height="1402" loading="lazy" decoding="async"></figure>
+  <div class="program-body">
+    <p class="program-label">Quarta-feira</p>
+    <h3>Quarta Free</h3>
+    <dl class="program-specs">
+      <div><dt>GTD</dt><dd>R$ 1.000,00</dd></div>
+      <div><dt>Buy-in</dt><dd>Grátis <small>Torneio com rebuy duplo e addon</small></dd></div>
+      <div><dt>Horário</dt><dd>19:30</dd></div>
+    </dl>
+  </div>
+</article>
+<article class="program-card program-special" data-reveal="">
+  <div class="program-placeholder" aria-label="Banner do Domingo Especial em breve">
+    <img src="assets/img/perf/decor/trophy-120.webp" alt="" width="120" height="144" loading="lazy" decoding="async">
+    <span>Próximo especial</span><strong>DOMINGO</strong><em>Banner em breve</em>
+  </div>
+  <div class="program-body">
+    <p class="program-label">Data selecionada</p>
+    <h3>Domingo Especial</h3>
+    <dl class="program-specs">
+      <div><dt>GTD</dt><dd>A confirmar</dd></div>
+      <div><dt>Buy-in</dt><dd>A confirmar <small>Torneio com duplo e addon</small></dd></div>
+      <div><dt>Data</dt><dd>A confirmar</dd></div>
+      <div><dt>Horário</dt><dd>10:00</dd></div>
+    </dl>
+  </div>
+</article>
+</div>
 </div>
 </div>
 </section>
@@ -167,7 +227,7 @@
 
     // Natural scroll: a short soft start/end with a calm, nearly constant middle.
     const averageSpeed=760;
-    const duration=600;
+    const duration=300;
     const edge=.14;
     const maxVelocity=1/(1-edge);
     let started=null;
