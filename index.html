@@ -84,7 +84,7 @@
 <div class="home-hero-copy">
 <p class="home-hero-kicker">Caligulas Poker Live</p>
 <h1 class="home-hero-title">O poker de Passos <span>tem casa.</span></h1>
-<a class="home-hero-action" href="#inicio-conteudo">Conheça o Caligulas</a>
+<a class="home-hero-action" data-slow-scroll href="#inicio-conteudo">Conheça o Caligulas</a>
 </div>
 <div aria-hidden="true" class="home-hero-scroll"></div>
 </div>
@@ -92,7 +92,7 @@
 <section class="section section-tight" id="inicio-conteudo">
 <div class="container">
 <div class="section-head" data-reveal="">
-<div class="section-head-copy"><p class="kicker">Agenda</p><h2 class="section-title">Mesa aberta.</h2></div>
+<div class="section-head-copy"><p class="kicker">Agenda</p><h2 class="section-title">Programações.</h2></div>
 <a class="spear-link" href="agenda.html"><span>Ver agenda</span><img alt="" decoding="async" height="32" loading="lazy" src="assets/img/perf/decor/spear-96.webp" width="96"/></a>
 </div>
 <div class="home-agenda">
@@ -128,19 +128,7 @@
 </section>
 <section class="section section-quiet">
 <div class="container">
-<article class="home-award-strip glass" data-reveal="">
-<div class="home-award-copy">
-<p class="kicker">Premiações</p>
-<h2 class="section-title">Campeões &amp; troféus.</h2>
-<div class="award-row"><a class="btn btn-gold" href="premiacoes.html">Ver registros</a><a class="btn" href="ranking.html">Ranking 2026</a></div>
-</div>
-<img alt="" class="home-award-asset" decoding="async" height="384" loading="lazy" src="assets/img/perf/decor/trophy-320.webp" width="320"/>
-</article>
-</div>
-</section>
-<section class="section section-quiet">
-<div class="container">
-<article class="house-summary glass" data-reveal=""><div class="home-location-copy"><p class="kicker">A casa</p><h2 class="section-title">Passos / MG.</h2><p class="house-summary-address" data-address=""></p><div class="award-row"><a class="btn btn-gold" href="casa.html">Ver a casa</a><a class="btn" data-map="" href="#">Como chegar</a></div></div><div class="home-map-frame"><iframe allowfullscreen="" data-map-embed="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa do Caligulas Poker Live"></iframe></div></article>
+<article class="house-summary glass" data-reveal=""><div class="home-location-copy"><p class="kicker">Localização Caligulas Poker Club</p><h2 class="section-title">Passos / MG.</h2><p class="house-summary-address" data-address=""></p><div class="award-row"><a class="btn btn-gold" data-map="" href="#">Como chegar</a></div></div><div class="home-map-frame"><iframe allowfullscreen="" data-map-embed="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa do Caligulas Poker Live"></iframe></div></article>
 </div>
 </section>
 </main>
@@ -161,6 +149,32 @@
 <img alt="" decoding="async" id="lightboxImg" loading="lazy" src=""/>
 </div>
 <div aria-live="polite" class="toast" id="toast" role="status"></div>
+<script>
+(()=>{
+  const trigger=document.querySelector('[data-slow-scroll]');
+  if(!trigger)return;
+  trigger.addEventListener('click',event=>{
+    const target=document.querySelector(trigger.getAttribute('href'));
+    if(!target)return;
+    event.preventDefault();
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){target.scrollIntoView();return;}
+    const start=window.scrollY;
+    const end=target.getBoundingClientRect().top+start;
+    const distance=end-start;
+    const duration=1200;
+    let started=null;
+    const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    const frame=time=>{
+      if(started===null)started=time;
+      const progress=Math.min((time-started)/duration,1);
+      window.scrollTo(0,start+distance*ease(progress));
+      if(progress<1)requestAnimationFrame(frame);
+      else history.replaceState(null,'','#inicio-conteudo');
+    };
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
 <script defer="" src="config.js"></script>
 <script defer="" src="assets/js/ranking-fallback.min.js"></script>
 <script defer="" src="assets/js/api.min.js"></script>

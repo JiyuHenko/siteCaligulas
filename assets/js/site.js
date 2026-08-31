@@ -74,7 +74,7 @@
       const rows=data.rows.slice(0,3);
       preview.innerHTML=rows.map((r,i)=>`<article class="rank-tile glass ${i===0?"first":""}">
         <div class="pos">${String(i+1).padStart(2,"0")}</div>
-        <div><div class="name">${esc(r.name)}</div><div class="small">${r.presences} presenças${CaligulasAPI.tieSummary(r)?` · ${esc(CaligulasAPI.tieSummary(r,1))}`:""}</div></div>
+        <div><div class="name">${esc(r.name)}</div><div class="small">${r.presences} presenças</div></div>
         <div class="score">${CaligulasAPI.fmt(r.finalPoints)}</div>
       </article>`).join("");
       const status=$("#homeRankingStatus");
