@@ -1,0 +1,45 @@
+name: Natural Hero Scroll
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/natural-hero-scroll.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace hero scroll with constant physical speed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = """    const start=window.scrollY;\n    const end=target.getBoundingClientRect().top+start;\n    const distance=end-start;\n    const duration=1200;\n    let started=null;\n    const frame=time=>{\n      if(started===null)started=time;\n      const progress=Math.min((time-started)/duration,1);\n      window.scrollTo(0,start+distance*progress);\n      if(progress<1)requestAnimationFrame(frame);\n      else history.replaceState(null,'','#inicio-conteudo');\n    };\n    requestAnimationFrame(frame);"""
+          new = """    const start=window.scrollY;\n    const end=target.getBoundingClientRect().top+start;\n    const distance=end-start;\n    const direction=Math.sign(distance)||1;\n    const speed=560; // pixels por segundo: constante do início ao fim\n    let current=start;\n    let lastTime=null;\n    let rafId=0;\n    let cancelled=false;\n\n    const cancel=()=>{\n      cancelled=true;\n      if(rafId)cancelAnimationFrame(rafId);\n      removeEventListener('wheel',cancel);\n      removeEventListener('touchstart',cancel);\n      removeEventListener('keydown',cancel);\n    };\n\n    addEventListener('wheel',cancel,{passive:true,once:true});\n    addEventListener('touchstart',cancel,{passive:true,once:true});\n    addEventListener('keydown',cancel,{once:true});\n\n    const frame=time=>{\n      if(cancelled)return;\n      if(lastTime===null)lastTime=time;\n      const delta=Math.min((time-lastTime)/1000,0.05);\n      lastTime=time;\n      current+=direction*speed*delta;\n      const reached=direction>0?current>=end:current<=end;\n      window.scrollTo(0,reached?end:current);\n      if(!reached){\n        rafId=requestAnimationFrame(frame);\n      }else{\n        removeEventListener('wheel',cancel);\n        removeEventListener('touchstart',cancel);\n        removeEventListener('keydown',cancel);\n        history.replaceState(null,'','#inicio-conteudo');\n      }\n    };\n    rafId=requestAnimationFrame(frame);"""
+          if old not in s:
+              raise SystemExit('Expected linear scroll block not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Verify constant-speed scroll
+        run: |
+          grep -q 'const speed=560' index.html
+          grep -q 'current+=direction\*speed\*delta' index.html
+          ! grep -q 'const duration=1200' index.html
+
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Make hero scroll feel natural and constant-speed"
+          git push
