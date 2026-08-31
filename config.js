@@ -7,3 +7,10 @@ window.CALIGULAS_CONFIG = Object.freeze({
   mapsQuery: "Av. Comendador Francisco Avelino Maia, 3427, Passos, MG",
   siteUrl: ""
 });
+
+if (document.querySelector('.program-special')) {
+  const programAlignStyles = document.createElement('link');
+  programAlignStyles.rel = 'stylesheet';
+  programAlignStyles.href = 'assets/css/home-program-align.css';
+  document.head.appendChild(programAlignStyles);
+}
