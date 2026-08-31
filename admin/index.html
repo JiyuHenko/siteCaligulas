@@ -21,7 +21,7 @@
         <img class="admin-logo" src="../assets/img/brand/logo-caligulas-white.png" alt="Caligulas Poker Live">
         <span><small>Painel</small><strong>Ranking 2026</strong></span>
       </a>
-      <div class="admin-top-actions"><span class="admin-badge" id="modeBadge">ADMIN</span></div>
+      <div class="admin-top-actions"><span class="admin-badge" id="modeBadge" hidden>ADMIN</span></div>
     </div>
   </header>
 
@@ -41,8 +41,7 @@
             <button class="btn btn-gold login-submit" type="submit">Entrar</button>
           </form>
           <div class="status-line" id="loginMsg"></div>
-          <button class="btn demo-btn" id="demoLogin" type="button">Modo demonstração</button>
-          <div class="demo-warning">Sem a URL do Apps Script configurada, o modo demonstração não publica alterações.</div>
+          <button class="btn demo-btn" id="demoLogin" type="button" hidden>Modo demonstração</button>
         </div>
       </div>
     </section>
@@ -66,14 +65,14 @@
           </section>
 
           <section class="publish-bar">
-            <div class="publish-copy"><span class="publish-status-dot"></span><div><div class="publish-title">Publicação em lote</div><div class="publish-meta" id="draftMeta">Rascunho local</div></div></div>
+            <div class="publish-copy"><span class="publish-status-dot"></span><div><div class="publish-title">Publicação</div><div class="publish-meta" id="draftMeta">Alterações ainda não publicadas</div></div></div>
             <div class="admin-actions publish-actions"><button class="btn btn-small" id="exportBtn">Exportar</button><label class="btn btn-small" for="importInput">Importar</label><input id="importInput" type="file" accept="application/json" hidden><button class="btn btn-gold" id="publishBtn">Publicar ranking</button></div>
           </section>
         </div>
 
         <aside class="admin-side">
-          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Ao vivo</p><h3>Prévia do Top 10</h3></div><a class="side-link" href="../ranking.html" target="_blank" rel="noopener">Abrir ↗</a></div><div class="preview-list" id="previewRows"></div></section>
-          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Versões</p><h3>Histórico</h3></div></div><div class="history-list" id="historyList"></div></section>
+          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Prévia</p><h3>Top 10</h3></div><a class="side-link" href="../ranking.html" target="_blank" rel="noopener">Abrir ↗</a></div><div class="preview-list" id="previewRows"></div></section>
+          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Publicações</p><h3>Histórico</h3></div></div><div class="history-list" id="historyList"></div></section>
         </aside>
       </div>
     </section>

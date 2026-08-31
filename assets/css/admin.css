@@ -1,3 +1,4 @@
+[hidden]{display:none!important}
 .admin-body{margin:0;background:#070706;color:var(--ink);min-height:100vh}
 .admin-app{min-height:100vh;background:radial-gradient(circle at 18% 0%,rgba(199,162,88,.055),transparent 28%),#070706}
 .admin-container{width:min(calc(100% - 32px),1440px);margin-inline:auto}
