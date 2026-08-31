@@ -14,55 +14,75 @@
 <meta name="description" content="Área administrativa do ranking.">
 </head>
 <body class="admin-body">
-<main class="admin-shell">
-  <div class="container">
-    <div class="admin-topbar"><a href="../index.html"><img class="admin-logo" src="../assets/img/brand/logo-caligulas-white.png" alt="Caligulas Poker Live"></a><span class="admin-badge" id="modeBadge">ADMIN</span></div>
+<div class="admin-app">
+  <header class="admin-topbar">
+    <div class="admin-container admin-topbar-inner">
+      <a class="admin-brand" href="../index.html" aria-label="Voltar ao Caligulas Poker Live">
+        <img class="admin-logo" src="../assets/img/brand/logo-caligulas-white.png" alt="Caligulas Poker Live">
+        <span><small>Painel</small><strong>Ranking 2026</strong></span>
+      </a>
+      <div class="admin-top-actions"><span class="admin-badge" id="modeBadge">ADMIN</span></div>
+    </div>
+  </header>
 
+  <main class="admin-container admin-content">
     <section class="login-panel" id="loginView">
-      <div class="admin-card glass">
-        <p class="kicker">Área restrita</p><h1>Ranking Admin</h1>
-        <p>As alterações ficam em rascunho até a publicação.</p>
-        <form class="login-form" id="loginForm"><input class="admin-input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Senha" required><button class="btn btn-gold" type="submit">Entrar</button></form>
-        <div class="status-line" id="loginMsg" style="margin-top:12px"></div>
-        <button class="btn" id="demoLogin" type="button" style="width:100%;margin-top:12px">Modo demonstração</button>
-        <div class="demo-warning">Sem a URL do Apps Script configurada, o painel não publica alterações.</div>
+      <div class="login-layout">
+        <div class="login-intro">
+          <p class="admin-eyebrow">Área restrita</p>
+          <h1>Gestão simples.<br>Publicação segura.</h1>
+          <p>Atualize jogadores, registre torneios e revise a prévia antes de publicar o ranking.</p>
+        </div>
+        <div class="admin-card login-card">
+          <div class="login-card-head"><span class="login-lock">●</span><div><p class="admin-eyebrow">Acesso</p><h2>Entrar no painel</h2></div></div>
+          <form class="login-form" id="loginForm">
+            <label class="admin-field-label" for="adminPassword">Senha</label>
+            <input class="admin-input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
+            <button class="btn btn-gold login-submit" type="submit">Entrar</button>
+          </form>
+          <div class="status-line" id="loginMsg"></div>
+          <button class="btn demo-btn" id="demoLogin" type="button">Modo demonstração</button>
+          <div class="demo-warning">Sem a URL do Apps Script configurada, o modo demonstração não publica alterações.</div>
+        </div>
       </div>
     </section>
 
     <section id="adminView" hidden>
+      <div class="dashboard-head">
+        <div><p class="admin-eyebrow">Administração</p><h1>Ranking Caligulas</h1><p>Edite o rascunho, confira a prévia e publique somente quando estiver pronto.</p></div>
+        <div class="dashboard-head-actions"><a class="btn btn-small" href="../ranking.html" target="_blank" rel="noopener">Ver ranking público</a><button class="btn btn-small" id="logoutBtn">Sair</button></div>
+      </div>
+
       <div class="admin-grid">
         <div class="admin-main">
-          <div class="admin-card">
+          <section class="admin-card players-panel">
+            <div class="panel-head"><div><p class="admin-eyebrow">Base atual</p><h2>Jogadores</h2></div><button class="btn btn-gold" id="roundBtn">Registrar torneio</button></div>
             <div class="admin-toolbar">
-              <div class="admin-toolbar-top"><input class="search-field admin-search" id="playerSearch" type="search" placeholder="Buscar jogador"></div>
-              <div class="admin-actions"><button class="btn btn-small btn-gold" id="roundBtn">Registrar torneio</button><button class="btn btn-small" id="addPlayerBtn">+ Jogador</button><button class="btn btn-small" id="saveDraftBtn">Salvar</button><button class="btn btn-small" id="discardDraftBtn">Descartar</button></div>
+              <input class="search-field admin-search" id="playerSearch" type="search" placeholder="Buscar jogador">
+              <div class="admin-actions"><button class="btn btn-small" id="addPlayerBtn">+ Jogador</button><button class="btn btn-small" id="saveDraftBtn">Salvar rascunho</button><button class="btn btn-small danger-soft" id="discardDraftBtn">Descartar</button></div>
             </div>
             <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Pos.</th><th>Nome</th><th>Pontos</th><th>Pres.</th><th>Fator</th><th>Final</th><th>Desempate</th><th></th></tr></thead><tbody id="adminRows"></tbody></table></div>
             <div class="player-list" id="playerCards"></div>
-          </div>
+          </section>
 
-          <div class="publish-bar">
-            <div class="publish-top"><div><div class="publish-title">Publicação em lote</div><div class="publish-meta" id="draftMeta">Rascunho local</div></div></div>
-            <div class="admin-actions"><button class="btn btn-small" id="exportBtn">Exportar</button><label class="btn btn-small" for="importInput">Importar</label><input id="importInput" type="file" accept="application/json" hidden><button class="btn btn-gold" id="publishBtn">Publicar ranking</button></div>
-          </div>
+          <section class="publish-bar">
+            <div class="publish-copy"><span class="publish-status-dot"></span><div><div class="publish-title">Publicação em lote</div><div class="publish-meta" id="draftMeta">Rascunho local</div></div></div>
+            <div class="admin-actions publish-actions"><button class="btn btn-small" id="exportBtn">Exportar</button><label class="btn btn-small" for="importInput">Importar</label><input id="importInput" type="file" accept="application/json" hidden><button class="btn btn-gold" id="publishBtn">Publicar ranking</button></div>
+          </section>
         </div>
 
         <aside class="admin-side">
-          <div class="admin-card"><div class="admin-side-head"><h3>Prévia</h3><a class="btn btn-small" href="../ranking.html" target="_blank">Abrir público</a></div><div class="preview-list" id="previewRows"></div></div>
-          <div class="admin-card"><div class="admin-side-head"><h3>Histórico</h3></div><div class="history-list" id="historyList"></div></div>
-          <button class="btn" id="logoutBtn">Sair</button>
+          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Ao vivo</p><h3>Prévia do Top 10</h3></div><a class="side-link" href="../ranking.html" target="_blank" rel="noopener">Abrir ↗</a></div><div class="preview-list" id="previewRows"></div></section>
+          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Versões</p><h3>Histórico</h3></div></div><div class="history-list" id="historyList"></div></section>
         </aside>
       </div>
     </section>
-  </div>
-</main>
+  </main>
+</div>
 
-<dialog id="playerDialog"><form class="dialog-inner" id="addPlayerForm"><h2>Adicionar jogador</h2><div class="dialog-grid two"><label>Nome<input class="admin-input" id="newPlayerName" required></label><label>Pontos atuais<input class="admin-input" id="newPlayerPoints" type="number" min="0" step="1" value="0"></label><label>Presenças atuais<input class="admin-input" id="newPlayerPresences" type="number" min="0" step="1" value="0"></label></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Adicionar</button></div></form></dialog>
-
-<dialog id="finishesDialog"><form class="dialog-inner" id="finishForm"><h2 id="finishTitle">Colocações</h2><p class="round-note">Use estes campos para preencher ou corrigir o histórico de desempate do jogador.</p><div class="finishes-grid" id="finishesGrid"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Salvar colocações</button></div></form></dialog>
-
-<dialog id="roundDialog"><form class="dialog-inner" id="roundForm"><h2>Registrar torneio</h2><div class="round-tools"><label class="round-note">Tipo<select class="admin-select" id="roundType"><option value="regular">Segunda / Quarta</option><option value="special">Domingo / Especial</option></select></label><input class="admin-input" id="roundSearch" type="search" placeholder="Filtrar jogadores"></div><p class="round-note">Marque presença. A colocação é opcional; sem colocação, o jogador recebe apenas o ponto de presença.</p><div class="round-list" id="roundList"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Aplicar ao rascunho</button></div></form></dialog>
-
+<dialog id="playerDialog"><form class="dialog-inner" id="addPlayerForm"><div class="dialog-heading"><p class="admin-eyebrow">Novo cadastro</p><h2>Adicionar jogador</h2></div><div class="dialog-grid two"><label>Nome<input class="admin-input" id="newPlayerName" required></label><label>Pontos atuais<input class="admin-input" id="newPlayerPoints" type="number" min="0" step="1" value="0"></label><label>Presenças atuais<input class="admin-input" id="newPlayerPresences" type="number" min="0" step="1" value="0"></label></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Adicionar</button></div></form></dialog>
+<dialog id="finishesDialog"><form class="dialog-inner" id="finishForm"><div class="dialog-heading"><p class="admin-eyebrow">Desempate</p><h2 id="finishTitle">Colocações</h2></div><p class="round-note">Use estes campos para preencher ou corrigir o histórico de colocações do jogador.</p><div class="finishes-grid" id="finishesGrid"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Salvar colocações</button></div></form></dialog>
+<dialog id="roundDialog"><form class="dialog-inner round-dialog-inner" id="roundForm"><div class="dialog-heading"><p class="admin-eyebrow">Pontuação</p><h2>Registrar torneio</h2></div><div class="round-tools"><label>Tipo<select class="admin-select" id="roundType"><option value="regular">Segunda / Quarta</option><option value="special">Domingo / Especial</option></select></label><label>Buscar jogador<input class="admin-input" id="roundSearch" type="search" placeholder="Filtrar jogadores"></label></div><p class="round-note">Marque presença. A colocação é opcional; sem colocação, o jogador recebe apenas o ponto de presença.</p><div class="round-list" id="roundList"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Aplicar ao rascunho</button></div></form></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="../config.js"></script><script src="../assets/js/ranking-fallback.js"></script><script src="../assets/js/api.js"></script><script src="../assets/js/admin.js"></script>
 </body></html>
