@@ -1,0 +1,112 @@
+name: Polish Caligulas PageSpeed
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pagespeed-polish.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install tools
+        run: python -m pip install --disable-pip-version-check pillow beautifulsoup4 csscompressor
+      - name: Apply final image sizing polish
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageOps
+          from bs4 import BeautifulSoup
+          import csscompressor
+
+          root=Path('.')
+          def save_scaled(src,dst,width,quality=80,allow_upscale=False):
+              src=root/src; dst=root/dst; dst.parent.mkdir(parents=True,exist_ok=True)
+              with Image.open(src) as im:
+                  im=ImageOps.exif_transpose(im)
+                  if allow_upscale or im.width>width:
+                      h=max(1,round(im.height*width/im.width))
+                      im=im.resize((width,h),Image.Resampling.LANCZOS)
+                  if im.mode not in ('RGB','RGBA'):
+                      im=im.convert('RGBA' if 'A' in im.getbands() else 'RGB')
+                  im.save(dst,'WEBP',quality=quality,method=6)
+
+          save_scaled('assets/img/brand/logo-caligulas-white.png','assets/img/perf/brand/logo-caligulas-white-720.webp',720,90,True)
+          save_scaled('assets/img/decor/cash-game.webp','assets/img/perf/decor/cash-game-120.webp',120,76)
+          save_scaled('assets/img/decor/freeroll.webp','assets/img/perf/decor/freeroll-120.webp',120,76)
+          save_scaled('assets/img/decor/trophy.webp','assets/img/perf/decor/trophy-120.webp',120,77)
+          save_scaled('assets/img/decor/trophy.webp','assets/img/perf/decor/trophy-320.webp',320,77)
+
+          cssp=root/'assets/css/styles.css'
+          css=cssp.read_text(encoding='utf-8')
+          css=css.replace('img{display:block;max-width:100%}', 'img{display:block;max-width:100%;height:auto}')
+          cssp.write_text(css,encoding='utf-8')
+          (root/'assets/css/styles.min.css').write_text(csscompressor.compress(css),encoding='utf-8')
+
+          def dims(rel):
+              p=root/rel
+              if not p.exists(): return None
+              with Image.open(p) as im: return im.size
+
+          for page in root.glob('*.html'):
+              soup=BeautifulSoup(page.read_text(encoding='utf-8'),'html.parser')
+              for img in soup.find_all('img'):
+                  src=img.get('src','')
+                  classes=img.get('class') or []
+
+                  if src=='assets/img/perf/brand/logo-caligulas-white-360.webp':
+                      img['srcset']='assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w'
+                      if 'hero-brand' in classes:
+                          img['sizes']='(max-width:699px) 265px, (max-width:939px) 265px, 315px'
+                      elif 'footer-logo' in classes:
+                          img['sizes']='180px'
+                      elif img.find_parent(class_='nav-logo'):
+                          img['sizes']='(max-width:939px) 126px, 138px'
+
+                  day=img.find_parent(class_='day-card')
+                  if day:
+                      replacements={
+                        'assets/img/perf/decor/cash-game-220.webp':'assets/img/perf/decor/cash-game-120.webp',
+                        'assets/img/perf/decor/freeroll-220.webp':'assets/img/perf/decor/freeroll-120.webp',
+                        'assets/img/perf/decor/trophy-220.webp':'assets/img/perf/decor/trophy-120.webp',
+                      }
+                      if src in replacements:
+                          img['src']=replacements[src]; src=img['src']
+
+                  if 'home-award-asset' in classes and src=='assets/img/perf/decor/trophy-520.webp':
+                      img['src']='assets/img/perf/decor/trophy-320.webp'; src=img['src']
+
+                  if img.get('data-full')=='assets/img/photos/room-master.webp' and img.find_parent('figure',class_='g'):
+                      img['src']='assets/img/perf/photos/room-master-640.webp'
+                      img['srcset']='assets/img/perf/photos/room-master-360.webp 360w, assets/img/perf/photos/room-master-640.webp 640w'
+                      img['sizes']='(max-width:699px) calc(100vw - 28px), (max-width:939px) 68vw, 760px'
+                      src=img['src']
+
+                  src=img.get('src','')
+                  if src and not src.startswith(('http://','https://','data:')):
+                      d=dims(src)
+                      if d:
+                          img['width'],img['height']=str(d[0]),str(d[1])
+              page.write_text(str(soup),encoding='utf-8')
+          PY
+      - name: Commit polish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Polish responsive image sizing and logo fidelity"
+            git push
+          fi
