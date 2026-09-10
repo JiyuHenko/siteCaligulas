@@ -1,6 +1,6 @@
 /* Agenda */
 .agenda-programs { padding-top: 42px; }
-.agenda-cps-section { padding-top: 42px; }
+.agenda-cps-section { padding-top: 42px; padding-bottom: 62px; }
 .cps-callout {
   min-height: 340px;
   padding: clamp(24px, 5vw, 46px);
@@ -43,23 +43,18 @@
   max-width: 650px;
   margin: 0;
   color: #fff;
-  font-family: 'Manrope', sans-serif;
-  font-size: clamp(2rem, 4.5vw, 4.5rem);
-  font-weight: 800;
-  letter-spacing: -.055em;
-  line-height: .92;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 4.25vw, 4.25rem);
+  font-weight: 600;
+  letter-spacing: -.045em;
+  line-height: .96;
   text-transform: uppercase;
 }
 .cps-callout-meta { margin-top: 18px; display: flex; align-items: baseline; gap: 12px; }
-.cps-callout-meta strong { color: var(--gold-soft); font-family: 'Cinzel', serif; font-size: 1.7rem; }
+.cps-callout-meta > strong { color: var(--gold-soft); font-family: 'Cinzel', serif; font-size: 1.7rem; }
 .cps-callout-meta span { color: var(--muted); font-size: .75rem; }
+.cps-callout-meta span em { color: var(--gold-soft); font-style: normal; font-weight: 700; }
 .award-row { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 9px; }
-
-.archive-preview-section { padding-top: 36px; }
-.archive-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.archive-card { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #0d0c0a; }
-.archive-card img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
-.archive-card span { display: block; padding: 10px 12px; color: var(--muted); font-size: .71rem; }
 
 /* CPS page */
 .cps-intro-section { padding-top: 36px; }
@@ -77,14 +72,22 @@
   max-width: 680px;
   margin: 0;
   color: #fff;
-  font-family: 'Manrope', sans-serif;
-  font-size: clamp(2.1rem, 4.8vw, 4.7rem);
-  font-weight: 800;
-  letter-spacing: -.058em;
-  line-height: .91;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.05rem, 4.45vw, 4.35rem);
+  font-weight: 600;
+  letter-spacing: -.047em;
+  line-height: .96;
   text-transform: uppercase;
 }
 .cps-major em { color: var(--gold-soft); font-style: normal; }
+.cps-event-summary {
+  margin: 17px 0 0;
+  color: var(--muted);
+  font-family: 'Cinzel', serif;
+  font-size: .92rem;
+  letter-spacing: .02em;
+}
+.cps-event-summary strong { color: var(--gold-soft); font-weight: 600; }
 .cps-facts { margin-top: 24px; border-top: 1px solid var(--line); display: grid; }
 .cps-facts div { padding: 13px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 20px; }
 .cps-facts span { color: var(--muted); font-size: .72rem; }
@@ -94,6 +97,15 @@
 .cps-program-card .program-body h3 { min-height: 2.1em; }
 
 /* Gallery */
+.gallery-page .page-hero { padding-bottom: 38px; }
+.gallery-section { padding-top: 34px; }
+.gallery-intro {
+  max-width: 680px;
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.7;
+}
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
