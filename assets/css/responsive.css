@@ -1,3 +1,15 @@
+/* Shared polish overrides */
+.hero-title-mobile,
+.hero-copy-mobile { display: none; }
+.hero-title-desktop,
+.hero-copy-desktop { display: block; }
+
+/* Agenda already has a strong page title; keep only the small programming label before cards. */
+.agenda-programs { padding-top: 30px; }
+.agenda-programs .section-head { margin-bottom: 20px; }
+.agenda-programs .section-title,
+.agenda-programs .section-note { display: none; }
+
 /* Responsive */
 @media (min-width: 700px) {
   .container { width: min(calc(100% - 48px), var(--max)); }
@@ -31,7 +43,18 @@
   .section { padding: 92px 0; }
   .section-tight { padding: 64px 0; }
   .page-hero { padding: 154px 0 68px; }
-  .home-hero-inner { padding-top: clamp(250px, 26vh, 290px); }
+
+  .home-hero-inner {
+    width: min(calc(100% - 46px), 1120px);
+    padding-top: clamp(235px, 24vh, 275px);
+  }
+  .home-hero-title {
+    max-width: 1100px;
+    font-size: clamp(3rem, 4.15vw, 4.7rem);
+    line-height: .98;
+  }
+  .home-hero-copy { max-width: 830px; }
+
   .program-grid { gap: 20px; }
   .cps-home { min-height: 590px; }
   .events-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -60,16 +83,32 @@
   .floating-social { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .section { padding: 66px 0; }
   .section-tight { padding: 48px 0; }
+
+  .hero-title-desktop,
+  .hero-copy-desktop { display: none; }
+  .hero-title-mobile,
+  .hero-copy-mobile { display: block; }
+
   .home-hero-inner {
     min-height: 100svh;
-    padding: 146px 0 68px;
+    padding: 142px 0 68px;
     justify-content: flex-start;
   }
   .home-hero-media img { object-position: 48% 38%; filter: saturate(.74) contrast(1.04) brightness(.60); }
-  .home-hero-kicker { font-size: .57rem; letter-spacing: .22em; }
-  .home-hero-title { font-size: clamp(2.15rem, 11vw, 3.5rem); }
-  .home-hero-copy { max-width: 670px; margin-top: 17px; font-size: .86rem; line-height: 1.55; }
-  .home-hero-action { min-width: min(100%, 310px); margin-top: 24px; }
+  .home-hero-kicker { margin-bottom: 13px; font-size: .55rem; letter-spacing: .2em; }
+  .home-hero-title {
+    max-width: 330px;
+    font-size: clamp(1.9rem, 8.9vw, 2.28rem);
+    line-height: 1.04;
+    letter-spacing: -.035em;
+  }
+  .home-hero-copy {
+    max-width: 300px;
+    margin-top: 16px;
+    font-size: .75rem;
+    line-height: 1.55;
+  }
+  .home-hero-action { min-width: min(100%, 300px); min-height: 48px; margin-top: 20px; }
   .home-about { padding-block: 58px 44px; }
   .about-photo { min-height: 340px; }
 
@@ -103,7 +142,9 @@
     aspect-ratio: 4 / 5;
   }
 
-  /* Agenda remains a readable vertical list on mobile. */
+  /* Agenda stays vertical but starts immediately after its single small label. */
+  .agenda-programs { padding-top: 24px; }
+  .agenda-programs .section-head { margin-bottom: 16px; }
   .agenda-programs .program-card { display: block; }
   .agenda-programs .program-poster,
   .agenda-programs .program-placeholder { width: 100%; height: auto; min-height: 0; aspect-ratio: 4 / 5; }
@@ -128,8 +169,20 @@
   .cps-callout-meta { flex-wrap: wrap; }
   .gallery-grid { gap: 10px; }
   .events-grid { gap: 8px; }
-  .floating-socials { left: 9px; top: auto; bottom: 18px; transform: none; grid-template-columns: repeat(2, auto); }
+
+  /* Mobile shortcuts stay out of the left edge and stack vertically for thumb reach. */
+  .floating-socials {
+    left: auto;
+    right: 10px;
+    top: auto;
+    bottom: 18px;
+    transform: none;
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    gap: 8px;
+  }
   .floating-social { width: 43px; height: 43px; background: rgba(8, 8, 7, .94); }
+
   .footer-main { gap: 26px; }
   .footer-logo { width: 132px; }
   .footer-bottom { align-items: flex-start; flex-direction: column; }
@@ -140,9 +193,10 @@
 @media (max-width: 430px) {
   .mobile-nav { grid-template-columns: 1fr; }
   .mobile-meta { flex-direction: column; }
-  .hero-logo-flight { width: 200px; top: 34px; }
-  .home-hero-inner { padding-top: 142px; }
-  .home-hero-title { font-size: clamp(2rem, 10.7vw, 2.85rem); }
+  .hero-logo-flight { width: 190px; top: 31px; }
+  .home-hero-inner { padding-top: 132px; }
+  .home-hero-title { max-width: 320px; font-size: clamp(1.82rem, 8.7vw, 2.08rem); }
+  .home-hero-copy { max-width: 286px; font-size: .72rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
