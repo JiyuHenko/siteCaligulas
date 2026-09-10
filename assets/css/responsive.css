@@ -4,6 +4,15 @@
 .hero-title-desktop,
 .hero-copy-desktop { display: block; }
 
+.floating-socials {
+  transition: opacity .22s ease, visibility .22s ease;
+}
+.floating-socials.is-footer-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Agenda already has a strong page title; keep only the small programming label before cards. */
 .agenda-programs { padding-top: 30px; }
 .agenda-programs .section-head { margin-bottom: 20px; }
@@ -46,7 +55,8 @@
 
   .home-hero-inner {
     width: min(calc(100% - 46px), 1120px);
-    padding-top: clamp(235px, 24vh, 275px);
+    padding: 140px 0 180px;
+    justify-content: center;
   }
   .home-hero-title {
     max-width: 1100px;
