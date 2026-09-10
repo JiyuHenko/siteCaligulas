@@ -71,9 +71,9 @@
 
     image.removeAttribute('srcset');
     image.removeAttribute('sizes');
-    image.src = compact
-      ? 'assets/img/perf/photos/hero-mobile-720.webp'
-      : 'assets/img/perf/photos/hero-desktop-1440.webp';
+    image.src = 'assets/img/perf/photos/hero-mobile-720.webp';
+    image.width = 720;
+    image.height = 960;
     image.alt = 'Noite de poker no Caligulas Poker Live';
   }
 
