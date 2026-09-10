@@ -65,6 +65,18 @@
     });
   }
 
+  function upgradeAboutPhoto() {
+    const image = $('.home-page .about-photo img');
+    if (!image) return;
+
+    image.removeAttribute('srcset');
+    image.removeAttribute('sizes');
+    image.src = compact
+      ? 'assets/img/perf/photos/hero-mobile-720.webp'
+      : 'assets/img/perf/photos/hero-desktop-1440.webp';
+    image.alt = 'Noite de poker no Caligulas Poker Live';
+  }
+
   function mountFloatingSocials() {
     if (!cfg.whatsappNumber && !cfg.instagram) return;
 
@@ -96,6 +108,27 @@
     `).join('');
 
     document.body.appendChild(dock);
+
+    const footer = $('.site-footer');
+    if (!footer) return;
+
+    let ticking = false;
+    const updateVisibility = () => {
+      ticking = false;
+      const dockRect = dock.getBoundingClientRect();
+      const footerRect = footer.getBoundingClientRect();
+      dock.classList.toggle('is-footer-hidden', footerRect.top <= dockRect.bottom + 12);
+    };
+
+    const requestUpdate = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateVisibility);
+    };
+
+    updateVisibility();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate, { passive: true });
   }
 
   function setupNavigation() {
@@ -329,6 +362,7 @@
   }
 
   hydratePublicLinks();
+  upgradeAboutPhoto();
   mountFloatingSocials();
   setupNavigation();
   setupHomeHeroTransition();
