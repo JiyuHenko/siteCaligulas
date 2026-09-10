@@ -1,0 +1,106 @@
+/* Ranking */
+.rank-preview { display: grid; gap: 10px; }
+.rank-tile {
+  padding: 19px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+.rank-tile .pos { min-width: 30px; color: var(--gold-soft); font-family: 'Cinzel', serif; font-size: 1.3rem; }
+.rank-tile .name { font-weight: 700; }
+.rank-tile .small { margin-top: 2px; color: var(--muted); font-size: .72rem; }
+.rank-tile .score { font-family: 'Cinzel', serif; font-size: 1.18rem; }
+.live-status { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .72rem; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+.live-dot.demo { background: var(--gold); }
+
+.ranking-shell { display: grid; gap: 18px; }
+.podium { display: grid; gap: 10px; }
+.podium-card { padding: 22px; border-radius: 20px; }
+.podium-card .place { color: var(--gold-soft); font-family: 'Cinzel', serif; font-size: .9rem; }
+.podium-card .player { margin-top: 8px; font-family: 'Cinzel', serif; font-size: 1.22rem; }
+.podium-card .points { margin-top: 18px; color: var(--gold-soft); font-family: 'Cinzel', serif; font-size: 2rem; }
+.podium-card .sub { margin-top: 5px; color: var(--muted); font-size: .7rem; }
+.ranking-tools { display: flex; flex-direction: column; gap: 9px; }
+.ranking-mobile { display: grid; gap: 8px; }
+.rank-row-mobile {
+  padding: 15px;
+  border-radius: 17px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.rank-row-mobile .p { color: var(--gold-soft); font-family: 'Cinzel', serif; }
+.rank-row-mobile .n { font-size: .88rem; font-weight: 700; }
+.rank-row-mobile .d { margin-top: 3px; color: var(--muted); font-size: .68rem; }
+.rank-row-mobile .f { font-family: 'Cinzel', serif; }
+.ranking-table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 18px; }
+.ranking-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+.ranking-table th,
+.ranking-table td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: .78rem; }
+.ranking-table th { color: var(--muted); font-size: .62rem; letter-spacing: .11em; text-transform: uppercase; }
+.ranking-table td:last-child { color: var(--gold-soft); font-family: 'Cinzel', serif; }
+.ranking-table tbody tr:last-child td { border-bottom: 0; }
+
+.home-ranking-status { margin-top: 12px; }
+.ranking-status { margin-top: 18px; }
+.house-brand { width: 220px; margin-bottom: 22px; }
+.rule-presence-note { margin-top: 12px !important; }
+.regulation-secondary { margin-top: 14px; }
+.regulation-prizes { margin-top: 36px; }
+.regulation-finalists { margin-top: 10px; }
+.regulation-details { margin-top: 28px; display: grid; gap: 8px; }
+
+/* Regulation integrated into ranking */
+.regulation-wrap { padding-top: 22px; }
+.regulation-grid { display: grid; gap: 14px; }
+.rule-card { padding: 21px; border-radius: 20px; }
+.rule-card h3 { margin: 0 0 10px; font-family: 'Cinzel', serif; font-size: 1.12rem; }
+.rule-card p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.65; }
+.points-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.point-pill { padding: 10px 4px; border: 1px solid var(--line); border-radius: 13px; text-align: center; }
+.point-pill strong { display: block; color: var(--gold-soft); font-size: .86rem; }
+.point-pill span { color: var(--muted); font-size: .62rem; }
+.factor-list { display: grid; gap: 0; }
+.factor-row { padding: 12px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; font-size: .82rem; }
+.factor-row:last-child { border-bottom: 0; }
+.factor-row strong { color: var(--gold-soft); }
+.prize-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.prize-card { min-height: 112px; display: grid; align-content: center; text-align: center; }
+.prize-card h3 { margin-bottom: 7px; color: var(--muted); font-family: 'Manrope', sans-serif; font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; }
+.prize-card p { color: var(--ink); font-family: 'Cinzel', serif; font-size: 1.2rem; }
+.rule-details { padding: 0 16px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255, 255, 255, .02); }
+.rule-details summary { padding: 16px 0; cursor: pointer; font-size: .82rem; font-weight: 700; }
+.details-body { padding-bottom: 16px; color: var(--muted); font-size: .8rem; }
+.details-body p { margin: 0 0 10px; }
+
+/* Page hero */
+.page-hero {
+  padding: 132px 0 52px;
+  position: relative;
+  overflow: hidden;
+  background: #090807;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(7, 7, 6, .97), rgba(7, 7, 6, .72)), url('../img/perf/decor/marble-960.webp') center / cover;
+  opacity: .62;
+}
+.page-hero .container,
+.page-hero .narrow { position: relative; }
+.page-hero-mark {
+  width: 190px;
+  position: absolute;
+  right: -34px;
+  bottom: -65px;
+  opacity: .06;
+  pointer-events: none;
+}
+.page-hero-actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
