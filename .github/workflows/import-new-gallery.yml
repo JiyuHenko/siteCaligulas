@@ -1,0 +1,127 @@
+name: Import new gallery photos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-new-gallery.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import-gallery:
+    if: github.event.head_commit.message == 'Run gallery photo import'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install image tools
+        run: python -m pip install --upgrade pillow pillow-heif
+
+      - name: Convert, sort and update gallery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from datetime import datetime
+          import shutil
+          import re
+          from PIL import Image, ImageOps, ExifTags
+          from pillow_heif import register_heif_opener
+
+          register_heif_opener()
+
+          source = Path('assets/novas fotos')
+          full_dir = Path('assets/img/photos')
+          thumb_dir = Path('assets/img/perf/photos')
+          full_dir.mkdir(parents=True, exist_ok=True)
+          thumb_dir.mkdir(parents=True, exist_ok=True)
+
+          allowed = {'.jpg', '.jpeg', '.png', '.heic', '.heif'}
+          files = [p for p in source.iterdir() if p.is_file() and p.suffix.lower() in allowed]
+          if not files:
+              raise SystemExit('Nenhuma foto encontrada em assets/novas fotos')
+
+          def photo_date(path):
+              try:
+                  with Image.open(path) as im:
+                      exif = im.getexif()
+                      for tag in (36867, 36868, 306):
+                          value = exif.get(tag)
+                          if value:
+                              text = str(value).strip().replace('\x00', '')
+                              for fmt in ('%Y:%m:%d %H:%M:%S', '%Y-%m-%d %H:%M:%S'):
+                                  try:
+                                      return datetime.strptime(text[:19], fmt)
+                                  except ValueError:
+                                      pass
+              except Exception:
+                  pass
+              return datetime.min
+
+          items = sorted(files, key=lambda p: (photo_date(p), p.name.lower()), reverse=True)
+          snippets = []
+
+          # Clean only previously generated recent assets, if any.
+          for pattern in ('recent-*.webp',):
+              for old in full_dir.glob(pattern):
+                  old.unlink()
+              for old in thumb_dir.glob(pattern):
+                  old.unlink()
+
+          for index, src in enumerate(items, 1):
+              with Image.open(src) as original:
+                  image = ImageOps.exif_transpose(original).convert('RGB')
+
+                  full = image.copy()
+                  full.thumbnail((1800, 1800), Image.Resampling.LANCZOS)
+                  full_path = full_dir / f'recent-{index:02d}.webp'
+                  full.save(full_path, 'WEBP', quality=84, method=6)
+
+                  thumb = image.copy()
+                  thumb.thumbnail((720, 720), Image.Resampling.LANCZOS)
+                  thumb_path = thumb_dir / f'recent-{index:02d}-720.webp'
+                  thumb.save(thumb_path, 'WEBP', quality=80, method=6)
+                  w, h = thumb.size
+
+              snippets.append(
+                  f'        <figure class="gallery-item" data-reveal><img src="{thumb_path.as_posix()}" '
+                  f'sizes="(max-width:699px) calc(50vw - 24px), 25vw" width="{w}" height="{h}" '
+                  f'alt="Foto recente do Caligulas Poker Live" data-full="{full_path.as_posix()}" '
+                  f'data-lightbox loading="lazy" decoding="async"></figure>'
+              )
+
+          gallery = Path('galeria.html')
+          html = gallery.read_text(encoding='utf-8')
+          start_marker = '        <!-- RECENT_GALLERY_START -->'
+          end_marker = '        <!-- RECENT_GALLERY_END -->'
+          if start_marker in html and end_marker in html:
+              pattern = re.escape(start_marker) + r'.*?' + re.escape(end_marker) + r'\n'
+              html = re.sub(pattern, '', html, flags=re.S)
+
+          needle = '      <div class="gallery-grid">\n'
+          if needle not in html:
+              raise SystemExit('gallery-grid não encontrado em galeria.html')
+
+          block = start_marker + '\n' + '\n'.join(snippets) + '\n' + end_marker + '\n'
+          html = html.replace(needle, needle + block, 1)
+          gallery.write_text(html, encoding='utf-8')
+
+          shutil.rmtree(source)
+          print(f'Importadas {len(items)} fotos novas.')
+          PY
+
+      - name: Commit imported gallery
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Import new gallery photos as WebP"
+          git push origin main
