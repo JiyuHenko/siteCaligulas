@@ -69,21 +69,6 @@
     });
   }
 
-  function upgradeProgramPosters() {
-    const replacements = {
-      'assets/img/events/programacao-segunda-prime.webp': 'assets/img/events/sg-prime-cps.webp',
-      'assets/img/events/programacao-quarta-free.webp': 'assets/img/events/qr-free-cps.webp'
-    };
-
-    Object.entries(replacements).forEach(([oldSrc, newSrc]) => {
-      $$(`img[src="${oldSrc}"]`).forEach(image => {
-        image.src = newSrc;
-        image.width = 400;
-        image.height = 600;
-      });
-    });
-  }
-
   function mountFloatingSocials() {
     if (!cfg.whatsappNumber && !cfg.instagram) return;
 
@@ -369,7 +354,6 @@
   }
 
   hydratePublicLinks();
-  upgradeProgramPosters();
   mountFloatingSocials();
   setupNavigation();
   setupHomeHeroTransition();
