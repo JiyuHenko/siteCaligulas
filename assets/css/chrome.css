@@ -1,7 +1,8 @@
 /* Floating social shortcuts */
 .floating-socials {
   position: fixed;
-  left: 14px;
+  right: 14px;
+  left: auto;
   top: 50%;
   z-index: 68;
   transform: translateY(-50%);
@@ -23,7 +24,7 @@
   -webkit-backdrop-filter: blur(14px);
   transition: transform .2s ease, border-color .2s ease, color .2s ease, background .2s ease;
 }
-.floating-social:hover { transform: translateX(2px); border-color: var(--line-gold); color: var(--gold-soft); background: rgba(17, 15, 12, .94); }
+.floating-social:hover { transform: translateX(-2px); border-color: var(--line-gold); color: var(--gold-soft); background: rgba(17, 15, 12, .94); }
 .floating-socials.is-footer-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .floating-social svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .floating-social svg.icon-fill { fill: currentColor; stroke: none; }
