@@ -3,14 +3,8 @@ window.CALIGULAS_CONFIG = Object.freeze({
   instagram: "https://www.instagram.com/caligulaspokerlive/",
   whatsappNumber: "5535988369317",
   whatsappMessage: "Olá! Vim pelo site do Caligulas Poker Live.",
+  email: "caligulaspoker@hotmail.com",
   address: "Av. Comendador Francisco Avelino Maia, 3427 — Centro, Passos/MG",
   mapsQuery: "Av. Comendador Francisco Avelino Maia, 3427, Passos, MG",
   siteUrl: "https://caligulaspoker.com.br"
 });
-
-if (document.querySelector('.program-special')) {
-  const programAlignStyles = document.createElement('link');
-  programAlignStyles.rel = 'stylesheet';
-  programAlignStyles.href = 'assets/css/home-program-align.css?v=2';
-  document.head.appendChild(programAlignStyles);
-}

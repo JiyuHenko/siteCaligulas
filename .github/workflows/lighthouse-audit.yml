@@ -1,9 +1,20 @@
-name: Audit Caligulas Lighthouse
+name: Caligulas site quality
 
 on:
   push:
     branches: [main]
     paths:
+      - '*.html'
+      - 'config.js'
+      - 'assets/css/**'
+      - 'assets/js/**'
+      - '.github/workflows/lighthouse-audit.yml'
+  pull_request:
+    paths:
+      - '*.html'
+      - 'config.js'
+      - 'assets/css/**'
+      - 'assets/js/**'
       - '.github/workflows/lighthouse-audit.yml'
 
 permissions:
@@ -14,29 +25,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for Pages
-        run: sleep 8
-      - name: Run Lighthouse mobile
+
+      - name: Check obsolete build references
         run: |
-          npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
-            --quiet --chrome-flags='--headless --no-sandbox' \
-            --output=json --output-path=/tmp/mobile.json
-      - name: Run Lighthouse desktop
+          if grep -R -n -E 'styles\.min\.css|site\.min\.js|api\.min\.js|ranking-page\.min\.js|ranking-fallback\.min\.js|home-program-align\.css' --include='*.html' --include='*.js' .; then
+            echo "Obsolete generated asset reference found."
+            exit 1
+          fi
+
+      - name: Serve site
         run: |
-          npx --yes lighthouse@12.8.2 https://jiyuhenko.github.io/siteCaligulas/ \
-            --quiet --preset=desktop --chrome-flags='--headless --no-sandbox' \
-            --output=json --output-path=/tmp/desktop.json
-      - name: Print final summary
+          python3 -m http.server 4173 > /tmp/caligulas-http.log 2>&1 &
+          sleep 2
+
+      - name: Lighthouse mobile
+        run: |
+          npx --yes lighthouse@12.8.2 http://127.0.0.1:4173/ \
+            --quiet \
+            --chrome-flags='--headless --no-sandbox' \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json \
+            --output-path=/tmp/mobile.json
+
+      - name: Lighthouse desktop
+        run: |
+          npx --yes lighthouse@12.8.2 http://127.0.0.1:4173/ \
+            --quiet \
+            --preset=desktop \
+            --chrome-flags='--headless --no-sandbox' \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json \
+            --output-path=/tmp/desktop.json
+
+      - name: Print summary
         run: |
           node - <<'NODE'
-          const fs=require('fs');
-          for(const mode of ['mobile','desktop']){
-            const r=JSON.parse(fs.readFileSync(`/tmp/${mode}.json`,'utf8'));
-            const a=r.audits,c=r.categories;
-            const pct=k=>Math.round(c[k].score*100);
-            console.log(`FINAL_${mode.toUpperCase()} performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
-            console.log(`METRICS_${mode.toUpperCase()} FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} SI=${a['speed-index'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue}`);
-            console.log(`RESPONSIVE_IMAGES_${mode.toUpperCase()} ${a['uses-responsive-images']?.displayValue||'ok'}`);
-            console.log(`CACHE_${mode.toUpperCase()} ${a['uses-long-cache-ttl']?.displayValue||'ok'}`);
+          const fs = require('fs');
+          for (const mode of ['mobile', 'desktop']) {
+            const report = JSON.parse(fs.readFileSync(`/tmp/${mode}.json`, 'utf8'));
+            const c = report.categories;
+            const a = report.audits;
+            const pct = key => Math.round(c[key].score * 100);
+            console.log(`${mode.toUpperCase()} performance=${pct('performance')} accessibility=${pct('accessibility')} best_practices=${pct('best-practices')} seo=${pct('seo')}`);
+            console.log(`${mode.toUpperCase()} FCP=${a['first-contentful-paint'].displayValue} LCP=${a['largest-contentful-paint'].displayValue} TBT=${a['total-blocking-time'].displayValue} CLS=${a['cumulative-layout-shift'].displayValue}`);
           }
           NODE
