@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://caligulaspoker.com.br/sitemap.xml
