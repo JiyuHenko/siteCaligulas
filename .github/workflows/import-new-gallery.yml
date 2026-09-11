@@ -33,7 +33,7 @@ jobs:
           from datetime import datetime
           import shutil
           import re
-          from PIL import Image, ImageOps, ExifTags
+          from PIL import Image, ImageOps
           from pillow_heif import register_heif_opener
 
           register_heif_opener()
@@ -69,12 +69,10 @@ jobs:
           items = sorted(files, key=lambda p: (photo_date(p), p.name.lower()), reverse=True)
           snippets = []
 
-          # Clean only previously generated recent assets, if any.
-          for pattern in ('recent-*.webp',):
-              for old in full_dir.glob(pattern):
-                  old.unlink()
-              for old in thumb_dir.glob(pattern):
-                  old.unlink()
+          for old in full_dir.glob('recent-*.webp'):
+              old.unlink()
+          for old in thumb_dir.glob('recent-*.webp'):
+              old.unlink()
 
           for index, src in enumerate(items, 1):
               with Image.open(src) as original:
@@ -125,3 +123,5 @@ jobs:
           git add -A
           git commit -m "Import new gallery photos as WebP"
           git push origin main
+
+# one-time import trigger
