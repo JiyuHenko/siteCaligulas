@@ -5,7 +5,7 @@ window.CALIGULAS_CONFIG = Object.freeze({
   whatsappMessage: "Olá! Vim pelo site do Caligulas Poker Live.",
   address: "Av. Comendador Francisco Avelino Maia, 3427 — Centro, Passos/MG",
   mapsQuery: "Av. Comendador Francisco Avelino Maia, 3427, Passos, MG",
-  siteUrl: ""
+  siteUrl: "https://caligulaspoker.com.br"
 });
 
 if (document.querySelector('.program-special')) {
