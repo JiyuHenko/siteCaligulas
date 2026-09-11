@@ -1,0 +1,29 @@
+name: Kick final redesign
+
+on:
+  push:
+    branches:
+      - redesign/site-structure-home
+    paths:
+      - '.github/workflows/kick-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  kick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: redesign/site-structure-home
+          fetch-depth: 0
+      - name: Trigger final apply workflow
+        shell: bash
+        run: |
+          printf '\n# triggered by kick-final\n' >> .github/workflows/apply-final-redesign.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/apply-final-redesign.yml
+          git commit -m 'Trigger final redesign workflow'
+          git push origin HEAD:redesign/site-structure-home
