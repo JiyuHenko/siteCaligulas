@@ -17,13 +17,13 @@
     .modifier-summary-title .eyebrow{margin-bottom:5px}
     .modifier-summary-title h2{font-size:1.25rem}
     .modifier-summary-action{display:flex;align-items:center;gap:9px;flex:0 0 auto;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
-    .modifier-chevron{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--gold);font-size:1.05rem;line-height:1;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+    .modifier-chevron{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--gold);line-height:1;transition:transform .24s cubic-bezier(.2,.8,.2,1),border-color .18s ease,background .18s ease}
+    .modifier-chevron svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .modifier-panel>summary:hover .modifier-chevron{border-color:var(--line-gold);background:rgba(226,201,133,.045)}
     .modifier-panel[open]>summary{border-bottom:1px solid var(--line)}
     .modifier-panel[open] .modifier-chevron{transform:rotate(180deg)}
-    .modifier-content{padding-top:14px}
-    .modifier-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:0 14px 10px}
-    .modifier-intro .panel-note{margin:0;flex:1}
+    .modifier-content{padding-top:12px}
+    .modifier-intro{display:flex;align-items:center;justify-content:flex-end;padding:0 14px 10px}
     .modifier-intro .icon-button{flex:0 0 auto}
     @media(max-width:500px){.modifier-panel>summary{min-height:68px;padding:13px 14px}.modifier-summary-title h2{font-size:1.12rem}.modifier-summary-action>span:first-child{display:none}.modifier-intro{padding-inline:12px}}
   </style>
@@ -130,12 +130,15 @@
               </div>
               <div class="modifier-summary-action">
                 <span>Editar</span>
-                <span class="modifier-chevron" aria-hidden="true">⌄</span>
+                <span class="modifier-chevron" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="m7 9.5 5 5 5-5"></path>
+                  </svg>
+                </span>
               </div>
             </summary>
             <div class="modifier-content">
               <div class="modifier-intro">
-                <p class="panel-note">0–9 presenças usam 1,0x. A maior faixa atingida passa a valer automaticamente.</p>
                 <button class="icon-button" id="addModifierBtn" type="button" aria-label="Adicionar modificador">+</button>
               </div>
               <div class="modifier-list" id="modifierList"></div>
