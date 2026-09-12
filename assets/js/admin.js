@@ -1,216 +1,794 @@
-(function(){
-  const API=window.CaligulasAPI;
-  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-  const DRAFT_KEY="caligulas-ranking-draft-v2",SESSION_KEY="caligulas-admin-session-v2";
-  let state={token:"",version:1,updatedAt:null,rows:[],history:[],mode:API.configured()?"live":"demo"};
-  let finishEditingId=null;
-  let roundSelection={};
+(function () {
+  'use strict';
 
-  const E={
-    loginView:$("#loginView"),adminView:$("#adminView"),loginForm:$("#loginForm"),password:$("#adminPassword"),loginMsg:$("#loginMsg"),
-    demoBtn:$("#demoLogin"),modeBadge:$("#modeBadge"),search:$("#playerSearch"),table:$("#adminRows"),mobile:$("#playerCards"),
-    preview:$("#previewRows"),history:$("#historyList"),draftMeta:$("#draftMeta"),publishBtn:$("#publishBtn"),saveDraft:$("#saveDraftBtn"),
-    discardDraft:$("#discardDraftBtn"),addBtn:$("#addPlayerBtn"),roundBtn:$("#roundBtn"),logout:$("#logoutBtn"),addDialog:$("#playerDialog"),
-    addForm:$("#addPlayerForm"),addName:$("#newPlayerName"),addPoints:$("#newPlayerPoints"),addPres:$("#newPlayerPresences"),
-    finishesDialog:$("#finishesDialog"),finishTitle:$("#finishTitle"),finishesGrid:$("#finishesGrid"),finishForm:$("#finishForm"),
-    roundDialog:$("#roundDialog"),roundForm:$("#roundForm"),roundType:$("#roundType"),roundSearch:$("#roundSearch"),roundList:$("#roundList"),
-    exportBtn:$("#exportBtn"),importInput:$("#importInput")
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const cfg = window.CALIGULAS_CONFIG || {};
+  const API_URL = cfg.appsScriptUrl || '';
+  const TOKEN_KEY = 'caligulas_admin_token_v3';
+  const DRAFT_KEY = 'caligulas_admin_draft_v3';
+
+  const REGULAR_POINTS = [15, 12, 10, 8, 7, 6, 5, 4, 3];
+  const SPECIAL_POINTS = [20, 18, 16, 14, 13, 12, 11, 10, 9];
+
+  const DEFAULT_MODIFIERS = [
+    { minPresences: 10, factor: 1.1 },
+    { minPresences: 15, factor: 1.2 },
+    { minPresences: 20, factor: 1.3 },
+    { minPresences: 25, factor: 1.4 },
+    { minPresences: 30, factor: 1.5 },
+    { minPresences: 36, factor: 2.0 }
+  ];
+
+  const state = {
+    token: sessionStorage.getItem(TOKEN_KEY) || '',
+    version: 1,
+    updatedAt: null,
+    publishedRows: [],
+    draftRows: [],
+    publishedModifiers: [],
+    draftModifiers: [],
+    history: [],
+    previewHistoryId: null
   };
 
-  function clone(x){return JSON.parse(JSON.stringify(x))}
-  function uuid(){return crypto.randomUUID?crypto.randomUUID():`p_${Date.now()}_${Math.random().toString(36).slice(2)}`}
-  function esc(s=""){return String(s).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
-  function rows(){return API.normalizeRows(state.rows)}
-  function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2300)}
-  function setMeta(msg){E.draftMeta.textContent=msg||`Base v${state.version} · ${state.rows.length} jogadores`}
-  function saveDraft(){localStorage.setItem(DRAFT_KEY,JSON.stringify({baseVersion:state.version,savedAt:new Date().toISOString(),rows:state.rows}));setMeta("Rascunho salvo neste navegador");toast("Rascunho salvo")}
-  function readDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"null")}catch{return null}}
-  function clearDraft(){localStorage.removeItem(DRAFT_KEY)}
-  function saveSession(){if(state.mode==="live")sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:state.token}))}
-  function clearSession(){sessionStorage.removeItem(SESSION_KEY)}
+  let tournamentEntries = new Map();
 
-  async function enter(token,demo=false){
-    state.token=token||"";state.mode=demo?"demo":"live";
-    E.loginView.hidden=true;E.adminView.hidden=false;E.modeBadge.textContent=demo?"MODO DEMO":"PLANILHA CONECTADA";
-    if(demo){
-      const d=clone(window.CALIGULAS_RANKING_FALLBACK);state.version=d.version||1;state.updatedAt=d.updatedAt;state.rows=d.rows||[];state.history=[];
-    }else{
-      const d=await API.post({action:"adminState",token:state.token});state.version=d.version;state.updatedAt=d.updatedAt;state.rows=d.rows||[];state.history=d.history||[];saveSession();
+  function esc(value = '') {
+    return String(value).replace(/[&<>'"]/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
+  }
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function uid() {
+    if (window.crypto && crypto.randomUUID) return 'p_' + crypto.randomUUID();
+    return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  function fmt(value) {
+    return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(Number(value) || 0);
+  }
+
+  function fmtFactor(value) {
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 3 }).format(Number(value) || 1) + 'x';
+  }
+
+  function fmtDate(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    }).format(date);
+  }
+
+  function cleanFinishes(value) {
+    const input = Array.isArray(value) ? value : [];
+    return Array.from({ length: 9 }, (_, i) => Math.max(0, Math.floor(Number(input[i]) || 0)));
+  }
+
+  function normalizeModifiers(value) {
+    const map = new Map();
+    (Array.isArray(value) ? value : []).forEach(item => {
+      const minPresences = Math.max(0, Math.floor(Number(item?.minPresences ?? item?.presences) || 0));
+      const factor = Number(item?.factor);
+      if (!Number.isFinite(factor) || factor <= 0) return;
+      if (minPresences === 0 && factor === 1) return;
+      map.set(minPresences, Math.round(factor * 1000) / 1000);
+    });
+    return Array.from(map.entries())
+      .map(([minPresences, factor]) => ({ minPresences, factor }))
+      .sort((a, b) => a.minPresences - b.minPresences);
+  }
+
+  function factorFor(presences, modifiers = state.draftModifiers) {
+    const p = Math.max(0, Math.floor(Number(presences) || 0));
+    let factor = 1;
+    normalizeModifiers(modifiers).forEach(rule => {
+      if (p >= rule.minPresences) factor = rule.factor;
+    });
+    return factor;
+  }
+
+  function compareRows(a, b) {
+    if (b.finalPoints !== a.finalPoints) return b.finalPoints - a.finalPoints;
+    const af = cleanFinishes(a.finishes);
+    const bf = cleanFinishes(b.finishes);
+    for (let i = 0; i < 9; i += 1) {
+      if (bf[i] !== af[i]) return bf[i] - af[i];
     }
-    const draft=readDraft();
-    if(draft&&Array.isArray(draft.rows)&&draft.baseVersion===state.version&&confirm("Existe um rascunho salvo para esta versão. Recuperar?"))state.rows=draft.rows;
+    return String(a.name).localeCompare(String(b.name), 'pt-BR');
+  }
+
+  function calculateRows(rows, modifiers = state.draftModifiers) {
+    return clone(rows || []).map(row => {
+      const points = Math.max(0, Number(row.points) || 0);
+      const presences = Math.max(0, Math.floor(Number(row.presences) || 0));
+      const factor = factorFor(presences, modifiers);
+      return {
+        id: String(row.id || uid()),
+        name: String(row.name || '').trim(),
+        points,
+        presences,
+        factor,
+        finalPoints: Math.round(((points + presences) * factor) * 10) / 10,
+        finishes: cleanFinishes(row.finishes),
+        active: row.active !== false
+      };
+    }).filter(row => row.name && row.active !== false).sort(compareRows);
+  }
+
+  function comparableRow(row) {
+    return {
+      id: row.id,
+      name: String(row.name || '').trim(),
+      points: Number(row.points) || 0,
+      presences: Math.floor(Number(row.presences) || 0),
+      finishes: cleanFinishes(row.finishes)
+    };
+  }
+
+  function sameRow(a, b) {
+    if (!a || !b) return false;
+    return JSON.stringify(comparableRow(a)) === JSON.stringify(comparableRow(b));
+  }
+
+  function modifiersEqual(a, b) {
+    return JSON.stringify(normalizeModifiers(a)) === JSON.stringify(normalizeModifiers(b));
+  }
+
+  function changedPlayerIds() {
+    const baseline = new Map(state.publishedRows.map(row => [row.id, row]));
+    const draft = new Map(state.draftRows.map(row => [row.id, row]));
+    const ids = new Set([...baseline.keys(), ...draft.keys()]);
+    return Array.from(ids).filter(id => !sameRow(baseline.get(id), draft.get(id)));
+  }
+
+  function hasDraftChanges() {
+    return changedPlayerIds().length > 0 || !modifiersEqual(state.publishedModifiers, state.draftModifiers);
+  }
+
+  function toast(message, type = '') {
+    const el = $('#toast');
+    el.textContent = message;
+    el.className = 'toast show' + (type ? ' ' + type : '');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { el.className = 'toast'; }, 3200);
+  }
+
+  async function api(payload) {
+    if (!API_URL) throw new Error('Endpoint do ranking não configurado.');
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      redirect: 'follow'
+    });
+    const data = await response.json();
+    if (!data.ok) {
+      const error = new Error(data.message || 'Erro na API.');
+      error.code = data.code || 'API_ERROR';
+      throw error;
+    }
+    return data;
+  }
+
+  function handleApiError(error) {
+    if (error?.code === 'AUTH_REQUIRED' || error?.code === 'AUTH_EXPIRED') {
+      logout(false);
+      toast('Sua sessão expirou. Entre novamente.', 'error');
+      return;
+    }
+    toast(error?.message || 'Não foi possível concluir a ação.', 'error');
+  }
+
+  async function login(password) {
+    const data = await api({ action: 'login', password });
+    state.token = data.token;
+    sessionStorage.setItem(TOKEN_KEY, state.token);
+    await loadAdminState();
+  }
+
+  async function loadAdminState() {
+    const data = await api({ action: 'adminState', token: state.token });
+    state.version = Number(data.version) || 1;
+    state.updatedAt = data.updatedAt || null;
+    const incomingModifiers = Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS;
+    state.publishedRows = calculateRows(data.rows || [], incomingModifiers);
+    state.publishedModifiers = normalizeModifiers(incomingModifiers);
+    state.history = Array.isArray(data.history) ? data.history : [];
+
+    const saved = readLocalDraft();
+    if (saved && saved.baseVersion === state.version) {
+      state.draftModifiers = normalizeModifiers(saved.modifiers || state.publishedModifiers);
+      state.draftRows = calculateRows(saved.rows || state.publishedRows, state.draftModifiers);
+      toast('Rascunho local recuperado.');
+    } else {
+      state.draftModifiers = clone(state.publishedModifiers);
+      state.draftRows = clone(state.publishedRows);
+      if (saved) localStorage.removeItem(DRAFT_KEY);
+    }
+
+    showDashboard();
     renderAll();
   }
 
-  E.loginForm?.addEventListener("submit",async e=>{
-    e.preventDefault();if(!API.configured())return;
-    E.loginMsg.textContent="Entrando...";
-    try{const d=await API.post({action:"login",password:E.password.value});E.password.value="";E.loginMsg.textContent="";await enter(d.token,false)}
-    catch(err){E.loginMsg.textContent=err.message}
-  });
-  E.demoBtn?.addEventListener("click",()=>enter("",true));
-  if(API.configured()){
-    E.demoBtn.hidden=true;const s=JSON.parse(sessionStorage.getItem(SESSION_KEY)||"null");if(s?.token)enter(s.token,false).catch(()=>clearSession());
-  }else E.loginMsg.textContent="Apps Script ainda não configurado. Use o modo demonstração.";
-
-  function renderAll(){renderPlayers();renderPreview();renderHistory();setMeta()}
-  function filtered(){
-    const q=(E.search.value||"").trim().toLocaleLowerCase("pt-BR");
-    return rows().filter(r=>!q||r.name.toLocaleLowerCase("pt-BR").includes(q));
-  }
-  function updateById(id,patch){
-    const i=state.rows.findIndex(r=>String(r.id)===String(id));if(i<0)return;
-    state.rows[i]={...state.rows[i],...patch};renderAll();
-  }
-  function removeById(id){
-    const r=state.rows.find(x=>String(x.id)===String(id));if(!r)return;
-    if(confirm(`Excluir ${r.name} do rascunho?`)){state.rows=state.rows.filter(x=>String(x.id)!==String(id));renderAll()}
+  function logout(showMessage = true) {
+    state.token = '';
+    sessionStorage.removeItem(TOKEN_KEY);
+    $('#dashboard').hidden = true;
+    $('#loginView').hidden = false;
+    $('#passwordInput').value = '';
+    if (showMessage) toast('Sessão encerrada.');
   }
 
-  function renderPlayers(){
-    const list=filtered(),ordered=rows();
-    E.table.innerHTML=list.length?list.map(r=>{
-      const pos=ordered.findIndex(x=>x.id===r.id)+1,tie=API.tieSummary(r,2)||"—";
-      return `<tr data-id="${esc(r.id)}"><td class="admin-readonly">${pos}</td>
-      <td><input class="name" data-field="name" value="${esc(r.name)}"></td>
-      <td><input class="num" type="number" min="0" step="1" data-field="points" value="${r.points}"></td>
-      <td><input class="num" type="number" min="0" step="1" data-field="presences" value="${r.presences}"></td>
-      <td class="admin-readonly">${String(r.factor).replace(".",",")}x</td>
-      <td class="admin-readonly">${API.fmt(r.finalPoints)}</td>
-      <td><button class="btn btn-small" data-finishes="${esc(r.id)}">${esc(tie)}</button></td>
-      <td><button class="btn btn-small danger" data-remove="${esc(r.id)}">Excluir</button></td></tr>`;
-    }).join(""):`<tr><td colspan="8"><div class="admin-empty">Nenhum jogador encontrado.</div></td></tr>`;
-
-    E.mobile.innerHTML=list.length?list.map(r=>{
-      const pos=ordered.findIndex(x=>x.id===r.id)+1,tie=API.tieSummary(r,2)||"Sem colocações cadastradas";
-      return `<article class="player-card" data-id="${esc(r.id)}">
-        <div class="player-card-head"><div><div class="player-card-pos">${String(pos).padStart(2,"0")}</div><input class="admin-input" data-field="name" value="${esc(r.name)}" aria-label="Nome"></div><div class="player-card-score">${API.fmt(r.finalPoints)}</div></div>
-        <div class="player-card-grid"><label>Pontos<input class="admin-input" type="number" min="0" step="1" data-field="points" value="${r.points}"></label><label>Presenças<input class="admin-input" type="number" min="0" step="1" data-field="presences" value="${r.presences}"></label></div>
-        <div class="player-card-bottom"><button class="btn btn-small" data-finishes="${esc(r.id)}">Colocações</button><span class="tie-mini">${esc(tie)}</span><button class="btn btn-small danger" data-remove="${esc(r.id)}">Excluir</button></div>
-      </article>`;
-    }).join(""):`<div class="admin-empty">Nenhum jogador encontrado.</div>`;
+  function showDashboard() {
+    $('#loginView').hidden = true;
+    $('#dashboard').hidden = false;
   }
 
-  function fieldHandler(e){
-    const target=e.target.closest("[data-field]");if(!target)return;
-    const holder=target.closest("[data-id]");if(!holder)return;
-    const id=holder.dataset.id,field=target.dataset.field;
-    const value=field==="name"?target.value:Math.max(0,Number(target.value)||0);
-    const i=state.rows.findIndex(r=>String(r.id)===String(id));if(i<0)return;
-    state.rows[i][field]=value;renderPreview();setMeta("Alterações ainda não publicadas");
+  function saveLocalDraft() {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      baseVersion: state.version,
+      savedAt: new Date().toISOString(),
+      rows: state.draftRows,
+      modifiers: state.draftModifiers
+    }));
+    toast('Rascunho salvo neste navegador.');
   }
-  E.table.addEventListener("input",fieldHandler);E.mobile.addEventListener("input",fieldHandler);
-  E.table.addEventListener("change",renderAll);E.mobile.addEventListener("change",renderAll);
-  function clickHandler(e){
-    const f=e.target.closest("[data-finishes]");if(f){openFinishes(f.dataset.finishes);return}
-    const d=e.target.closest("[data-remove]");if(d)removeById(d.dataset.remove);
-  }
-  E.table.addEventListener("click",clickHandler);E.mobile.addEventListener("click",clickHandler);
-  E.search.addEventListener("input",renderPlayers);
 
-  function renderPreview(){
-    E.preview.innerHTML=rows().slice(0,10).map((r,i)=>`<div class="preview-row"><span class="pos">${String(i+1).padStart(2,"0")}</span><span>${esc(r.name)}</span><strong>${API.fmt(r.finalPoints)}</strong></div>`).join("")||`<div class="admin-empty">Sem jogadores.</div>`;
-  }
-  function renderHistory(){
-    if(state.mode==="demo"){E.history.innerHTML=`<div class="admin-empty">Histórico disponível após conectar a planilha.</div>`;return}
-    E.history.innerHTML=(state.history||[]).map(h=>`<div class="history-row"><div><strong>Versão ${h.version}</strong><span>${API.fmtDate(h.createdAt)} · ${h.total} jogadores</span></div><button class="btn btn-small" data-restore="${esc(h.id)}">Restaurar</button></div>`).join("")||`<div class="admin-empty">Nenhuma publicação anterior.</div>`;
-  }
-  E.history.addEventListener("click",async e=>{
-    const b=e.target.closest("[data-restore]");if(!b)return;
-    if(!confirm("Restaurar esta versão? A versão atual será guardada no histórico."))return;
-    try{
-      const d=await API.post({action:"restore",token:state.token,baseVersion:state.version,historyId:b.dataset.restore});
-      state.version=d.version;state.updatedAt=d.updatedAt;state.rows=d.rows;state.history=d.history;clearDraft();renderAll();toast("Versão restaurada");
-    }catch(err){alert(err.message)}
-  });
-
-  E.addBtn.addEventListener("click",()=>E.addDialog.showModal());
-  E.addForm.addEventListener("submit",e=>{
-    e.preventDefault();state.rows.push({id:uuid(),name:E.addName.value.trim(),points:+E.addPoints.value||0,presences:+E.addPres.value||0,finishes:Array(9).fill(0)});
-    E.addForm.reset();E.addPoints.value=0;E.addPres.value=0;E.addDialog.close();renderAll();setMeta("Novo jogador no rascunho");
-  });
-
-  function openFinishes(id){
-    finishEditingId=id;const row=state.rows.find(r=>String(r.id)===String(id));if(!row)return;
-    E.finishTitle.textContent=`Colocações — ${row.name}`;
-    const f=API.cleanFinishes(row.finishes);
-    E.finishesGrid.innerHTML=f.map((n,i)=>`<div class="finish-field"><label>${i+1}º lugar<input class="admin-input" type="number" min="0" step="1" data-finish-index="${i}" value="${n}"></label></div>`).join("");
-    E.finishesDialog.showModal();
-  }
-  E.finishForm.addEventListener("submit",e=>{
-    e.preventDefault();const row=state.rows.find(r=>String(r.id)===String(finishEditingId));if(!row)return;
-    row.finishes=Array.from({length:9},(_,i)=>Math.max(0,Math.floor(Number(E.finishesGrid.querySelector(`[data-finish-index="${i}"]`).value)||0)));
-    E.finishesDialog.close();renderAll();setMeta("Colocações alteradas no rascunho");
-  });
-
-  E.roundBtn.addEventListener("click",()=>{
-    roundSelection={};rows().forEach(r=>roundSelection[r.id]={present:false,placement:""});
-    E.roundSearch.value="";renderRoundList();E.roundDialog.showModal();
-  });
-  E.roundSearch.addEventListener("input",renderRoundList);
-  function renderRoundList(){
-    const q=(E.roundSearch.value||"").trim().toLocaleLowerCase("pt-BR");
-    const list=rows().filter(r=>!q||r.name.toLocaleLowerCase("pt-BR").includes(q));
-    E.roundList.innerHTML=list.map(r=>{
-      const sel=roundSelection[r.id]||{present:false,placement:""};
-      return `<div class="round-player" data-round-id="${esc(r.id)}"><input type="checkbox" data-present aria-label="Presente" ${sel.present?"checked":""}><span class="rname">${esc(r.name)}</span><select class="admin-select" data-placement aria-label="Colocação"><option value="">—</option>${Array.from({length:9},(_,i)=>`<option value="${i+1}" ${String(sel.placement)===String(i+1)?"selected":""}>${i+1}º</option>`).join("")}</select></div>`;
-    }).join("");
-  }
-  E.roundList.addEventListener("change",e=>{
-    const el=e.target.closest(".round-player");if(!el)return;
-    const id=el.dataset.roundId;roundSelection[id]=roundSelection[id]||{present:false,placement:""};
-    if(e.target.matches("[data-placement]")){
-      roundSelection[id].placement=e.target.value;
-      if(e.target.value){roundSelection[id].present=true;el.querySelector("[data-present]").checked=true}
+  function readLocalDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
     }
-    if(e.target.matches("[data-present]")){
-      roundSelection[id].present=e.target.checked;
-      if(!e.target.checked){roundSelection[id].placement="";el.querySelector("[data-placement]").value="";}
+  }
+
+  function clearLocalDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+  }
+
+
+  function exportDraft() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      baseVersion: state.version,
+      rows: state.draftRows,
+      modifiers: state.draftModifiers
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `caligulas-ranking-rascunho-v${state.version}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importDraftFile(file) {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const rows = Array.isArray(parsed) ? parsed : parsed.rows;
+      if (!Array.isArray(rows)) throw new Error('Arquivo sem lista de jogadores.');
+      const modifiers = Array.isArray(parsed.modifiers) ? parsed.modifiers : state.draftModifiers;
+      state.draftModifiers = normalizeModifiers(modifiers);
+      state.draftRows = calculateRows(rows, state.draftModifiers);
+      renderAll();
+      toast('Rascunho importado. Revise antes de publicar.');
+    } catch (error) {
+      toast(error.message || 'Arquivo inválido.', 'error');
     }
-  });
-  E.roundForm.addEventListener("submit",e=>{
-    e.preventDefault();let changed=0;
-    Object.entries(roundSelection).forEach(([id,sel])=>{
-      if(!sel.present)return;
-      const placement=Number(sel.placement)||0;
-      const row=state.rows.find(r=>String(r.id)===String(id));if(!row)return;
-      row.presences=(Number(row.presences)||0)+1;row.finishes=API.cleanFinishes(row.finishes);
-      if(placement){row.points=(Number(row.points)||0)+API.pointsFor(E.roundType.value,placement);row.finishes[placement-1]+=1}
-      changed++;
+  }
+
+  function renderAll() {
+    state.draftModifiers = normalizeModifiers(state.draftModifiers);
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    $('#versionBadge').textContent = 'v' + state.version;
+    renderPlayers();
+    renderTopPreview();
+    renderModifiers();
+    renderHistory();
+    renderDraftState();
+  }
+
+  function filteredRows() {
+    const q = ($('#playerSearch').value || '').trim().toLocaleLowerCase('pt-BR');
+    return state.draftRows.filter(row => !q || row.name.toLocaleLowerCase('pt-BR').includes(q));
+  }
+
+  function playerActions(row) {
+    const baseline = state.publishedRows.find(item => item.id === row.id);
+    const modified = !sameRow(baseline, row);
+    return `
+      <div class="row-actions">
+        ${modified ? `<button class="mini-button warning" data-revert-player="${esc(row.id)}" type="button">Remover modificação</button>` : ''}
+        <button class="mini-button" data-edit-player="${esc(row.id)}" type="button">Editar</button>
+        <button class="mini-button danger" data-delete-player="${esc(row.id)}" type="button">Excluir</button>
+      </div>
+    `;
+  }
+
+  function renderPlayers() {
+    const rows = filteredRows();
+    const tbody = $('#playersTableBody');
+    const mobile = $('#mobilePlayerList');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Nenhum jogador.</td></tr>';
+      mobile.innerHTML = '<div class="empty-state">Nenhum jogador.</div>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(row => `
+      <tr class="${changedPlayerIds().includes(row.id) ? 'is-modified' : ''}">
+        <td><strong>${esc(row.name)}</strong></td>
+        <td>${fmt(row.points)}</td>
+        <td>${row.presences}</td>
+        <td>${fmtFactor(row.factor)}</td>
+        <td><strong class="gold">${fmt(row.finalPoints)}</strong></td>
+        <td>${playerActions(row)}</td>
+      </tr>
+    `).join('');
+
+    mobile.innerHTML = rows.map(row => `
+      <article class="player-card ${changedPlayerIds().includes(row.id) ? 'is-modified' : ''}">
+        <div class="player-card-head"><strong>${esc(row.name)}</strong><span>${fmt(row.finalPoints)}</span></div>
+        <div class="player-stats"><span>${fmt(row.points)} pts</span><span>${row.presences} pres.</span><span>${fmtFactor(row.factor)}</span></div>
+        ${playerActions(row)}
+      </article>
+    `).join('');
+  }
+
+  function renderTopList(rows, target) {
+    target.innerHTML = rows.slice(0, 10).map((row, index) => `
+      <div class="top-row">
+        <span class="top-pos">${String(index + 1).padStart(2, '0')}</span>
+        <span class="top-name">${esc(row.name)}</span>
+        <strong>${fmt(row.finalPoints)}</strong>
+      </div>
+    `).join('') || '<div class="empty-state">Ranking vazio.</div>';
+  }
+
+  function renderTopPreview() {
+    renderTopList(state.draftRows, $('#topPreview'));
+  }
+
+  function renderModifiers() {
+    const list = $('#modifierList');
+    const rules = normalizeModifiers(state.draftModifiers);
+    list.innerHTML = rules.map((rule, index) => `
+      <div class="modifier-row" data-modifier-index="${index}">
+        <label><span>Presenças</span><input type="number" min="1" step="1" value="${rule.minPresences}" data-modifier-presences="${index}"></label>
+        <label><span>Fator</span><input type="number" min="0.1" step="0.1" value="${rule.factor}" data-modifier-factor="${index}"></label>
+        <button class="icon-button danger-soft" data-remove-modifier="${index}" type="button" aria-label="Remover modificador">×</button>
+      </div>
+    `).join('') || '<div class="empty-state">Sem modificadores adicionais. Todos usam 1,0x.</div>';
+  }
+
+  function renderHistory() {
+    const list = $('#historyList');
+    list.innerHTML = state.history.map(item => `
+      <article class="history-item">
+        <div>
+          <strong>Versão ${item.version}</strong>
+          <span>${fmtDate(item.createdAt)} · ${item.total} jogador${item.total === 1 ? '' : 'es'}</span>
+        </div>
+        <div class="history-actions">
+          <button class="mini-button" data-preview-history="${esc(item.id)}" type="button">Visualizar</button>
+          <button class="mini-button warning" data-restore-history="${esc(item.id)}" type="button">Restaurar</button>
+          <button class="mini-button danger" data-delete-history="${esc(item.id)}" type="button">Excluir</button>
+        </div>
+      </article>
+    `).join('') || '<div class="empty-state">Nenhuma publicação anterior.</div>';
+  }
+
+  function renderDraftState() {
+    const changed = changedPlayerIds();
+    const modifierChanged = !modifiersEqual(state.publishedModifiers, state.draftModifiers);
+    const dirty = changed.length > 0 || modifierChanged;
+
+    $('#draftState').textContent = dirty ? 'Alterações pendentes' : 'Sem alterações';
+    $('#draftState').classList.toggle('dirty', dirty);
+    $('#publishBtn').disabled = !dirty;
+
+    let summary = 'Nenhuma alteração pendente';
+    const parts = [];
+    if (changed.length) parts.push(`${changed.length} jogador${changed.length === 1 ? '' : 'es'} alterado${changed.length === 1 ? '' : 's'}`);
+    if (modifierChanged) parts.push('fatores alterados');
+    if (parts.length) summary = parts.join(' · ');
+    $('#publishSummary').textContent = summary;
+    $('#publishSubline').textContent = dirty
+      ? 'As mudanças só chegam ao site depois de publicar.'
+      : `Publicado em ${fmtDate(state.updatedAt)}.`;
+  }
+
+  function openPlayerModal(row = null) {
+    $('#playerModalTitle').textContent = row ? 'Editar jogador' : 'Adicionar jogador';
+    $('#playerIdInput').value = row?.id || '';
+    $('#playerNameInput').value = row?.name || '';
+    $('#playerPointsInput').value = row?.points ?? 0;
+    $('#playerPresencesInput').value = row?.presences ?? 0;
+    const finishes = cleanFinishes(row?.finishes);
+    $('#finishInputs').innerHTML = finishes.map((value, i) => `
+      <label class="field compact-field"><span>${i + 1}º lugares</span><input type="number" min="0" step="1" value="${value}" data-finish-input="${i}"></label>
+    `).join('');
+    $('#playerModal').showModal();
+    setTimeout(() => $('#playerNameInput').focus(), 50);
+  }
+
+  function savePlayerFromModal() {
+    const id = $('#playerIdInput').value || uid();
+    const name = $('#playerNameInput').value.trim();
+    if (!name) return toast('Informe o nome do jogador.', 'error');
+
+    const row = {
+      id,
+      name,
+      points: Math.max(0, Number($('#playerPointsInput').value) || 0),
+      presences: Math.max(0, Math.floor(Number($('#playerPresencesInput').value) || 0)),
+      finishes: $$('[data-finish-input]').map(input => Math.max(0, Math.floor(Number(input.value) || 0))),
+      active: true
+    };
+
+    const index = state.draftRows.findIndex(item => item.id === id);
+    if (index >= 0) state.draftRows[index] = row;
+    else state.draftRows.push(row);
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    $('#playerModal').close();
+    renderAll();
+  }
+
+  function deletePlayer(id) {
+    const row = state.draftRows.find(item => item.id === id);
+    if (!row) return;
+    if (!confirm(`Excluir ${row.name} do rascunho?`)) return;
+    state.draftRows = state.draftRows.filter(item => item.id !== id);
+    renderAll();
+  }
+
+  function revertPlayer(id) {
+    const baseline = state.publishedRows.find(item => item.id === id);
+    if (baseline) {
+      const index = state.draftRows.findIndex(item => item.id === id);
+      if (index >= 0) state.draftRows[index] = clone(baseline);
+      else state.draftRows.push(clone(baseline));
+    } else {
+      state.draftRows = state.draftRows.filter(item => item.id !== id);
+    }
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    renderAll();
+    toast('Modificação removida.');
+  }
+
+  function openTournamentModal() {
+    tournamentEntries = new Map();
+    $('#tournamentType').value = 'regular';
+    $('#tournamentSearch').value = '';
+    renderParticipants();
+    renderTournamentPreview();
+    $('#tournamentModal').showModal();
+  }
+
+  function renderParticipants() {
+    const q = ($('#tournamentSearch').value || '').trim().toLocaleLowerCase('pt-BR');
+    const rows = clone(state.draftRows).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+      .filter(row => !q || row.name.toLocaleLowerCase('pt-BR').includes(q));
+
+    $('#participantList').innerHTML = rows.map(row => {
+      const entry = tournamentEntries.get(row.id) || { presence: false, placement: null };
+      return `
+        <div class="participant-row" data-participant-id="${esc(row.id)}">
+          <label class="presence-check">
+            <input type="checkbox" data-presence-id="${esc(row.id)}" ${entry.presence ? 'checked' : ''}>
+            <span>${esc(row.name)}</span>
+          </label>
+          <select data-placement-id="${esc(row.id)}" aria-label="Colocação de ${esc(row.name)}">
+            <option value="">Sem colocação</option>
+            ${Array.from({ length: 9 }, (_, i) => `<option value="${i + 1}" ${entry.placement === i + 1 ? 'selected' : ''}>${i + 1}º</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }).join('') || '<div class="empty-state">Nenhum jogador encontrado.</div>';
+  }
+
+  function tournamentInputState() {
+    return Array.from(tournamentEntries.entries()).map(([id, entry]) => ({
+      id,
+      presence: Boolean(entry.presence || entry.placement),
+      placement: entry.placement ? Number(entry.placement) : null
+    })).filter(entry => entry.presence || entry.placement);
+  }
+
+  function tournamentPreviewRows() {
+    const type = $('#tournamentType').value;
+    const pointsMap = type === 'special' ? SPECIAL_POINTS : REGULAR_POINTS;
+    const rows = clone(state.draftRows);
+    const byId = new Map(rows.map(row => [row.id, row]));
+
+    tournamentInputState().forEach(entry => {
+      const row = byId.get(entry.id);
+      if (!row || !entry.presence) return;
+      row.presences = Math.max(0, Math.floor(Number(row.presences) || 0)) + 1;
+      if (entry.placement && entry.placement >= 1 && entry.placement <= 9) {
+        row.points = Math.max(0, Number(row.points) || 0) + pointsMap[entry.placement - 1];
+        row.finishes = cleanFinishes(row.finishes);
+        row.finishes[entry.placement - 1] += 1;
+      }
     });
-    if(!changed){toast("Selecione pelo menos um participante");return}
-    E.roundDialog.close();E.roundSearch.value="";roundSelection={};renderAll();setMeta(`${changed} participações adicionadas ao rascunho`);toast("Torneio aplicado ao rascunho");
-  });
 
-  E.saveDraft.addEventListener("click",saveDraft);
-  E.discardDraft.addEventListener("click",async()=>{
-    if(!confirm("Descartar as alterações locais e voltar ao ranking publicado?"))return;
-    clearDraft();
-    if(state.mode==="demo"){const d=clone(window.CALIGULAS_RANKING_FALLBACK);state.rows=d.rows}
-    else{const d=await API.post({action:"adminState",token:state.token});state.version=d.version;state.rows=d.rows;state.history=d.history}
-    renderAll();toast("Rascunho descartado");
-  });
-  E.publishBtn.addEventListener("click",async()=>{
-    if(state.mode==="demo"){toast("Conecte o Apps Script para publicar");return}
-    if(!confirm("Publicar o ranking inteiro agora? A versão atual será salva no histórico."))return;
-    E.publishBtn.disabled=true;E.publishBtn.textContent="Publicando...";
-    try{
-      const d=await API.post({action:"publish",token:state.token,baseVersion:state.version,rows:state.rows});
-      state.version=d.version;state.updatedAt=d.updatedAt;state.rows=d.rows;state.history=d.history;clearDraft();renderAll();toast("Ranking publicado");
-    }catch(err){if(err.code==="VERSION_CONFLICT")alert("O ranking foi alterado em outra sessão. Recarregue o painel.");else alert(err.message)}
-    finally{E.publishBtn.disabled=false;E.publishBtn.textContent="Publicar ranking"}
-  });
+    return calculateRows(rows, state.draftModifiers);
+  }
 
-  E.exportBtn.addEventListener("click",()=>{
-    const blob=new Blob([JSON.stringify({baseVersion:state.version,exportedAt:new Date().toISOString(),rows:state.rows},null,2)],{type:"application/json"});
-    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`caligulas-ranking-rascunho-v${state.version}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
-  });
-  E.importInput.addEventListener("change",async()=>{
-    const file=E.importInput.files?.[0];if(!file)return;
-    try{const d=JSON.parse(await file.text());if(!Array.isArray(d.rows))throw new Error("Arquivo inválido.");state.rows=d.rows;renderAll();setMeta("JSON importado para o rascunho");toast("Rascunho importado")}catch(err){alert(err.message)}
-    E.importInput.value="";
-  });
+  function renderTournamentPreview() {
+    renderTopList(tournamentPreviewRows(), $('#tournamentPreview'));
+  }
 
-  $$("[data-close-dialog]").forEach(b=>b.addEventListener("click",()=>b.closest("dialog").close()));
-  E.logout.addEventListener("click",()=>{clearSession();location.reload()});
+  function applyTournament() {
+    const entries = tournamentInputState();
+    if (!entries.length) return toast('Marque pelo menos uma presença.', 'error');
+
+    const placements = entries.filter(entry => entry.placement).map(entry => entry.placement);
+    const unique = new Set(placements);
+    if (unique.size !== placements.length) return toast('Uma colocação não pode ser usada por dois jogadores.', 'error');
+
+    state.draftRows = tournamentPreviewRows();
+    $('#tournamentModal').close();
+    renderAll();
+    toast('Torneio adicionado ao rascunho.');
+  }
+
+  function addModifier() {
+    const rules = normalizeModifiers(state.draftModifiers);
+    const last = rules[rules.length - 1];
+    state.draftModifiers.push({
+      minPresences: last ? last.minPresences + 5 : 10,
+      factor: last ? Math.round((last.factor + 0.1) * 10) / 10 : 1.1
+    });
+    renderAll();
+  }
+
+  function updateModifier(index, field, value) {
+    const rules = normalizeModifiers(state.draftModifiers);
+    if (!rules[index]) return;
+    if (field === 'minPresences') rules[index].minPresences = Math.max(1, Math.floor(Number(value) || 1));
+    if (field === 'factor') rules[index].factor = Math.max(0.1, Number(value) || 1);
+    state.draftModifiers = normalizeModifiers(rules);
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    renderAll();
+  }
+
+  function removeModifier(index) {
+    const rules = normalizeModifiers(state.draftModifiers);
+    rules.splice(index, 1);
+    state.draftModifiers = normalizeModifiers(rules);
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    renderAll();
+  }
+
+  function resetModifiers() {
+    state.draftModifiers = clone(state.publishedModifiers);
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    renderAll();
+  }
+
+  async function publishDraft() {
+    if (!hasDraftChanges()) return;
+    if (!confirm('Publicar este rascunho no ranking do site?')) return;
+
+    const btn = $('#publishBtn');
+    btn.disabled = true;
+    btn.textContent = 'Publicando...';
+    try {
+      const data = await api({
+        action: 'publish',
+        token: state.token,
+        baseVersion: state.version,
+        rows: state.draftRows,
+        modifiers: state.draftModifiers
+      });
+      state.version = data.version;
+      state.updatedAt = data.updatedAt;
+      state.publishedModifiers = normalizeModifiers(Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS);
+      state.draftModifiers = clone(state.publishedModifiers);
+      state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers);
+      state.draftRows = clone(state.publishedRows);
+      state.history = data.history || [];
+      clearLocalDraft();
+      renderAll();
+      toast('Ranking publicado.');
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      btn.textContent = 'Publicar ranking';
+      btn.disabled = !hasDraftChanges();
+    }
+  }
+
+  async function previewHistory(id) {
+    try {
+      const data = await api({ action: 'historySnapshot', token: state.token, historyId: id });
+      state.previewHistoryId = id;
+      $('#historyPreviewTitle').textContent = `Versão ${data.history.version}`;
+      $('#historyPreviewMeta').textContent = `${fmtDate(data.history.createdAt)} · ${data.history.total} jogadores`;
+      $('#historyRankingPreview').innerHTML = data.rows.map((row, index) => `
+        <div class="history-rank-row"><span>${index + 1}</span><strong>${esc(row.name)}</strong><em>${fmt(row.finalPoints)}</em></div>
+      `).join('') || '<div class="empty-state">Ranking vazio.</div>';
+      $('#historyModifierPreview').innerHTML = [
+        '<div class="history-mod-row"><span>0+ presenças</span><strong>1,0x</strong></div>',
+        ...(data.modifiers || []).map(rule => `<div class="history-mod-row"><span>${rule.minPresences}+ presenças</span><strong>${fmtFactor(rule.factor)}</strong></div>`)
+      ].join('');
+      $('#historyPreviewModal').showModal();
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  async function restoreHistory(id) {
+    const item = state.history.find(history => history.id === id);
+    if (!confirm(`Restaurar a versão ${item?.version ?? ''}? O ranking atual será salvo no histórico antes da restauração.`)) return;
+
+    try {
+      const data = await api({
+        action: 'restore',
+        token: state.token,
+        baseVersion: state.version,
+        historyId: id
+      });
+      state.version = data.version;
+      state.updatedAt = data.updatedAt;
+      state.publishedModifiers = normalizeModifiers(Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS);
+      state.draftModifiers = clone(state.publishedModifiers);
+      state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers);
+      state.draftRows = clone(state.publishedRows);
+      state.history = data.history || [];
+      clearLocalDraft();
+      $('#historyPreviewModal').close();
+      renderAll();
+      toast('Versão restaurada e publicada.');
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  async function deleteHistory(id) {
+    const item = state.history.find(history => history.id === id);
+    if (!confirm(`Excluir definitivamente a versão ${item?.version ?? ''} do histórico?`)) return;
+    try {
+      const data = await api({ action: 'deleteHistory', token: state.token, historyId: id });
+      state.history = data.history || [];
+      renderHistory();
+      toast('Histórico excluído.');
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  function discardDraft() {
+    if (hasDraftChanges() && !confirm('Descartar todas as alterações do rascunho?')) return;
+    state.draftRows = clone(state.publishedRows);
+    state.draftModifiers = clone(state.publishedModifiers);
+    clearLocalDraft();
+    renderAll();
+  }
+
+  function bindEvents() {
+    $('#loginForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const status = $('#loginStatus');
+      status.textContent = 'Entrando...';
+      try {
+        await login($('#passwordInput').value);
+        status.textContent = '';
+      } catch (error) {
+        status.textContent = error.message || 'Não foi possível entrar.';
+      }
+    });
+
+    $('#logoutBtn').addEventListener('click', () => logout());
+    $('#openTournamentBtn').addEventListener('click', openTournamentModal);
+    $('#addPlayerBtn').addEventListener('click', () => openPlayerModal());
+    $('#savePlayerBtn').addEventListener('click', savePlayerFromModal);
+    $('#saveLocalBtn').addEventListener('click', saveLocalDraft);
+    $('#exportBtn').addEventListener('click', exportDraft);
+    $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
+    $('#importFileInput').addEventListener('change', event => {
+      importDraftFile(event.target.files?.[0]);
+      event.target.value = '';
+    });
+    $('#discardDraftBtn').addEventListener('click', discardDraft);
+    $('#publishBtn').addEventListener('click', publishDraft);
+    $('#playerSearch').addEventListener('input', renderPlayers);
+
+    $('#addModifierBtn').addEventListener('click', addModifier);
+    $('#resetModifiersBtn').addEventListener('click', resetModifiers);
+
+    $('#tournamentSearch').addEventListener('input', renderParticipants);
+    $('#tournamentType').addEventListener('change', renderTournamentPreview);
+    $('#participantList').addEventListener('change', event => {
+      const participant = event.target.closest('[data-participant-id]');
+      if (!participant) return;
+      const id = participant.dataset.participantId;
+      const checkbox = participant.querySelector('[data-presence-id]');
+      const select = participant.querySelector('[data-placement-id]');
+      if (event.target.matches('[data-placement-id]') && select.value) checkbox.checked = true;
+      tournamentEntries.set(id, {
+        presence: checkbox.checked,
+        placement: select.value ? Number(select.value) : null
+      });
+      renderTournamentPreview();
+    });
+    $('#applyTournamentBtn').addEventListener('click', applyTournament);
+
+    document.addEventListener('click', event => {
+      const edit = event.target.closest('[data-edit-player]');
+      if (edit) {
+        const row = state.draftRows.find(item => item.id === edit.dataset.editPlayer);
+        if (row) openPlayerModal(row);
+        return;
+      }
+
+      const revert = event.target.closest('[data-revert-player]');
+      if (revert) return revertPlayer(revert.dataset.revertPlayer);
+
+      const del = event.target.closest('[data-delete-player]');
+      if (del) return deletePlayer(del.dataset.deletePlayer);
+
+      const removeModifierBtn = event.target.closest('[data-remove-modifier]');
+      if (removeModifierBtn) return removeModifier(Number(removeModifierBtn.dataset.removeModifier));
+
+      const preview = event.target.closest('[data-preview-history]');
+      if (preview) return previewHistory(preview.dataset.previewHistory);
+
+      const restore = event.target.closest('[data-restore-history]');
+      if (restore) return restoreHistory(restore.dataset.restoreHistory);
+
+      const deleteHistoryBtn = event.target.closest('[data-delete-history]');
+      if (deleteHistoryBtn) return deleteHistory(deleteHistoryBtn.dataset.deleteHistory);
+
+      const closer = event.target.closest('[data-close-dialog]');
+      if (closer) document.getElementById(closer.dataset.closeDialog)?.close();
+    });
+
+    $('#modifierList').addEventListener('change', event => {
+      if (event.target.matches('[data-modifier-presences]')) {
+        updateModifier(Number(event.target.dataset.modifierPresences), 'minPresences', event.target.value);
+      }
+      if (event.target.matches('[data-modifier-factor]')) {
+        updateModifier(Number(event.target.dataset.modifierFactor), 'factor', event.target.value);
+      }
+    });
+
+    $('#restoreFromPreviewBtn').addEventListener('click', () => {
+      if (state.previewHistoryId) restoreHistory(state.previewHistoryId);
+    });
+
+    window.addEventListener('beforeunload', event => {
+      if (!hasDraftChanges()) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+  }
+
+  async function boot() {
+    bindEvents();
+    if (!state.token) return;
+    try {
+      await loadAdminState();
+    } catch (error) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      state.token = '';
+      handleApiError(error);
+    }
+  }
+
+  boot();
 })();
