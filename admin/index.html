@@ -10,6 +10,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/admin.css">
+  <style>
+    .modifier-panel>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;min-height:74px;user-select:none}
+    .modifier-panel>summary::-webkit-details-marker{display:none}
+    .modifier-summary-title{min-width:0}
+    .modifier-summary-title .eyebrow{margin-bottom:5px}
+    .modifier-summary-title h2{font-size:1.25rem}
+    .modifier-summary-action{display:flex;align-items:center;gap:9px;flex:0 0 auto;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+    .modifier-chevron{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--gold);font-size:1.05rem;line-height:1;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+    .modifier-panel>summary:hover .modifier-chevron{border-color:var(--line-gold);background:rgba(226,201,133,.045)}
+    .modifier-panel[open]>summary{border-bottom:1px solid var(--line)}
+    .modifier-panel[open] .modifier-chevron{transform:rotate(180deg)}
+    .modifier-content{padding-top:14px}
+    .modifier-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:0 14px 10px}
+    .modifier-intro .panel-note{margin:0;flex:1}
+    .modifier-intro .icon-button{flex:0 0 auto}
+    @media(max-width:500px){.modifier-panel>summary{min-height:68px;padding:13px 14px}.modifier-summary-title h2{font-size:1.12rem}.modifier-summary-action>span:first-child{display:none}.modifier-intro{padding-inline:12px}}
+  </style>
 </head>
 <body>
   <main class="admin-shell">
@@ -105,18 +122,26 @@
             <div class="top-list" id="topPreview"></div>
           </section>
 
-          <section class="panel">
-            <div class="panel-head compact">
-              <div>
+          <details class="panel modifier-panel">
+            <summary>
+              <div class="modifier-summary-title">
                 <p class="eyebrow">Frequência</p>
                 <h2>Modificadores</h2>
               </div>
-              <button class="icon-button" id="addModifierBtn" type="button" aria-label="Adicionar modificador">+</button>
+              <div class="modifier-summary-action">
+                <span>Editar</span>
+                <span class="modifier-chevron" aria-hidden="true">⌄</span>
+              </div>
+            </summary>
+            <div class="modifier-content">
+              <div class="modifier-intro">
+                <p class="panel-note">0–9 presenças usam 1,0x. A maior faixa atingida passa a valer automaticamente.</p>
+                <button class="icon-button" id="addModifierBtn" type="button" aria-label="Adicionar modificador">+</button>
+              </div>
+              <div class="modifier-list" id="modifierList"></div>
+              <button class="text-button" id="resetModifiersBtn" type="button">Restaurar fatores publicados</button>
             </div>
-            <p class="panel-note">0–9 presenças usam 1,0x. A maior faixa atingida passa a valer automaticamente.</p>
-            <div class="modifier-list" id="modifierList"></div>
-            <button class="text-button" id="resetModifiersBtn" type="button">Restaurar fatores publicados</button>
-          </section>
+          </details>
 
           <section class="panel">
             <div class="panel-head compact">
