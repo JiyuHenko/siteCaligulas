@@ -1,87 +1,235 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070706">
-<link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon-32.png">
-<link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
-<link rel="manifest" href="../site.webmanifest">
-<link rel="stylesheet" href="../assets/css/styles.css">
-<link rel="stylesheet" href="../assets/css/admin.css">
-<meta name="robots" content="noindex,nofollow">
-<title>Admin | Caligulas Poker Live</title>
-<meta name="description" content="Área administrativa do ranking.">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#070706">
+  <title>Admin | Caligulas Poker Live</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/admin.css">
 </head>
-<body class="admin-body">
-<div class="admin-app">
-  <header class="admin-topbar">
-    <div class="admin-container admin-topbar-inner">
-      <a class="admin-brand" href="../index.html" aria-label="Voltar ao Caligulas Poker Live">
-        <img class="admin-logo" src="../assets/img/brand/logo-caligulas-white.png" alt="Caligulas Poker Live">
-        <span><small>Painel</small><strong>Ranking 2026</strong></span>
-      </a>
-      <div class="admin-top-actions"><span class="admin-badge" id="modeBadge" hidden>ADMIN</span></div>
-    </div>
-  </header>
-
-  <main class="admin-container admin-content">
-    <section class="login-panel" id="loginView">
-      <div class="login-layout">
-        <div class="login-intro">
-          <p class="admin-eyebrow">Área restrita</p>
-          <h1>Painel administrativo.</h1>
-          <p>Gerencie jogadores, torneios e o ranking.</p>
-        </div>
-        <div class="admin-card login-card">
-          <div class="login-card-head"><span class="login-lock">●</span><div><p class="admin-eyebrow">Acesso</p><h2>Entrar no painel</h2></div></div>
-          <form class="login-form" id="loginForm">
-            <label class="admin-field-label" for="adminPassword">Senha</label>
-            <input class="admin-input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
-            <button class="btn btn-gold login-submit" type="submit">Entrar</button>
-          </form>
-          <div class="status-line" id="loginMsg"></div>
-          <button class="btn demo-btn" id="demoLogin" type="button" hidden>Modo demonstração</button>
-        </div>
+<body>
+  <main class="admin-shell">
+    <section class="login-view" id="loginView">
+      <div class="login-card">
+        <img class="admin-logo" src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live">
+        <p class="eyebrow">Área restrita</p>
+        <h1>Painel administrativo.</h1>
+        <p class="lead">Gerencie jogadores, torneios e o ranking.</p>
+        <form id="loginForm" class="stack" autocomplete="off">
+          <label class="field">
+            <span>Senha</span>
+            <input id="passwordInput" type="password" autocomplete="current-password" required>
+          </label>
+          <button class="button primary" type="submit">Entrar</button>
+        </form>
+        <div class="inline-status" id="loginStatus" role="status"></div>
       </div>
     </section>
 
-    <section id="adminView" hidden>
-      <div class="dashboard-head">
-        <div><p class="admin-eyebrow">Ranking 2026</p><h1>Gerenciar ranking</h1><p>Atualize os dados e publique quando estiver pronto.</p></div>
-        <div class="dashboard-head-actions"><a class="btn btn-small" href="../ranking.html" target="_blank" rel="noopener">Ver ranking público</a><button class="btn btn-small" id="logoutBtn">Sair</button></div>
+    <section class="dashboard" id="dashboard" hidden>
+      <header class="admin-header">
+        <div class="brand-row">
+          <img src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live">
+          <div>
+            <p class="eyebrow">Ranking 2026</p>
+            <h1>Gerenciar ranking</h1>
+            <p>Atualize os dados e publique quando estiver pronto.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="version-badge" id="versionBadge">v—</span>
+          <button class="button ghost" id="logoutBtn" type="button">Sair</button>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <button class="button primary" id="openTournamentBtn" type="button">Registrar torneio</button>
+        <button class="button" id="addPlayerBtn" type="button">Adicionar jogador</button>
+        <button class="button" id="saveLocalBtn" type="button">Salvar rascunho</button>
+        <button class="button" id="exportBtn" type="button">Exportar</button>
+        <button class="button" id="importBtn" type="button">Importar</button>
+        <input id="importFileInput" type="file" accept="application/json,.json" hidden>
+        <button class="button ghost" id="discardDraftBtn" type="button">Descartar rascunho</button>
+        <div class="toolbar-spacer"></div>
+        <input id="playerSearch" class="search" type="search" placeholder="Buscar jogador">
       </div>
 
-      <div class="admin-grid">
-        <div class="admin-main">
-          <section class="admin-card players-panel">
-            <div class="panel-head"><div><p class="admin-eyebrow">Base atual</p><h2>Jogadores</h2></div><button class="btn btn-gold" id="roundBtn">Registrar torneio</button></div>
-            <div class="admin-toolbar">
-              <input class="search-field admin-search" id="playerSearch" type="search" placeholder="Buscar jogador">
-              <div class="admin-actions"><button class="btn btn-small" id="addPlayerBtn">+ Jogador</button><button class="btn btn-small" id="saveDraftBtn">Salvar rascunho</button><button class="btn btn-small danger-soft" id="discardDraftBtn">Descartar</button></div>
+      <div class="dashboard-grid">
+        <section class="panel ranking-editor-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Rascunho</p>
+              <h2>Jogadores</h2>
             </div>
-            <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Pos.</th><th>Nome</th><th>Pontos</th><th>Pres.</th><th>Fator</th><th>Final</th><th>Desempate</th><th></th></tr></thead><tbody id="adminRows"></tbody></table></div>
-            <div class="player-list" id="playerCards"></div>
+            <div class="draft-state" id="draftState">Sem alterações</div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="editor-table">
+              <thead>
+                <tr>
+                  <th>Jogador</th>
+                  <th>Pontos</th>
+                  <th>Presenças</th>
+                  <th>Fator</th>
+                  <th>Final</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="playersTableBody"></tbody>
+            </table>
+          </div>
+          <div class="mobile-player-list" id="mobilePlayerList"></div>
+
+          <div class="publish-bar">
+            <div>
+              <strong id="publishSummary">Nenhuma alteração pendente</strong>
+              <span id="publishSubline">O ranking publicado permanece inalterado.</span>
+            </div>
+            <button class="button primary publish-button" id="publishBtn" type="button">Publicar ranking</button>
+          </div>
+        </section>
+
+        <aside class="side-stack">
+          <section class="panel">
+            <div class="panel-head compact">
+              <div>
+                <p class="eyebrow">Prévia</p>
+                <h2>Top 10</h2>
+              </div>
+            </div>
+            <div class="top-list" id="topPreview"></div>
           </section>
 
-          <section class="publish-bar">
-            <div class="publish-copy"><span class="publish-status-dot"></span><div><div class="publish-title">Publicação</div><div class="publish-meta" id="draftMeta">Alterações ainda não publicadas</div></div></div>
-            <div class="admin-actions publish-actions"><button class="btn btn-small" id="exportBtn">Exportar</button><label class="btn btn-small" for="importInput">Importar</label><input id="importInput" type="file" accept="application/json" hidden><button class="btn btn-gold" id="publishBtn">Publicar ranking</button></div>
+          <section class="panel">
+            <div class="panel-head compact">
+              <div>
+                <p class="eyebrow">Frequência</p>
+                <h2>Modificadores</h2>
+              </div>
+              <button class="icon-button" id="addModifierBtn" type="button" aria-label="Adicionar modificador">+</button>
+            </div>
+            <p class="panel-note">0–9 presenças usam 1,0x. A maior faixa atingida passa a valer automaticamente.</p>
+            <div class="modifier-list" id="modifierList"></div>
+            <button class="text-button" id="resetModifiersBtn" type="button">Restaurar fatores publicados</button>
           </section>
-        </div>
 
-        <aside class="admin-side">
-          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Prévia</p><h3>Top 10</h3></div><a class="side-link" href="../ranking.html" target="_blank" rel="noopener">Abrir ↗</a></div><div class="preview-list" id="previewRows"></div></section>
-          <section class="admin-card side-card"><div class="admin-side-head"><div><p class="admin-eyebrow">Publicações</p><h3>Histórico</h3></div></div><div class="history-list" id="historyList"></div></section>
+          <section class="panel">
+            <div class="panel-head compact">
+              <div>
+                <p class="eyebrow">Publicações</p>
+                <h2>Histórico</h2>
+              </div>
+            </div>
+            <div class="history-list" id="historyList"></div>
+          </section>
         </aside>
       </div>
     </section>
   </main>
-</div>
 
-<dialog id="playerDialog"><form class="dialog-inner" id="addPlayerForm"><div class="dialog-heading"><p class="admin-eyebrow">Novo cadastro</p><h2>Adicionar jogador</h2></div><div class="dialog-grid two"><label>Nome<input class="admin-input" id="newPlayerName" required></label><label>Pontos atuais<input class="admin-input" id="newPlayerPoints" type="number" min="0" step="1" value="0"></label><label>Presenças atuais<input class="admin-input" id="newPlayerPresences" type="number" min="0" step="1" value="0"></label></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Adicionar</button></div></form></dialog>
-<dialog id="finishesDialog"><form class="dialog-inner" id="finishForm"><div class="dialog-heading"><p class="admin-eyebrow">Desempate</p><h2 id="finishTitle">Colocações</h2></div><p class="round-note">Use estes campos para preencher ou corrigir o histórico de colocações do jogador.</p><div class="finishes-grid" id="finishesGrid"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Salvar colocações</button></div></form></dialog>
-<dialog id="roundDialog"><form class="dialog-inner round-dialog-inner" id="roundForm"><div class="dialog-heading"><p class="admin-eyebrow">Pontuação</p><h2>Registrar torneio</h2></div><div class="round-tools"><label>Tipo<select class="admin-select" id="roundType"><option value="regular">Segunda / Quarta</option><option value="special">Domingo / Especial</option></select></label><label>Buscar jogador<input class="admin-input" id="roundSearch" type="search" placeholder="Filtrar jogadores"></label></div><p class="round-note">Marque presença. A colocação é opcional; sem colocação, o jogador recebe apenas o ponto de presença.</p><div class="round-list" id="roundList"></div><div class="dialog-actions"><button type="button" class="btn" data-close-dialog>Cancelar</button><button class="btn btn-gold" type="submit">Aplicar ao rascunho</button></div></form></dialog>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="../config.js"></script><script src="../assets/js/ranking-fallback.js"></script><script src="../assets/js/api.js"></script><script src="../assets/js/admin.js"></script>
-</body></html>
+  <dialog class="modal tournament-modal" id="tournamentModal">
+    <form method="dialog" class="modal-shell modal-wide" id="tournamentForm">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Rascunho</p>
+          <h2>Registrar torneio</h2>
+          <p>Marque presença e, quando houver, informe a colocação.</p>
+        </div>
+        <button class="icon-button close-modal" type="button" data-close-dialog="tournamentModal" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="tournament-grid">
+        <section class="tournament-entry">
+          <div class="tournament-settings">
+            <label class="field compact-field">
+              <span>Tipo de torneio</span>
+              <select id="tournamentType">
+                <option value="regular">Regular — Seg/Qua</option>
+                <option value="special">Especial — Domingo/Abertura</option>
+              </select>
+            </label>
+            <input class="search" id="tournamentSearch" type="search" placeholder="Buscar jogador">
+          </div>
+          <div class="participant-list" id="participantList"></div>
+        </section>
+
+        <aside class="live-preview-pane">
+          <div class="live-preview-sticky">
+            <p class="eyebrow">Em tempo real</p>
+            <h3>Como o ranking vai ficar</h3>
+            <div class="top-list preview-live" id="tournamentPreview"></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="modal-actions">
+        <button class="button ghost close-modal" type="button" data-close-dialog="tournamentModal">Cancelar</button>
+        <button class="button primary" id="applyTournamentBtn" type="button">Adicionar ao rascunho</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="playerModal">
+    <form method="dialog" class="modal-shell" id="playerForm">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Jogador</p>
+          <h2 id="playerModalTitle">Adicionar jogador</h2>
+        </div>
+        <button class="icon-button close-modal" type="button" data-close-dialog="playerModal" aria-label="Fechar">×</button>
+      </div>
+      <input type="hidden" id="playerIdInput">
+      <label class="field"><span>Nome</span><input id="playerNameInput" maxlength="100" required></label>
+      <div class="field-grid">
+        <label class="field"><span>Pontos</span><input id="playerPointsInput" type="number" min="0" step="0.1" value="0"></label>
+        <label class="field"><span>Presenças</span><input id="playerPresencesInput" type="number" min="0" step="1" value="0"></label>
+      </div>
+      <details class="finishes-details">
+        <summary>Colocações para desempate</summary>
+        <div class="finish-grid" id="finishInputs"></div>
+      </details>
+      <div class="modal-actions">
+        <button class="button ghost close-modal" type="button" data-close-dialog="playerModal">Cancelar</button>
+        <button class="button primary" id="savePlayerBtn" type="button">Salvar no rascunho</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal history-preview-modal" id="historyPreviewModal">
+    <div class="modal-shell modal-wide">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Histórico</p>
+          <h2 id="historyPreviewTitle">Visualizar publicação</h2>
+          <p id="historyPreviewMeta"></p>
+        </div>
+        <button class="icon-button close-modal" type="button" data-close-dialog="historyPreviewModal" aria-label="Fechar">×</button>
+      </div>
+      <div class="history-preview-grid">
+        <div>
+          <h3>Ranking</h3>
+          <div class="history-ranking" id="historyRankingPreview"></div>
+        </div>
+        <div>
+          <h3>Modificadores</h3>
+          <div class="history-modifiers" id="historyModifierPreview"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="button ghost close-modal" type="button" data-close-dialog="historyPreviewModal">Fechar</button>
+        <button class="button primary" id="restoreFromPreviewBtn" type="button">Restaurar esta versão</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="../config.js"></script>
+  <script src="../assets/js/admin.js"></script>
+</body>
+</html>
