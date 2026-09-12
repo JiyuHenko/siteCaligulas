@@ -317,6 +317,37 @@
     });
   }
 
+  async function setupHomeGalleryPreview() {
+    if (!document.body.classList.contains('home-page')) return;
+
+    const grid = $('.gallery-grid');
+    if (!grid) return;
+
+    const targets = $$('[data-lightbox]', grid).slice(0, 4);
+    if (targets.length < 4) return;
+
+    try {
+      const response = await fetch('galeria.html', { cache: 'no-cache' });
+      if (!response.ok) return;
+
+      const html = await response.text();
+      const galleryDocument = new DOMParser().parseFromString(html, 'text/html');
+      const sources = $$('.gallery-grid [data-lightbox]', galleryDocument).slice(0, 4);
+      if (sources.length < 4) return;
+
+      targets.forEach((target, index) => {
+        const source = sources[index];
+        ['src', 'srcset', 'sizes', 'width', 'height', 'alt', 'data-full'].forEach(attribute => {
+          const value = source.getAttribute(attribute);
+          if (value !== null) target.setAttribute(attribute, value);
+          else target.removeAttribute(attribute);
+        });
+      });
+    } catch (error) {
+      // Keep the static fallback if the gallery page cannot be read.
+    }
+  }
+
   function setupHomeRankingPreview() {
     const preview = $('#rankingPreview');
     if (!preview || !window.CaligulasAPI) return;
@@ -361,5 +392,6 @@
   setupReveal();
   setupMaps();
   setupLightbox();
+  setupHomeGalleryPreview();
   setupHomeRankingPreview();
 })();
