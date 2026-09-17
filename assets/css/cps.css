@@ -16,12 +16,21 @@
   outline-offset: 4px;
 }
 
+.cps-program-card .program-poster {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 4 / 5;
+  align-self: start;
+  background: #070706;
+}
+
 .cps-program-card .program-poster img {
-  transition: transform .42s ease, filter .42s ease;
+  object-fit: contain;
+  transition: filter .42s ease;
 }
 
 .cps-program-card:hover .program-poster img {
-  transform: scale(1.012);
   filter: brightness(.96);
 }
 
