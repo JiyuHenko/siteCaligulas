@@ -123,6 +123,76 @@
     window.addEventListener('resize', requestUpdate, { passive: true });
   }
 
+  function setupWhatsAppWelcome() {
+    if (!cfg.whatsappGroupUrl || !$('.site-header') || document.body.classList.contains('utility-page')) return;
+    if (typeof HTMLDialogElement === 'undefined' || typeof HTMLDialogElement.prototype.showModal !== 'function') return;
+
+    const sessionKey = 'caligulas:whatsapp-welcome:v1';
+    try {
+      if (sessionStorage.getItem(sessionKey)) return;
+    } catch (error) {
+      // The invitation still works when browser storage is unavailable.
+    }
+
+    const dialog = document.createElement('dialog');
+    dialog.className = 'whatsapp-welcome';
+    dialog.setAttribute('aria-label', 'Grupo oficial do Caligulas no WhatsApp');
+    dialog.innerHTML = `
+      <button class="whatsapp-welcome-close" type="button" aria-label="Fechar convite e continuar no site" autofocus>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+      </button>
+      <a class="whatsapp-welcome-link" href="${esc(cfg.whatsappGroupUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Entrar no grupo oficial do Caligulas no WhatsApp (abre em nova aba)"></a>
+    `;
+
+    const link = $('.whatsapp-welcome-link', dialog);
+    const poster = new Image(941, 1672);
+    poster.alt = 'Grupo oficial do Caligulas Poker Clube: torneios, novidades, promoções e informações do clube no WhatsApp.';
+    poster.decoding = 'async';
+    poster.fetchPriority = 'high';
+    link.appendChild(poster);
+    document.body.appendChild(dialog);
+
+    const close = () => {
+      if (dialog.open) dialog.close();
+    };
+
+    $('.whatsapp-welcome-close', dialog).addEventListener('click', close);
+    link.addEventListener('click', close);
+    link.addEventListener('auxclick', event => {
+      if (event.button === 1) close();
+    });
+
+    let pressedBackdrop = false;
+    dialog.addEventListener('pointerdown', event => {
+      pressedBackdrop = event.target === dialog;
+    });
+    dialog.addEventListener('click', event => {
+      if (pressedBackdrop && event.target === dialog) close();
+    });
+    dialog.addEventListener('close', () => {
+      document.documentElement.classList.remove('whatsapp-welcome-open');
+      dialog.remove();
+    }, { once: true });
+
+    poster.addEventListener('load', () => {
+      // Do not cover a menu or another dialog opened while the image was loading.
+      if ($('dialog[open], .lightbox.open') || document.body.classList.contains('menu-open')) {
+        dialog.remove();
+        return;
+      }
+      dialog.showModal();
+      document.documentElement.classList.add('whatsapp-welcome-open');
+      try {
+        sessionStorage.setItem(sessionKey, '1');
+      } catch (error) {
+        // Closing and following the link never depend on storage permissions.
+      }
+    }, { once: true });
+    poster.addEventListener('error', () => dialog.remove(), { once: true });
+    // Only open once the image is ready; a failed download must not block the site.
+    poster.src = 'assets/img/promo/whatsapp-group.webp';
+  }
+
   function setupNavigation() {
     const header = $('.site-header');
     const menuButton = $('#menuBtn');
@@ -392,6 +462,7 @@
   setupReveal();
   setupMaps();
   setupLightbox();
+  setupWhatsAppWelcome();
   setupHomeGalleryPreview();
   setupHomeRankingPreview();
 })();

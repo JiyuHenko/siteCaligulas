@@ -3,6 +3,7 @@ window.CALIGULAS_CONFIG = Object.freeze({
   instagram: "https://www.instagram.com/caligulaspokerlive/",
   whatsappNumber: "5535988369317",
   whatsappMessage: "Olá! Vim pelo site do Caligulas Poker Live.",
+  whatsappGroupUrl: "https://chat.whatsapp.com/JnfI0OYAKHRBIPIikinFRh?s=sw&p=i&mlu=4&ilr=4",
   email: "caligulaspoker@hotmail.com",
   address: "Av. Comendador Francisco Avelino Maia, 3427 — Centro, Passos/MG",
   mapsQuery: "Av. Comendador Francisco Avelino Maia, 3427, Passos, MG",
