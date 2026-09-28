@@ -245,3 +245,84 @@ figure { margin: 0; min-width: 0; }
   color: var(--muted-2);
   font-size: .66rem;
 }
+
+/* Welcome invitation: keep the entire portrait visible, including its own CTA. */
+html.whatsapp-welcome-open,
+html.whatsapp-welcome-open body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.whatsapp-welcome {
+  --poster-space: calc(100vh - 96px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  inset: 0;
+  width: min(440px, calc(100vw - 32px), calc(var(--poster-space) * 941 / 1672));
+  max-width: calc(100% - 32px);
+  max-height: none;
+  margin: auto;
+  padding: 52px 0 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  overflow: visible;
+}
+@supports (height: 100svh) {
+  .whatsapp-welcome {
+    --poster-space: calc(100svh - 96px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+.whatsapp-welcome::backdrop {
+  background: rgba(0, 0, 0, .78);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.whatsapp-welcome-link {
+  display: block;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(226, 201, 133, .3), 0 24px 80px rgba(0, 0, 0, .6);
+  -webkit-tap-highlight-color: transparent;
+}
+.whatsapp-welcome-link img {
+  width: 100%;
+  height: auto;
+}
+.whatsapp-welcome-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  padding: 11px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 50%;
+  background: #15130f;
+  color: #fff;
+  cursor: pointer;
+}
+.whatsapp-welcome-close svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.whatsapp-welcome-close:hover {
+  background: #292319;
+  border-color: var(--gold-soft);
+}
+.whatsapp-welcome-close:focus-visible,
+.whatsapp-welcome-link:focus-visible {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .whatsapp-welcome[open] { animation: whatsapp-welcome-in .22s ease-out; }
+  @keyframes whatsapp-welcome-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
