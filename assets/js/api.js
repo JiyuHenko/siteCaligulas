@@ -102,6 +102,8 @@
     const raw=String(value).trim();
     const iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
     if(iso)return iso[3]+"/"+iso[2]+"/"+iso[1];
+    const brazilian=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw);
+    if(brazilian)return raw;
     const verbose=/^(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{4})\b/i.exec(raw);
     if(verbose){
       const months=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
