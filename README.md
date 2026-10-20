@@ -45,3 +45,22 @@ O convite abre na primeira página pública acessada, uma vez por sessão da aba
 - Comportamento: `setupWhatsAppWelcome()` em `assets/js/site.js`; estilos `.whatsapp-welcome` em `assets/css/styles.css`.
 - A imagem inteira abre o grupo em nova aba; o X, o fundo e a tecla Esc fecham o convite. O diálogo nativo mantém o foco de teclado no popup e impede interação com o conteúdo atrás dele.
 - Se a imagem falhar ou o navegador não oferecer suporte ao diálogo, o site continua acessível. Sem acesso ao armazenamento da sessão, o convite continua funcionando, mas pode reaparecer ao trocar de página.
+
+## Ranking 2026/27
+
+O ranking usa o site estático como frontend e um Google Apps Script + Google Sheets como backend.
+
+A versão 2026/27 acrescenta:
+
+- fórmula geral `(pontos × fator) + presenças + bônus`;
+- bônus acumulado fora do multiplicador;
+- fatores de frequência a partir de 15, 21, 27, 33, 41 e 46 presenças;
+- acordos com colocação repetida no mesmo torneio;
+- ranking mensal por etapas entre os domingos especiais;
+- controle de 100% de presença para o bônus mensal;
+- histórico v4 com estado da etapa mensal.
+
+A implantação exige atualizar o Apps Script antes de publicar esta branch em produção. A migração é feita por `migrateV3ToV4()` e preserva os jogadores e o histórico existentes. **Não use `resetAllData()` durante a migração.**
+
+Veja `docs/apps-script-ranking-v4.md` para o procedimento.
+

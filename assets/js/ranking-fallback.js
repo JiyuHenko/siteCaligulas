@@ -2,16 +2,25 @@ window.CALIGULAS_RANKING_FALLBACK = {
   version: 1,
   updatedAt: null,
   source: "local-fallback",
-  rows: [
-    {id:"p001",name:"Juliano Fiorelin",points:164,presences:33,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p002",name:"Rafael Valentim",points:155,presences:33,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p003",name:"João Enryque",points:144,presences:32,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p004",name:"Danilo Morinaga",points:116,presences:29,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p005",name:"Schesley",points:84,presences:24,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p006",name:"José Granha",points:90,presences:22,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p007",name:"Guilherme Glória",points:85,presences:14,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p008",name:"Henrique Emídio",points:57,presences:16,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p009",name:"Marcio Alves",points:51,presences:19,finishes:[0,0,0,0,0,0,0,0,0]},
-    {id:"p010",name:"Jefinho",points:47,presences:10,finishes:[0,0,0,0,0,0,0,0,0]}
-  ]
+  modifiers: [
+    {minPresences:15,factor:1.1},
+    {minPresences:21,factor:1.2},
+    {minPresences:27,factor:1.3},
+    {minPresences:33,factor:1.4},
+    {minPresences:41,factor:1.5},
+    {minPresences:46,factor:2.0}
+  ],
+  rows: [],
+  monthly: {
+    stage: {
+      id: "2026-10-11",
+      label: "Etapa 1",
+      start: "2026-10-11",
+      end: "2026-11-14"
+    },
+    tournamentCount: 0,
+    finalized: false,
+    bonusRecipients: [],
+    rows: []
+  }
 };
