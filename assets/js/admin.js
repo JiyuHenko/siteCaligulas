@@ -574,6 +574,144 @@
   async function deleteHistory(id) { const item = state.history.find(history => history.id === id); if (!confirm(`Excluir definitivamente a versão ${item?.version ?? ''} do histórico?`)) return; try { const data = await api({ action: 'deleteHistory', token: state.token, historyId: id }); state.history = data.history || []; renderHistory(); toast('Histórico excluído.'); } catch (error) { handleApiError(error); } }
   function discardDraft() { if (hasDraftChanges() && !confirm('Descartar todas as alterações do rascunho?')) return; state.draftRows = clone(state.publishedRows); state.draftModifiers = clone(state.publishedModifiers); state.draftMonthlyState = clone(state.publishedMonthlyState); clearLocalDraft(); renderAll(); }
 
+  function activateManagementTab(tab) {
+    if (!['players','tournaments','stages'].includes(tab)) return;
+    activeManagementTab = tab;
+    $('#playersDashboard').hidden = tab !== 'players';
+    $('#tournamentsDashboard').hidden = tab !== 'tournaments';
+    $('#stagesDashboard').hidden = tab !== 'stages';
+    $('[data-admin-tab]').forEach(button => {
+      const active = button.dataset.adminTab === tab;
+      button.classList.toggle('is-active', active);
+      if (active) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+  }
+
+  function renderTournamentStages(preferred = null) {
+    const date = $('#tournamentDate').value;
+    const candidate = state.stages.find(stage => date >= stage.start && date <= stage.end);
+    const selected = preferred || candidate?.id || state.draftMonthlyState?.stageId || state.stages[0]?.id;
+    $('#tournamentStage').innerHTML = state.stages.map(stage =>
+      '<option value="' + esc(stage.id) + '"' + (stage.id === selected ? ' selected' : '') + '>' +
+      esc(stage.label) + ' · ' + fmtDateOnly(stage.start) + '–' + fmtDateOnly(stage.end) +
+      '</option>'
+    ).join('');
+    toggleTournamentMonthly();
+  }
+
+  function toggleTournamentMonthly() {
+    const enabled = $('#tournamentMonthly').checked;
+    $('#monthlyStageField').hidden = !enabled;
+    $('#tournamentStage').disabled = !enabled;
+    renderTournamentPreview();
+  }
+
+  function renderTournamentRecords() {
+    const root = $('#tournamentRecordList');
+    if (!root) return;
+    const events = Array.isArray(state.tournaments) ? state.tournaments : [];
+    root.innerHTML = events.map(item => {
+      const stage = state.stages.find(s => s.id === item.stageId);
+      const badges = [
+        item.applyGeneral ? '<span class="record-tag">Geral</span>' : '<span class="record-tag record-tag-muted">Fora do geral</span>',
+        item.applyMonthly ? '<span class="record-tag monthly">' + esc(stage?.label || item.stageId) + '</span>' : '<span class="record-tag record-tag-muted">Fora do mensal</span>'
+      ].join('');
+      return '<article class="tournament-record">' +
+        '<div class="tournament-record-copy"><strong>' + esc(item.name || (item.type === 'special' ? 'Especial' : 'Regular')) + '</strong>' +
+        '<span>' + fmtDateOnly(item.date) + ' · ' + item.entries.length + ' participante' + (item.entries.length === 1 ? '' : 's') + '</span>' +
+        '<div class="record-badges">' + badges + '</div></div>' +
+        '<div class="tournament-record-actions">' +
+        '<button class="mini-button" type="button" data-tournament-edit="' + esc(item.id) + '">Editar</button>' +
+        '<button class="mini-button danger" type="button" data-tournament-delete="' + esc(item.id) + '">Excluir</button>' +
+        '</div></article>';
+    }).join('') || '<div class="empty-state">Nenhum torneio cadastrado nesta versão. Registros antigos que já somaram no geral devem ser lançados somente no mensal para evitar pontuação duplicada.</div>';
+  }
+
+  function renderStageEditor() {
+    const list = $('#stageEditorList');
+    if (!list) return;
+    list.innerHTML = (state.stages || []).map(item => stageEditorMarkup(item)).join('');
+    const index = state.stages.findIndex(st => st.id === state.draftMonthlyState?.stageId);
+    const hasNext = index >= 0 && index < state.stages.length - 1;
+    const button = $('#advanceStageBtn');
+    button.disabled = !hasNext || !state.draftMonthlyState?.finalized;
+    button.textContent = hasNext ? 'Ativar ' + state.stages[index + 1].label : 'Última etapa';
+  }
+
+  function stageEditorMarkup(item) {
+    return '<div class="stage-editor-row" data-stage-row="' + esc(item.id) + '">' +
+      '<label class="field"><span>Nome da etapa</span><input data-stage-name maxlength="80" value="' + esc(item.label) + '" required></label>' +
+      '<label class="field"><span>Início</span><input type="date" data-stage-start value="' + esc(item.start) + '" required></label>' +
+      '<label class="field"><span>Fim</span><input type="date" data-stage-end value="' + esc(item.end) + '" required></label>' +
+      '<button type="button" class="mini-button danger" data-stage-remove="' + esc(item.id) + '" aria-label="Remover etapa">Remover</button>' +
+      '</div>';
+  }
+
+  function addStageEditorRow() {
+    const rows = $('[data-stage-row]');
+    const last = rows[rows.length - 1];
+    const start = last?.querySelector('[data-stage-end]')?.value || '2027-04-12';
+    const date = new Date(start + 'T12:00:00Z');
+    date.setUTCDate(date.getUTCDate() + 1);
+    const key = date.toISOString().slice(0,10);
+    if (rows.some(row => row.dataset.stageRow === key)) return toast('Já existe uma etapa com esta data de identificação.', 'error');
+    $('#stageEditorList').insertAdjacentHTML('beforeend', stageEditorMarkup({
+      id: key, label: 'Etapa ' + (rows.length + 1), start: key, end: key
+    }));
+  }
+
+  function removeStageEditorRow(id) {
+    if (id === state.draftMonthlyState?.stageId) return toast('Não é possível remover a etapa atual.', 'error');
+    const activeEvents = state.tournaments.some(t => t.applyMonthly && t.stageId === id);
+    if (activeEvents) return toast('Esta etapa possui torneios vinculados.', 'error');
+    const row = $('[data-stage-row]').find(element => element.dataset.stageRow === id);
+    row?.remove();
+  }
+
+  function readEditedStages() {
+    return $('[data-stage-row]').map(row => ({
+      id: row.dataset.stageRow,
+      label: row.querySelector('[data-stage-name]').value.trim(),
+      start: row.querySelector('[data-stage-start]').value,
+      end: row.querySelector('[data-stage-end]').value
+    }));
+  }
+
+  async function saveMonthlyStages() {
+    if (hasDraftChanges()) return toast('Publique ou descarte o rascunho dos jogadores antes de salvar etapas.', 'error');
+    const stages = readEditedStages();
+    if (!stages.length || stages.some(x => !x.label || !x.start || !x.end)) return toast('Preencha as datas e nomes das etapas.', 'error');
+    if (!confirm('Salvar os períodos das etapas? Os torneios existentes continuarão associados à etapa que foi selecionada no cadastro.')) return;
+    const button = $('#saveStagesBtn'); button.disabled = true;
+    try {
+      const data = await api({action:'saveStages',token:state.token,baseVersion:state.version,stages});
+      absorbPublished(data); toast('Etapas atualizadas.');
+    } catch (error) { handleApiError(error); }
+    finally { button.disabled = false; }
+  }
+
+  async function deleteSavedTournament(id) {
+    const record = state.tournaments.find(item => item.id === id);
+    if (!record) return;
+    if (hasDraftChanges()) return toast('Publique ou descarte o rascunho dos jogadores antes de excluir torneios.', 'error');
+    if (!confirm('Excluir o torneio de ' + fmtDateOnly(record.date) + '? Os pontos que ele lançou serão revertidos automaticamente.')) return;
+    try {
+      const data = await api({action:'deleteTournament',token:state.token,baseVersion:state.version,tournamentId:id});
+      absorbPublished(data); activateManagementTab('tournaments'); toast('Torneio removido, pontuação recalculada.');
+    } catch (error) { handleApiError(error); }
+  }
+
+  async function advanceMonthlyStage() {
+    if (hasDraftChanges()) return toast('Publique ou descarte o rascunho antes de avançar.', 'error');
+    if (!state.draftMonthlyState.finalized) return toast('Finalize a etapa atual e publique antes de avançar.', 'error');
+    if (!confirm('Ativar a próxima etapa? A pontuação mensal da etapa anterior será zerada e torneios já registrados para a próxima serão aplicados. O geral será preservado.')) return;
+    try {
+      const data = await api({action:'advanceStage',token:state.token,baseVersion:state.version});
+      absorbPublished(data); activateManagementTab('stages'); toast('Próxima etapa ativada.');
+    } catch (error) { handleApiError(error); }
+  }
+
   function bindEvents() {
     $('#historyPagination').addEventListener('click', event => {
       const target = event.target.closest('[data-history-page]');
