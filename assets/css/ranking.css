@@ -25,7 +25,7 @@
 .podium-card .player { margin-top: 8px; font-family: 'Cinzel', serif; font-size: 1.22rem; }
 .podium-card .points { margin-top: 18px; color: var(--gold-soft); font-family: 'Cinzel', serif; font-size: 2rem; }
 .podium-card .sub { margin-top: 5px; color: var(--muted); font-size: .7rem; }
-.ranking-tools { display: flex; flex-direction: column; gap: 9px; }
+.ranking-tools { display: flex; flex-direction: column; gap: 9px; margin-bottom: 24px; }
 .ranking-mobile { display: grid; gap: 8px; }
 .rank-row-mobile {
   padding: 15px;
@@ -138,16 +138,6 @@
   color:#080705;
 }
 [data-ranking-panel][hidden]{display:none!important}
-.ranking-formula-note{
-  margin:18px 0 0;
-  padding:14px 16px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  color:var(--muted);
-  font-size:.82rem;
-  line-height:1.6;
-}
-.ranking-formula-note strong{color:var(--text)}
 .monthly-stage-card{
   display:flex;
   align-items:center;

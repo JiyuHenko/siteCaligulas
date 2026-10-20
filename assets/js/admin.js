@@ -43,6 +43,8 @@
   };
 
   let tournamentEntries = new Map();
+  const HISTORY_PAGE_SIZE = 5;
+  let historyPage = 1;
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const round1 = value => Math.round((Number(value) || 0) * 10) / 10;
@@ -224,7 +226,7 @@
     state.publishedModifiers = normalizeModifiers(incomingModifiers);
     state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers);
     state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {});
-    state.history = Array.isArray(data.history) ? data.history : [];
+    state.history = Array.isArray(data.history) ? data.history : []; historyPage = 1;
 
     const saved = readLocalDraft();
     if (saved && saved.baseVersion === state.version) {
@@ -327,7 +329,32 @@
 
   function renderHistory() {
     const list = $('#historyList');
-    list.innerHTML = state.history.map(item => `<article class="history-item"><div><strong>Versão ${item.version}</strong><span>${fmtDate(item.createdAt)} · ${item.total} jogador${item.total === 1 ? '' : 'es'}${item.restorable === false ? ' · legado v3' : ''}</span></div><div class="history-actions"><button class="mini-button" data-preview-history="${esc(item.id)}" type="button">Visualizar</button>${item.restorable === false ? '' : `<button class="mini-button warning" data-restore-history="${esc(item.id)}" type="button">Restaurar</button>`}<button class="mini-button danger" data-delete-history="${esc(item.id)}" type="button">Excluir</button></div></article>`).join('') || '<div class="empty-state">Nenhuma publicação anterior.</div>';
+    const pager = $('#historyPagination');
+    const items = Array.isArray(state.history) ? state.history : [];
+    const pageCount = Math.max(1, Math.ceil(items.length / HISTORY_PAGE_SIZE));
+    historyPage = Math.min(Math.max(1, historyPage), pageCount);
+
+    const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+    list.innerHTML = items.slice(start, start + HISTORY_PAGE_SIZE).map(item => `
+      <article class="history-item">
+        <div>
+          <strong>Versão ${item.version}</strong>
+          <span>${fmtDate(item.createdAt)} · ${item.total} jogador${item.total === 1 ? '' : 'es'}${item.restorable === false ? ' · legado v3' : ''}</span>
+        </div>
+        <div class="history-actions">
+          <button class="mini-button" data-preview-history="${esc(item.id)}" type="button">Visualizar</button>
+          ${item.restorable === false ? '' : `<button class="mini-button warning" data-restore-history="${esc(item.id)}" type="button">Restaurar</button>`}
+          <button class="mini-button danger" data-delete-history="${esc(item.id)}" type="button">Excluir</button>
+        </div>
+      </article>
+    `).join('') || '<div class="empty-state">Nenhuma publicação anterior.</div>';
+
+    pager.hidden = pageCount <= 1;
+    pager.innerHTML = pageCount <= 1 ? '' : `
+      <button class="mini-button" data-history-page="${historyPage - 1}" type="button" ${historyPage === 1 ? 'disabled' : ''} aria-label="Página anterior do histórico">Anterior</button>
+      <span class="history-page-label" role="status">Página ${historyPage} de ${pageCount}</span>
+      <button class="mini-button" data-history-page="${historyPage + 1}" type="button" ${historyPage === pageCount ? 'disabled' : ''} aria-label="Próxima página do histórico">Próxima</button>
+    `;
   }
 
   function renderMonthlyStatePanel() {
@@ -472,7 +499,7 @@
     state.publishedModifiers = normalizeModifiers(Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS); state.draftModifiers = clone(state.publishedModifiers);
     state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers); state.draftRows = clone(state.publishedRows);
     state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {}); state.draftMonthlyState = clone(state.publishedMonthlyState);
-    state.history = data.history || []; clearLocalDraft(); renderAll();
+    state.history = data.history || []; historyPage = 1; clearLocalDraft(); renderAll();
   }
 
   async function publishDraft() {
@@ -503,6 +530,14 @@
   function discardDraft() { if (hasDraftChanges() && !confirm('Descartar todas as alterações do rascunho?')) return; state.draftRows = clone(state.publishedRows); state.draftModifiers = clone(state.publishedModifiers); state.draftMonthlyState = clone(state.publishedMonthlyState); clearLocalDraft(); renderAll(); }
 
   function bindEvents() {
+    $('#historyPagination').addEventListener('click', event => {
+      const target = event.target.closest('[data-history-page]');
+      if (!target || target.disabled) return;
+      const next = Number(target.dataset.historyPage);
+      if (!Number.isInteger(next) || next < 1) return;
+      historyPage = next;
+      renderHistory();
+    });
     $('#loginForm').addEventListener('submit', async event => { event.preventDefault(); const status = $('#loginStatus'); status.textContent = 'Entrando...'; try { await login($('#passwordInput').value); status.textContent = ''; } catch (error) { status.textContent = error.message || 'Não foi possível entrar.'; } });
     $('#logoutBtn').addEventListener('click', () => logout()); $('#openTournamentBtn').addEventListener('click', openTournamentModal); $('#addPlayerBtn').addEventListener('click', () => openPlayerModal()); $('#savePlayerBtn').addEventListener('click', savePlayerFromModal);
     $('#saveLocalBtn').addEventListener('click', saveLocalDraft); $('#exportBtn').addEventListener('click', exportDraft); $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
