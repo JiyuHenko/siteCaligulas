@@ -413,7 +413,7 @@
     state.draftRows = calculateRows(state.draftRows, state.draftModifiers); $('#playerModal').close(); renderAll();
   }
 
-  function deletePlayer(id) { const row = state.draftRows.find(item => item.id === id); if (!row) return; if (!confirm(`Excluir ${row.name} do rascunho?`)) return; state.draftRows = state.draftRows.filter(item => item.id !== id); renderAll(); }
+  function deletePlayer(id) { const row = state.draftRows.find(item => item.id === id); if (!row) return; if (state.tournaments.some(event => event.entries.some(entry => entry.playerId === id))) return toast('Jogador vinculado a torneios registrados. Edite ou remova esses torneios antes.', 'error'); if (!confirm(`Excluir ${row.name} do rascunho?`)) return; state.draftRows = state.draftRows.filter(item => item.id !== id); renderAll(); }
   function revertPlayer(id) { const baseline = state.publishedRows.find(item => item.id === id); if (baseline) { const index = state.draftRows.findIndex(item => item.id === id); if (index >= 0) state.draftRows[index] = clone(baseline); else state.draftRows.push(clone(baseline)); } else state.draftRows = state.draftRows.filter(item => item.id !== id); state.draftRows = calculateRows(state.draftRows, state.draftModifiers); renderAll(); toast('Modificação removida.'); }
 
   function openTournamentModal(eventRecord = null) {
@@ -445,23 +445,6 @@
 
   function tournamentInputState() {
     return Array.from(tournamentEntries.entries()).map(([id, entry]) => ({ id, presence: Boolean(entry.presence || entry.placement), placement: entry.placement ? Number(entry.placement) : null })).filter(entry => entry.presence || entry.placement);
-  }
-
-  function prepareStageForTournament(date, mutate = false) {
-    const target = stageForDate(date); if (!target) throw new Error('A data informada está fora do período do ranking 2026/27.');
-    const rows = clone(state.draftRows); const monthlyState = clone(state.draftMonthlyState);
-    if (monthlyState.stageId !== target.id) {
-      if (!monthlyState.finalized) throw new Error('Finalize e publique a etapa mensal anterior antes de registrar um torneio da próxima etapa.');
-      if (state.publishedMonthlyState?.stageId === monthlyState.stageId && !state.publishedMonthlyState?.finalized) {
-        throw new Error('A etapa foi finalizada apenas no rascunho. Publique a finalização antes de iniciar a próxima etapa.');
-      }
-      const currentIndex = stageIndex(monthlyState.stageId); const targetIndex = stageIndex(target.id);
-      if (targetIndex !== currentIndex + 1) throw new Error('A troca de etapa deve acontecer em sequência. Revise a data do torneio.');
-      rows.forEach(row => { row.monthlyPoints = 0; row.monthlyPresences = 0; row.monthlyFinalPoints = 0; row.monthlyFinishes = cleanFinishes(); });
-      monthlyState.stageId = target.id; monthlyState.tournamentCount = 0; monthlyState.finalized = false; monthlyState.bonusRecipients = []; monthlyState.bonusAwardedAt = null;
-    } else if (monthlyState.finalized) throw new Error('Esta etapa já foi finalizada. Registre o próximo torneio na etapa seguinte.');
-    if (mutate) { state.draftRows = rows; state.draftMonthlyState = monthlyState; }
-    return { rows, monthlyState, target };
   }
 
   function renderTournamentPreview() {
