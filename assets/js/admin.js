@@ -560,6 +560,7 @@
   function activateManagementTab(tab) {
     if (!['players','tournaments','stages'].includes(tab)) return;
     activeManagementTab = tab;
+    $('#adminToolbar').hidden = tab !== 'players';
     $('#playersDashboard').hidden = tab !== 'players';
     $('#tournamentsDashboard').hidden = tab !== 'tournaments';
     $('#stagesDashboard').hidden = tab !== 'stages';
