@@ -8,7 +8,7 @@ Esta atualização requer **frontend e Google Apps Script v5 juntos**. Não faç
 2. Substitua o `Code.gs` pelo arquivo `Caligulas_Ranking_v5_Code.gs` entregue na conversa.
 3. Salve e execute **`migrateV4ToV5()` uma única vez**.
 4. Verifique que `PUBLICADO`, `HISTORICO`, `META` e `MODIFICADORES` continuam preenchidos.
-5. Confira as novas abas `TORNEIOS` e `ETAPAS`. A aba `HISTORICO_PARTES` é criada quando necessário para guardar históricos grandes.
+5. Confira as novas abas `TORNEIOS` e `ETAPAS`. Confira também a nova aba `HISTORICO_PARTES`, usada para guardar históricos grandes em partes.
 6. Edite a **implantação Web App existente** (Gerenciar implantações → Editar → Nova versão → Implantar). Não crie um endpoint diferente sem atualizar o `config.js`.
 7. Verifique `?action=health` → `schemaVersion: 5`.
 8. Apenas então faça merge da branch `feat/tournaments-monthly-management` na `main`.
