@@ -96,7 +96,24 @@
   }
   function fmt(n){return new Intl.NumberFormat("pt-BR",{maximumFractionDigits:1}).format(Number(n)||0)}
   function fmtDate(s){if(!s)return "—";try{return new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short"}).format(new Date(s))}catch{return s}}
-  function fmtDateOnly(s){if(!s)return "—";try{return new Intl.DateTimeFormat("pt-BR",{timeZone:"UTC"}).format(new Date(`${s}T12:00:00Z`))}catch{return s}}
+  // Date cells from Google Sheets can be serialized as verbose JavaScript dates.
+  function fmtDateOnly(value){
+    if(!value)return "—";
+    const raw=String(value).trim();
+    const iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+    if(iso)return iso[3]+"/"+iso[2]+"/"+iso[1];
+    const brazilian=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw);
+    if(brazilian)return raw;
+    const verbose=/^(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{4})\b/i.exec(raw);
+    if(verbose){
+      const months=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+      return String(Number(verbose[2])).padStart(2,"0")+"/"+String(months.indexOf(verbose[1].toLowerCase())+1).padStart(2,"0")+"/"+verbose[3];
+    }
+    const date=new Date(value);
+    return Number.isFinite(date.getTime())
+      ?new Intl.DateTimeFormat("pt-BR",{timeZone:"America/Sao_Paulo",day:"2-digit",month:"2-digit",year:"numeric"}).format(date)
+      :"—";
+  }
 
   window.CaligulasAPI={configured,normalizeModifiers,factorFor,cleanFinishes,compute,compareRows,normalizeRows,normalizeMonthly,pointsFor,tieSummary,getRanking,post,fmt,fmtDate,fmtDateOnly,REGULAR,SPECIAL,DEFAULT_MODIFIERS};
 })();

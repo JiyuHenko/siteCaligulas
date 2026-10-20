@@ -64,11 +64,46 @@
     return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
   }
 
+  // Apps Script/Sheets may return calendar dates as ISO strings, Date objects
+  // or "Sun Oct 11 2026 00:00:00 GMT-0300 (Horário Padrão de Brasília)".
+  // Keep an ISO calendar key for comparisons and inputs (without timezone drift).
+  function dateKey(value) {
+    if (value === null || value === undefined || value === '') return '';
+    const raw = String(value).trim();
+    let year, month, day;
+    let match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T|\s)/.exec(raw);
+    if (match) {
+      year = Number(match[1]); month = Number(match[2]); day = Number(match[3]);
+    } else if ((match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw))) {
+      day = Number(match[1]); month = Number(match[2]); year = Number(match[3]);
+    } else if ((match = /^(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{4})\b/i.exec(raw))) {
+      const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+      year = Number(match[3]); month = months.indexOf(match[1].toLowerCase()) + 1; day = Number(match[2]);
+    } else {
+      const parsed = new Date(value);
+      if (!Number.isFinite(parsed.getTime())) return '';
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(parsed);
+      const part = type => Number(parts.find(item => item.type === type)?.value);
+      year = part('year'); month = part('month'); day = part('day');
+    }
+    const check = new Date(Date.UTC(year, month - 1, day));
+    if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return '';
+    return [year, String(month).padStart(2, '0'), String(day).padStart(2, '0')].join('-');
+  }
+
   function fmtDateOnly(value) {
-    if (!value) return '—';
-    const [year, month, day] = String(value).split('-').map(Number);
-    if (!year || !month || !day) return String(value);
-    return new Intl.DateTimeFormat('pt-BR').format(new Date(year, month - 1, day));
+    const key = dateKey(value);
+    return key ? key.slice(8, 10) + '/' + key.slice(5, 7) + '/' + key.slice(0, 4) : '—';
+  }
+
+  function normalizeStages(value) {
+    return (Array.isArray(value) ? value : MONTHLY_STAGES).map(stage => ({
+      ...stage,
+      start: dateKey(stage.start),
+      end: dateKey(stage.end)
+    }));
   }
 
   function localDateKey() {
@@ -231,7 +266,7 @@
     state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers);
     state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {});
     state.history = Array.isArray(data.history) ? data.history : []; historyPage = 1;
-    state.stages = Array.isArray(data.stages) ? data.stages : MONTHLY_STAGES;
+    state.stages = normalizeStages(data.stages);
     MONTHLY_STAGES = clone(state.stages);
     state.tournaments = Array.isArray(data.tournaments) ? data.tournaments : [];
 
@@ -524,7 +559,7 @@
     state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers); state.draftRows = clone(state.publishedRows);
     state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {}); state.draftMonthlyState = clone(state.publishedMonthlyState);
     state.history = data.history || []; historyPage = 1;
-    state.stages = Array.isArray(data.stages) ? data.stages : MONTHLY_STAGES;
+    state.stages = normalizeStages(data.stages);
     MONTHLY_STAGES = clone(state.stages);
     state.tournaments = Array.isArray(data.tournaments) ? data.tournaments : [];
     clearLocalDraft(); renderAll();
