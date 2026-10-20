@@ -217,6 +217,7 @@
 
   async function loadAdminState() {
     const data = await api({ action: 'adminState', token: state.token });
+    if (Number(data.schemaVersion || 0) < 4) throw new Error('Backend ainda está na v3. Atualize o Apps Script e execute migrateV3ToV4() antes de usar este painel.');
     state.version = Number(data.version) || 1;
     state.updatedAt = data.updatedAt || null;
     const incomingModifiers = Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS;
