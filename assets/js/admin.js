@@ -405,6 +405,9 @@
     const rows = clone(state.draftRows); const monthlyState = clone(state.draftMonthlyState);
     if (monthlyState.stageId !== target.id) {
       if (!monthlyState.finalized) throw new Error('Finalize e publique a etapa mensal anterior antes de registrar um torneio da próxima etapa.');
+      if (state.publishedMonthlyState?.stageId === monthlyState.stageId && !state.publishedMonthlyState?.finalized) {
+        throw new Error('A etapa foi finalizada apenas no rascunho. Publique a finalização antes de iniciar a próxima etapa.');
+      }
       const currentIndex = stageIndex(monthlyState.stageId); const targetIndex = stageIndex(target.id);
       if (targetIndex !== currentIndex + 1) throw new Error('A troca de etapa deve acontecer em sequência. Revise a data do torneio.');
       rows.forEach(row => { row.monthlyPoints = 0; row.monthlyPresences = 0; row.monthlyFinalPoints = 0; row.monthlyFinishes = cleanFinishes(); });
