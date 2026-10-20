@@ -33,11 +33,16 @@
         <div class="header-actions"><span class="version-badge" id="versionBadge">v—</span><button class="button ghost" id="logoutBtn" type="button">Sair</button></div>
       </header>
 
-      <div class="toolbar">
+      <div class="toolbar" id="adminToolbar">
         <button class="button primary" id="openTournamentBtn" type="button">Registrar torneio</button><button class="button" id="addPlayerBtn" type="button">Adicionar jogador</button><button class="button" id="saveLocalBtn" type="button">Salvar rascunho</button><button class="button" id="exportBtn" type="button">Exportar</button><button class="button" id="importBtn" type="button">Importar</button><input id="importFileInput" type="file" accept="application/json,.json" hidden><button class="button ghost" id="discardDraftBtn" type="button">Descartar rascunho</button><div class="toolbar-spacer"></div><input id="playerSearch" class="search" type="search" placeholder="Buscar jogador">
       </div>
 
-      <div class="dashboard-grid">
+      <nav class="management-tabs" id="managementTabs" aria-label="Seções do painel">
+        <button type="button" class="management-tab is-active" data-admin-tab="players" aria-current="page">Jogadores</button>
+        <button type="button" class="management-tab" data-admin-tab="tournaments">Torneios</button>
+        <button type="button" class="management-tab" data-admin-tab="stages">Etapas mensais</button>
+      </nav>
+      <div class="dashboard-grid" id="playersDashboard">
         <section class="panel ranking-editor-panel">
           <div class="panel-head"><div><p class="eyebrow">Rascunho</p><h2>Jogadores</h2></div><div class="draft-state" id="draftState">Sem alterações</div></div>
           <div class="table-wrap"><table class="editor-table"><thead><tr><th>Jogador</th><th>Pontos</th><th>Presenças</th><th>Fator</th><th>Bônus</th><th>Final</th><th></th></tr></thead><tbody id="playersTableBody"></tbody></table></div>
@@ -74,6 +79,27 @@
           </section>
         </aside>
       </div>
+      <section id="tournamentsDashboard" class="management-page panel" hidden>
+        <div class="panel-head">
+          <div><p class="eyebrow">Registro de eventos</p><h2>Torneios</h2></div>
+          <button class="button primary" id="newTournamentBtn" type="button">Novo torneio</button>
+        </div>
+        <p class="management-hint">Torneios lançados pela versão atual aparecem aqui. Eventos antigos não podem ser reconstruídos automaticamente a partir dos pontos acumulados. Para registrá-los somente no mensal, desmarque a opção de aplicar ao geral.</p>
+        <div class="tournament-record-list" id="tournamentRecordList"></div>
+      </section>
+      <section id="stagesDashboard" class="management-page panel" hidden>
+        <div class="panel-head"><div><p class="eyebrow">Configuração</p><h2>Etapas mensais</h2></div></div>
+        <p class="management-hint">Defina a data inicial e final de cada etapa. As etapas não podem se sobrepor. Ajustar datas não altera silenciosamente a etapa de torneios já vinculados.</p>
+        <div class="stage-editor-list" id="stageEditorList"></div>
+        <div class="management-actions">
+          <button class="button" id="addStageBtn" type="button">Adicionar etapa</button>
+          <button class="button primary" id="saveStagesBtn" type="button">Salvar etapas</button>
+        </div>
+        <div class="stage-next-actions">
+          <p>Quando uma etapa terminar, finalize e publique o bônus antes de iniciar a seguinte.</p>
+          <button class="button" id="advanceStageBtn" type="button">Ativar próxima etapa</button>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -83,15 +109,24 @@
       <div class="tournament-grid">
         <section class="tournament-entry">
           <div class="tournament-settings">
-            <label class="field compact-field"><span>Data</span><input id="tournamentDate" type="date" min="2026-10-11" max="2027-04-12" required></label>
+            <label class="field compact-field"><span>Data</span><input id="tournamentDate" type="date" required></label>
             <label class="field compact-field"><span>Tipo de torneio</span><select id="tournamentType"><option value="regular">Regular — Seg/Qua</option><option value="special">Especial — Domingo/Abertura</option></select></label>
             <input class="search" id="tournamentSearch" type="search" placeholder="Buscar jogador">
+          </div>
+          <div class="tournament-attribution">
+            <label class="presence-check"><input id="tournamentGeneral" type="checkbox" checked><span>Aplicar ao ranking geral</span></label>
+            <label class="presence-check"><input id="tournamentMonthly" type="checkbox" checked><span>Aplicar ao ranking mensal</span></label>
+            <label class="field compact-field" id="monthlyStageField"><span>Etapa mensal</span><select id="tournamentStage"></select></label>
+            <p>Já contabilizado no geral? Desmarque “Aplicar ao ranking geral” para não somar duas vezes.</p>
+          </div>
+          <div class="tournament-settings" style="grid-template-columns:1fr!important">
+            <label class="field compact-field"><span>Descrição (opcional)</span><input id="tournamentName" maxlength="120" placeholder="Ex.: Regular de quarta"> </label>
           </div>
           <div class="participant-list" id="participantList"></div>
         </section>
         <aside class="live-preview-pane"><div class="live-preview-sticky"><p class="eyebrow">Em tempo real</p><h3>Como o ranking geral vai ficar</h3><div class="top-list preview-live" id="tournamentPreview"></div></div></aside>
       </div>
-      <div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="tournamentModal">Cancelar</button><button class="button primary" id="applyTournamentBtn" type="button">Adicionar ao rascunho</button></div>
+      <div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="tournamentModal">Cancelar</button><button class="button primary" id="applyTournamentBtn" type="button">Salvar torneio</button></div>
     </form>
   </dialog>
 
