@@ -11,21 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/admin.css">
   <style>
-    .modifier-panel>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;min-height:74px;user-select:none}
-    .modifier-panel>summary::-webkit-details-marker{display:none}
-    .modifier-summary-title{min-width:0}
-    .modifier-summary-title .eyebrow{margin-bottom:5px}
-    .modifier-summary-title h2{font-size:1.25rem}
-    .modifier-summary-action{display:flex;align-items:center;gap:9px;flex:0 0 auto;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
-    .modifier-chevron{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--gold);line-height:1;transition:transform .24s cubic-bezier(.2,.8,.2,1),border-color .18s ease,background .18s ease}
-    .modifier-chevron svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .modifier-panel>summary:hover .modifier-chevron{border-color:var(--line-gold);background:rgba(226,201,133,.045)}
-    .modifier-panel[open]>summary{border-bottom:1px solid var(--line)}
-    .modifier-panel[open] .modifier-chevron{transform:rotate(180deg)}
-    .modifier-content{padding-top:12px}
-    .modifier-intro{display:flex;align-items:center;justify-content:flex-end;padding:0 14px 10px}
-    .modifier-intro .icon-button{flex:0 0 auto}
-    @media(max-width:500px){.modifier-panel>summary{min-height:68px;padding:13px 14px}.modifier-summary-title h2{font-size:1.12rem}.modifier-summary-action>span:first-child{display:none}.modifier-intro{padding-inline:12px}}
+    .modifier-panel>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;min-height:74px;user-select:none}.modifier-panel>summary::-webkit-details-marker{display:none}.modifier-summary-title{min-width:0}.modifier-summary-title .eyebrow{margin-bottom:5px}.modifier-summary-title h2{font-size:1.25rem}.modifier-summary-action{display:flex;align-items:center;gap:9px;flex:0 0 auto;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.modifier-chevron{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--gold);line-height:1;transition:transform .24s cubic-bezier(.2,.8,.2,1),border-color .18s ease,background .18s ease}.modifier-chevron svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.modifier-panel>summary:hover .modifier-chevron{border-color:var(--line-gold);background:rgba(226,201,133,.045)}.modifier-panel[open]>summary{border-bottom:1px solid var(--line)}.modifier-panel[open] .modifier-chevron{transform:rotate(180deg)}.modifier-content{padding-top:12px}.modifier-intro{display:flex;align-items:center;justify-content:flex-end;padding:0 14px 10px}.modifier-intro .icon-button{flex:0 0 auto}
+    .monthly-admin-card{display:grid;gap:12px}.monthly-admin-meta{display:grid;gap:4px;color:var(--muted);font-size:.84rem}.monthly-admin-meta strong{color:var(--text);font-size:.98rem}.monthly-stage-actions{display:flex;gap:8px;flex-wrap:wrap}.monthly-note{font-size:.78rem;line-height:1.5;color:var(--muted);margin:0}.tournament-settings{grid-template-columns:minmax(180px,.8fr) minmax(180px,.8fr) minmax(220px,1fr)!important}.monthly-fields{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.monthly-fields>p{margin:0 0 10px;color:var(--muted);font-size:.8rem}.editor-table th:nth-child(5),.editor-table td:nth-child(5){white-space:nowrap}
+    @media(max-width:760px){.tournament-settings{grid-template-columns:1fr!important}}@media(max-width:500px){.modifier-panel>summary{min-height:68px;padding:13px 14px}.modifier-summary-title h2{font-size:1.12rem}.modifier-summary-action>span:first-child{display:none}.modifier-intro{padding-inline:12px}}
   </style>
 </head>
 <body>
@@ -33,128 +21,44 @@
     <section class="login-view" id="loginView">
       <div class="login-card">
         <img class="admin-logo" src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live">
-        <p class="eyebrow">Área restrita</p>
-        <h1>Painel administrativo.</h1>
-        <p class="lead">Gerencie jogadores, torneios e o ranking.</p>
-        <form id="loginForm" class="stack" autocomplete="off">
-          <label class="field">
-            <span>Senha</span>
-            <input id="passwordInput" type="password" autocomplete="current-password" required>
-          </label>
-          <button class="button primary" type="submit">Entrar</button>
-        </form>
+        <p class="eyebrow">Área restrita</p><h1>Painel administrativo.</h1><p class="lead">Gerencie o ranking geral e o ranking mensal.</p>
+        <form id="loginForm" class="stack" autocomplete="off"><label class="field"><span>Senha</span><input id="passwordInput" type="password" autocomplete="current-password" required></label><button class="button primary" type="submit">Entrar</button></form>
         <div class="inline-status" id="loginStatus" role="status"></div>
       </div>
     </section>
 
     <section class="dashboard" id="dashboard" hidden>
       <header class="admin-header">
-        <div class="brand-row">
-          <img src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live">
-          <div>
-            <p class="eyebrow">Ranking 2026</p>
-            <h1>Gerenciar ranking</h1>
-            <p>Atualize os dados e publique quando estiver pronto.</p>
-          </div>
-        </div>
-        <div class="header-actions">
-          <span class="version-badge" id="versionBadge">v—</span>
-          <button class="button ghost" id="logoutBtn" type="button">Sair</button>
-        </div>
+        <div class="brand-row"><img src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live"><div><p class="eyebrow">3º Ranking 2026/27</p><h1>Gerenciar ranking</h1><p>Ranking geral, etapa mensal e bônus em um único fluxo.</p></div></div>
+        <div class="header-actions"><span class="version-badge" id="versionBadge">v—</span><button class="button ghost" id="logoutBtn" type="button">Sair</button></div>
       </header>
 
       <div class="toolbar">
-        <button class="button primary" id="openTournamentBtn" type="button">Registrar torneio</button>
-        <button class="button" id="addPlayerBtn" type="button">Adicionar jogador</button>
-        <button class="button" id="saveLocalBtn" type="button">Salvar rascunho</button>
-        <button class="button" id="exportBtn" type="button">Exportar</button>
-        <button class="button" id="importBtn" type="button">Importar</button>
-        <input id="importFileInput" type="file" accept="application/json,.json" hidden>
-        <button class="button ghost" id="discardDraftBtn" type="button">Descartar rascunho</button>
-        <div class="toolbar-spacer"></div>
-        <input id="playerSearch" class="search" type="search" placeholder="Buscar jogador">
+        <button class="button primary" id="openTournamentBtn" type="button">Registrar torneio</button><button class="button" id="addPlayerBtn" type="button">Adicionar jogador</button><button class="button" id="saveLocalBtn" type="button">Salvar rascunho</button><button class="button" id="exportBtn" type="button">Exportar</button><button class="button" id="importBtn" type="button">Importar</button><input id="importFileInput" type="file" accept="application/json,.json" hidden><button class="button ghost" id="discardDraftBtn" type="button">Descartar rascunho</button><div class="toolbar-spacer"></div><input id="playerSearch" class="search" type="search" placeholder="Buscar jogador">
       </div>
 
       <div class="dashboard-grid">
         <section class="panel ranking-editor-panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Rascunho</p>
-              <h2>Jogadores</h2>
-            </div>
-            <div class="draft-state" id="draftState">Sem alterações</div>
-          </div>
-
-          <div class="table-wrap">
-            <table class="editor-table">
-              <thead>
-                <tr>
-                  <th>Jogador</th>
-                  <th>Pontos</th>
-                  <th>Presenças</th>
-                  <th>Fator</th>
-                  <th>Final</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="playersTableBody"></tbody>
-            </table>
-          </div>
+          <div class="panel-head"><div><p class="eyebrow">Rascunho</p><h2>Jogadores</h2></div><div class="draft-state" id="draftState">Sem alterações</div></div>
+          <div class="table-wrap"><table class="editor-table"><thead><tr><th>Jogador</th><th>Pontos</th><th>Presenças</th><th>Fator</th><th>Bônus</th><th>Final</th><th></th></tr></thead><tbody id="playersTableBody"></tbody></table></div>
           <div class="mobile-player-list" id="mobilePlayerList"></div>
-
-          <div class="publish-bar">
-            <div>
-              <strong id="publishSummary">Nenhuma alteração pendente</strong>
-              <span id="publishSubline">O ranking publicado permanece inalterado.</span>
-            </div>
-            <button class="button primary publish-button" id="publishBtn" type="button">Publicar ranking</button>
-          </div>
+          <div class="publish-bar"><div><strong id="publishSummary">Nenhuma alteração pendente</strong><span id="publishSubline">O ranking publicado permanece inalterado.</span></div><button class="button primary publish-button" id="publishBtn" type="button">Publicar ranking</button></div>
         </section>
 
         <aside class="side-stack">
-          <section class="panel">
-            <div class="panel-head compact">
-              <div>
-                <p class="eyebrow">Prévia</p>
-                <h2>Top 10</h2>
-              </div>
-            </div>
-            <div class="top-list" id="topPreview"></div>
+          <section class="panel monthly-admin-card">
+            <div class="panel-head compact"><div><p class="eyebrow">Ranking mensal</p><h2>Etapa atual</h2></div></div>
+            <div class="monthly-admin-meta"><strong id="monthlyStageTitle">Etapa —</strong><span id="monthlyTournamentCount">0 torneios válidos</span><span id="monthlyStageStatus">Em andamento</span></div>
+            <div class="top-list" id="monthlyPreview"></div>
+            <div class="monthly-stage-actions"><button class="button" id="finalizeMonthlyBtn" type="button">Finalizar etapa mensal</button></div>
+            <p class="monthly-note">Ao finalizar e publicar, o servidor concede automaticamente 10 pontos de bônus ao melhor elegível com 100% de presença. Em empate absoluto, o bônus é dividido.</p>
           </section>
 
-          <details class="panel modifier-panel">
-            <summary>
-              <div class="modifier-summary-title">
-                <p class="eyebrow">Frequência</p>
-                <h2>Modificadores</h2>
-              </div>
-              <div class="modifier-summary-action">
-                <span>Editar</span>
-                <span class="modifier-chevron" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="m7 9.5 5 5 5-5"></path>
-                  </svg>
-                </span>
-              </div>
-            </summary>
-            <div class="modifier-content">
-              <div class="modifier-intro">
-                <button class="icon-button" id="addModifierBtn" type="button" aria-label="Adicionar modificador">+</button>
-              </div>
-              <div class="modifier-list" id="modifierList"></div>
-              <button class="text-button" id="resetModifiersBtn" type="button">Restaurar fatores publicados</button>
-            </div>
-          </details>
+          <section class="panel"><div class="panel-head compact"><div><p class="eyebrow">Geral</p><h2>Top 10</h2></div></div><div class="top-list" id="topPreview"></div></section>
 
-          <section class="panel">
-            <div class="panel-head compact">
-              <div>
-                <p class="eyebrow">Publicações</p>
-                <h2>Histórico</h2>
-              </div>
-            </div>
-            <div class="history-list" id="historyList"></div>
-          </section>
+          <details class="panel modifier-panel"><summary><div class="modifier-summary-title"><p class="eyebrow">Frequência</p><h2>Modificadores</h2></div><div class="modifier-summary-action"><span>Editar</span><span class="modifier-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m7 9.5 5 5 5-5"></path></svg></span></div></summary><div class="modifier-content"><div class="modifier-intro"><button class="icon-button" id="addModifierBtn" type="button" aria-label="Adicionar modificador">+</button></div><div class="modifier-list" id="modifierList"></div><button class="text-button" id="resetModifiersBtn" type="button">Restaurar fatores publicados</button></div></details>
+
+          <section class="panel"><div class="panel-head compact"><div><p class="eyebrow">Publicações</p><h2>Histórico</h2></div></div><div class="history-list" id="historyList"></div></section>
         </aside>
       </div>
     </section>
@@ -162,102 +66,39 @@
 
   <dialog class="modal tournament-modal" id="tournamentModal">
     <form method="dialog" class="modal-shell modal-wide" id="tournamentForm">
-      <div class="modal-head">
-        <div>
-          <p class="eyebrow">Rascunho</p>
-          <h2>Registrar torneio</h2>
-          <p>Marque presença e, quando houver, informe a colocação.</p>
-        </div>
-        <button class="icon-button close-modal" type="button" data-close-dialog="tournamentModal" aria-label="Fechar">×</button>
-      </div>
-
+      <div class="modal-head"><div><p class="eyebrow">Rascunho</p><h2>Registrar torneio</h2><p>Marque presença e informe a colocação. Colocações podem se repetir quando houver acordo.</p></div><button class="icon-button close-modal" type="button" data-close-dialog="tournamentModal" aria-label="Fechar">×</button></div>
       <div class="tournament-grid">
         <section class="tournament-entry">
           <div class="tournament-settings">
-            <label class="field compact-field">
-              <span>Tipo de torneio</span>
-              <select id="tournamentType">
-                <option value="regular">Regular — Seg/Qua</option>
-                <option value="special">Especial — Domingo/Abertura</option>
-              </select>
-            </label>
+            <label class="field compact-field"><span>Data</span><input id="tournamentDate" type="date" min="2026-10-11" max="2027-04-12" required></label>
+            <label class="field compact-field"><span>Tipo de torneio</span><select id="tournamentType"><option value="regular">Regular — Seg/Qua</option><option value="special">Especial — Domingo/Abertura</option></select></label>
             <input class="search" id="tournamentSearch" type="search" placeholder="Buscar jogador">
           </div>
           <div class="participant-list" id="participantList"></div>
         </section>
-
-        <aside class="live-preview-pane">
-          <div class="live-preview-sticky">
-            <p class="eyebrow">Em tempo real</p>
-            <h3>Como o ranking vai ficar</h3>
-            <div class="top-list preview-live" id="tournamentPreview"></div>
-          </div>
-        </aside>
+        <aside class="live-preview-pane"><div class="live-preview-sticky"><p class="eyebrow">Em tempo real</p><h3>Como o ranking geral vai ficar</h3><div class="top-list preview-live" id="tournamentPreview"></div></div></aside>
       </div>
-
-      <div class="modal-actions">
-        <button class="button ghost close-modal" type="button" data-close-dialog="tournamentModal">Cancelar</button>
-        <button class="button primary" id="applyTournamentBtn" type="button">Adicionar ao rascunho</button>
-      </div>
+      <div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="tournamentModal">Cancelar</button><button class="button primary" id="applyTournamentBtn" type="button">Adicionar ao rascunho</button></div>
     </form>
   </dialog>
 
   <dialog class="modal" id="playerModal">
     <form method="dialog" class="modal-shell" id="playerForm">
-      <div class="modal-head">
-        <div>
-          <p class="eyebrow">Jogador</p>
-          <h2 id="playerModalTitle">Adicionar jogador</h2>
-        </div>
-        <button class="icon-button close-modal" type="button" data-close-dialog="playerModal" aria-label="Fechar">×</button>
-      </div>
-      <input type="hidden" id="playerIdInput">
-      <label class="field"><span>Nome</span><input id="playerNameInput" maxlength="100" required></label>
-      <div class="field-grid">
-        <label class="field"><span>Pontos</span><input id="playerPointsInput" type="number" min="0" step="0.1" value="0"></label>
-        <label class="field"><span>Presenças</span><input id="playerPresencesInput" type="number" min="0" step="1" value="0"></label>
-      </div>
-      <details class="finishes-details">
-        <summary>Colocações para desempate</summary>
-        <div class="finish-grid" id="finishInputs"></div>
-      </details>
-      <div class="modal-actions">
-        <button class="button ghost close-modal" type="button" data-close-dialog="playerModal">Cancelar</button>
-        <button class="button primary" id="savePlayerBtn" type="button">Salvar no rascunho</button>
-      </div>
+      <div class="modal-head"><div><p class="eyebrow">Jogador</p><h2 id="playerModalTitle">Adicionar jogador</h2></div><button class="icon-button close-modal" type="button" data-close-dialog="playerModal" aria-label="Fechar">×</button></div>
+      <input type="hidden" id="playerIdInput"><label class="field"><span>Nome</span><input id="playerNameInput" maxlength="100" required></label>
+      <div class="field-grid"><label class="field"><span>Pontos gerais</span><input id="playerPointsInput" type="number" min="0" step="0.1" value="0"></label><label class="field"><span>Presenças gerais</span><input id="playerPresencesInput" type="number" min="0" step="1" value="0"></label></div>
+      <label class="field"><span>Bônus acumulado</span><input id="playerBonusInput" type="number" min="0" step="0.1" value="0"></label>
+      <details class="finishes-details"><summary>Colocações gerais para desempate</summary><div class="finish-grid" id="finishInputs"></div></details>
+      <div class="monthly-fields"><p>Use estes campos também para corrigir ou fazer o backfill da etapa mensal atual, se necessário.</p><div class="field-grid"><label class="field"><span>Pontos mensais por colocação</span><input id="playerMonthlyPointsInput" type="number" min="0" step="0.1" value="0"></label><label class="field"><span>Presenças mensais</span><input id="playerMonthlyPresencesInput" type="number" min="0" step="1" value="0"></label></div><details class="finishes-details"><summary>Colocações mensais para desempate</summary><div class="finish-grid" id="monthlyFinishInputs"></div></details></div>
+      <div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="playerModal">Cancelar</button><button class="button primary" id="savePlayerBtn" type="button">Salvar no rascunho</button></div>
     </form>
   </dialog>
 
   <dialog class="modal history-preview-modal" id="historyPreviewModal">
-    <div class="modal-shell modal-wide">
-      <div class="modal-head">
-        <div>
-          <p class="eyebrow">Histórico</p>
-          <h2 id="historyPreviewTitle">Visualizar publicação</h2>
-          <p id="historyPreviewMeta"></p>
-        </div>
-        <button class="icon-button close-modal" type="button" data-close-dialog="historyPreviewModal" aria-label="Fechar">×</button>
-      </div>
-      <div class="history-preview-grid">
-        <div>
-          <h3>Ranking</h3>
-          <div class="history-ranking" id="historyRankingPreview"></div>
-        </div>
-        <div>
-          <h3>Modificadores</h3>
-          <div class="history-modifiers" id="historyModifierPreview"></div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="button ghost close-modal" type="button" data-close-dialog="historyPreviewModal">Fechar</button>
-        <button class="button primary" id="restoreFromPreviewBtn" type="button">Restaurar esta versão</button>
-      </div>
-    </div>
+    <div class="modal-shell modal-wide"><div class="modal-head"><div><p class="eyebrow">Histórico</p><h2 id="historyPreviewTitle">Visualizar publicação</h2><p id="historyPreviewMeta"></p></div><button class="icon-button close-modal" type="button" data-close-dialog="historyPreviewModal" aria-label="Fechar">×</button></div><div class="history-preview-grid"><div><h3>Ranking</h3><div class="history-ranking" id="historyRankingPreview"></div></div><div><h3>Modificadores</h3><div class="history-modifiers" id="historyModifierPreview"></div></div></div><div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="historyPreviewModal">Fechar</button><button class="button primary" id="restoreFromPreviewBtn" type="button">Restaurar esta versão</button></div></div>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <script src="../config.js"></script>
-  <script src="../assets/js/admin.js"></script>
+  <script src="../config.js"></script><script src="../assets/js/admin.js"></script>
 </body>
 </html>
