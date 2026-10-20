@@ -541,10 +541,10 @@
   async function previewHistory(id) {
     try {
       const data = await api({ action: 'historySnapshot', token: state.token, historyId: id }); state.previewHistoryId = id;
-      $('#historyPreviewTitle').textContent = `Versão ${data.history.version}`; $('#historyPreviewMeta').textContent = `${fmtDate(data.history.createdAt)} · ${data.history.total} jogadores${data.history.schemaVersion < 4 ? ' · histórico legado v3' : ''}`;
+      $('#historyPreviewTitle').textContent = `Versão ${data.history.version}`; $('#historyPreviewMeta').textContent = `${fmtDate(data.history.createdAt)} · ${data.history.total} jogadores${data.history.schemaVersion < 5 ? ' · histórico legado (v4 ou anterior)' : ''}`;
       $('#historyRankingPreview').innerHTML = data.rows.map((row, index) => `<div class="history-rank-row"><span>${index + 1}</span><strong>${esc(row.name)}</strong><em>${fmt(row.finalPoints)}</em></div>`).join('') || '<div class="empty-state">Ranking vazio.</div>';
       $('#historyModifierPreview').innerHTML = ['<div class="history-mod-row"><span>0+ presenças</span><strong>1,0x</strong></div>', ...(data.modifiers || []).map(rule => `<div class="history-mod-row"><span>${rule.minPresences}+ presenças</span><strong>${fmtFactor(rule.factor)}</strong></div>`)].join('');
-      $('#restoreFromPreviewBtn').hidden = data.history.schemaVersion < 4; $('#historyPreviewModal').showModal();
+      $('#restoreFromPreviewBtn').hidden = data.history.schemaVersion < 5; $('#historyPreviewModal').showModal();
     } catch (error) { handleApiError(error); }
   }
 
