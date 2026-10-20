@@ -11,226 +11,110 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="stylesheet" href="assets/css/home.css">
-    <link rel="stylesheet" href="assets/css/ranking.css">
-    <link rel="stylesheet" href="assets/css/pages.css">
-    <link rel="stylesheet" href="assets/css/chrome.css">
-    <link rel="stylesheet" href="assets/css/responsive.css">
-  <title>Ranking 2026 | Caligulas Poker Live</title>
-  <meta name="description" content="2º Caligulas Ranking 2026: pontuação, presenças, fator de frequência, premiação e regulamento completo.">
-
+  <link rel="stylesheet" href="assets/css/home.css">
+  <link rel="stylesheet" href="assets/css/ranking.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/chrome.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <title>3º Ranking 2026/27 | Caligulas Poker Live</title>
+  <meta name="description" content="3º Caligulas Ranking 2026/27: ranking geral, ranking mensal, pontuação, presenças, bônus, fator de frequência, premiação e regulamento.">
 </head>
-<body class="">
+<body>
 <header class="site-header">
   <div class="nav-shell">
     <a class="nav-logo" href="index.html" aria-label="Caligulas Poker Live — início">
-      <img src="assets/img/perf/brand/logo-caligulas-white-360.webp"
-           srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w"
-           sizes="(max-width:939px) 132px, 145px"
-           width="360" height="168" alt="Caligulas Poker Live" decoding="async">
+      <img src="assets/img/perf/brand/logo-caligulas-white-360.webp" srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w" sizes="(max-width:939px) 132px, 145px" width="360" height="168" alt="Caligulas Poker Live" decoding="async">
     </a>
-    <nav class="desktop-nav" aria-label="Navegação principal">
-      <a href="casa.html">A casa</a><a href="agenda.html">Agenda</a><a href="cps.html" class="nav-cps">CPS</a><a href="ranking.html" aria-current="page">Ranking</a><a href="galeria.html">Galeria</a>
-    </nav>
-    <div class="nav-actions">
-      <a class="btn btn-small btn-ghost" href="#contato">Contato</a>
-      <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span></button>
-    </div>
+    <nav class="desktop-nav" aria-label="Navegação principal"><a href="casa.html">A casa</a><a href="agenda.html">Agenda</a><a href="cps.html" class="nav-cps">CPS</a><a href="ranking.html" aria-current="page">Ranking</a><a href="galeria.html">Galeria</a></nav>
+    <div class="nav-actions"><a class="btn btn-small btn-ghost" href="#contato">Contato</a><button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span></button></div>
   </div>
 </header>
-<nav class="mobile-nav" id="mobileNav" aria-label="Navegação mobile">
-  <a href="casa.html">A casa</a><a href="agenda.html">Agenda</a><a href="cps.html" class="mobile-cps">CPS</a><a href="ranking.html" aria-current="page">Ranking</a><a href="galeria.html">Galeria</a><a href="#contato">Contato</a>
-  <div class="mobile-meta"><span>SEG &amp; QUA · 19H30</span><span>Passos / MG</span></div>
-</nav>
+<nav class="mobile-nav" id="mobileNav" aria-label="Navegação mobile"><a href="casa.html">A casa</a><a href="agenda.html">Agenda</a><a href="cps.html" class="mobile-cps">CPS</a><a href="ranking.html" aria-current="page">Ranking</a><a href="galeria.html">Galeria</a><a href="#contato">Contato</a><div class="mobile-meta"><span>SEG &amp; QUA · 19H30</span><span>Passos / MG</span></div></nav>
+
 <main>
   <section class="page-hero">
     <div class="container">
-      <p class="kicker">2º Caligulas Ranking 2026</p>
+      <p class="kicker">3º Caligulas Ranking 2026/27</p>
       <h1 class="display display-small">Ranking.</h1>
+      <p class="section-note">11 de outubro de 2026 a 12 de abril de 2027.</p>
       <div class="live-status ranking-status" id="rankingPageStatus"></div>
       <img class="page-hero-mark" src="assets/img/decor/laurel.webp" width="1536" height="1024" alt="">
     </div>
   </section>
 
-  <section class="section">
+  <section class="section ranking-section">
     <div class="container ranking-shell">
-      <div class="podium" id="rankingPodium"></div>
-      <div class="ranking-tools">
-        <input class="search-field" id="rankingSearch" type="search" placeholder="Buscar jogador" aria-label="Buscar jogador">
-        <a class="btn btn-small" href="#regulamento">Ver regulamento</a>
+      <div class="ranking-tabs" role="tablist" aria-label="Classificações do ranking">
+        <button class="ranking-tab active" type="button" role="tab" aria-selected="true" data-ranking-tab="general">Ranking geral</button>
+        <button class="ranking-tab" type="button" role="tab" aria-selected="false" data-ranking-tab="monthly">Ranking mensal</button>
       </div>
-      <div class="ranking-mobile" id="rankingMobile"></div>
-      <div class="ranking-table-wrap">
-        <table class="ranking-table">
-          <thead>
-            <tr><th>Pos.</th><th>Jogador</th><th>Pontos</th><th>Presenças</th><th>Fator</th><th>Final</th></tr>
-          </thead>
-          <tbody id="rankingTableBody"><tr><td colspan="6">Carregando...</td></tr></tbody>
-        </table>
+
+      <div id="rankingGeneralPanel" data-ranking-panel="general">
+        <div class="podium" id="rankingPodium"></div>
+        <div class="ranking-tools"><input class="search-field" id="rankingSearch" type="search" placeholder="Buscar jogador" aria-label="Buscar jogador no ranking geral"><a class="btn btn-small" href="#regulamento">Ver regulamento</a></div>
+        <div class="ranking-mobile" id="rankingMobile"></div>
+        <div class="ranking-table-wrap">
+          <table class="ranking-table"><thead><tr><th>Pos.</th><th>Jogador</th><th>Pontos</th><th>Presenças</th><th>Fator</th><th>Bônus</th><th>Final</th></tr></thead><tbody id="rankingTableBody"><tr><td colspan="7">Carregando...</td></tr></tbody></table>
+        </div>
+        <p class="ranking-formula-note">Fórmula geral: <strong>(pontos × fator) + presenças + bônus</strong>. Presenças e bônus não sofrem multiplicação.</p>
+      </div>
+
+      <div id="rankingMonthlyPanel" data-ranking-panel="monthly" hidden>
+        <div class="monthly-stage-card glass">
+          <div><p class="kicker">Etapa atual</p><h2 id="monthlyStageLabel">Ranking mensal</h2><p id="monthlyStageMeta" class="muted">Carregando...</p></div>
+          <div class="monthly-bonus-pill" id="monthlyBonusStatus">Bônus de 10 pontos em disputa</div>
+        </div>
+        <div class="ranking-tools"><input class="search-field" id="monthlyRankingSearch" type="search" placeholder="Buscar jogador" aria-label="Buscar jogador no ranking mensal"><a class="btn btn-small" href="#regra-mensal">Regra 4.3</a></div>
+        <div class="ranking-mobile" id="monthlyRankingMobile"></div>
+        <div class="ranking-table-wrap">
+          <table class="ranking-table monthly-table"><thead><tr><th>Pos.</th><th>Jogador</th><th>Colocação</th><th>Presenças</th><th>Total</th><th>Bônus</th></tr></thead><tbody id="monthlyTableBody"><tr><td colspan="6">Carregando...</td></tr></tbody></table>
+        </div>
+        <article class="monthly-rule-card glass" id="regra-mensal">
+          <p class="kicker">Regra 4.3</p><h2>Ranking mensal e bônus.</h2>
+          <div class="monthly-rule-grid">
+            <div><strong>Etapas</strong><p>Cada etapa começa no torneio especial de domingo e termina antes do domingo especial seguinte. A classificação mensal zera na etapa seguinte, sem alterar o ranking geral.</p></div>
+            <div><strong>Pontuação</strong><p>Somam-se os pontos por colocação e os pontos de presença dos torneios válidos da etapa. Não existe multiplicador no ranking mensal.</p></div>
+            <div><strong>100% de presença</strong><p>Para concorrer ao bônus, o jogador precisa participar efetivamente de todos os torneios válidos da etapa.</p></div>
+            <div><strong>Bônus</strong><p>O melhor classificado entre os elegíveis recebe 10 pontos extras no ranking geral. O bônus é acrescentado depois do multiplicador e nunca é multiplicado.</p></div>
+          </div>
+        </article>
       </div>
     </div>
   </section>
 
   <div class="rule-line"></div>
   <section class="section regulation-wrap" id="regulamento">
-  <div class="container">
-    <div class="section-head" data-reveal>
-      <div class="section-head-copy">
-        <p class="kicker">2º Caligulas Ranking 2026</p>
-        <h2 class="section-title">Regulamento.</h2>
-        <p class="section-note">Regras oficiais do 2º Caligulas Ranking 2026: pontuação, frequência, desempate e premiação.</p>
+    <div class="container">
+      <div class="section-head" data-reveal><div class="section-head-copy"><p class="kicker">3º Caligulas Ranking 2026/27</p><h2 class="section-title">Regulamento.</h2><p class="section-note">Regras oficiais atualizadas para a temporada de 11/10/2026 a 12/04/2027.</p></div></div>
+
+      <div class="regulation-grid two">
+        <article class="rule-card glass" data-reveal><p class="kicker">Segunda &amp; quarta</p><h3>Pontuação regular</h3><div class="points-grid"><div class="point-pill"><strong>15</strong><span>1º</span></div><div class="point-pill"><strong>12</strong><span>2º</span></div><div class="point-pill"><strong>10</strong><span>3º</span></div><div class="point-pill"><strong>8</strong><span>4º</span></div><div class="point-pill"><strong>7</strong><span>5º</span></div><div class="point-pill"><strong>6</strong><span>6º</span></div><div class="point-pill"><strong>5</strong><span>7º</span></div><div class="point-pill"><strong>4</strong><span>8º</span></div><div class="point-pill"><strong>3</strong><span>9º</span></div></div><p class="rule-presence-note">Presença: +1 ponto.</p></article>
+        <article class="rule-card glass" data-reveal><p class="kicker">Abertura &amp; domingos</p><h3>Pontuação especial</h3><div class="points-grid"><div class="point-pill"><strong>20</strong><span>1º</span></div><div class="point-pill"><strong>18</strong><span>2º</span></div><div class="point-pill"><strong>16</strong><span>3º</span></div><div class="point-pill"><strong>14</strong><span>4º</span></div><div class="point-pill"><strong>13</strong><span>5º</span></div><div class="point-pill"><strong>12</strong><span>6º</span></div><div class="point-pill"><strong>11</strong><span>7º</span></div><div class="point-pill"><strong>10</strong><span>8º</span></div><div class="point-pill"><strong>9</strong><span>9º</span></div></div><p class="rule-presence-note">Datas especiais: 11/10/26, 15/11/26, 13/12/26, 17/01/27, 14/02/27, 14/03/27 e 11/04/27.</p></article>
+      </div>
+
+      <div class="regulation-grid two regulation-secondary">
+        <article class="rule-card glass" data-reveal><p class="kicker">Jogador frequente</p><h3>Fator</h3><div class="factor-list" id="factorList"><div class="factor-row"><span>15 a 20 torneios</span><strong>1,1x</strong></div><div class="factor-row"><span>21 a 26 torneios</span><strong>1,2x</strong></div><div class="factor-row"><span>27 a 32 torneios</span><strong>1,3x</strong></div><div class="factor-row"><span>33 a 40 torneios</span><strong>1,4x</strong></div><div class="factor-row"><span>41 a 45 torneios</span><strong>1,5x</strong></div><div class="factor-row"><span>46 ou mais</span><strong>2,0x</strong></div></div></article>
+        <article class="rule-card glass" data-reveal><p class="kicker">Critérios</p><h3>Acordos e desempate</h3><p>Acordos entre participantes são válidos. Quando houver acordo, os envolvidos podem receber a mesma pontuação correspondente à colocação acordada.</p><p>Em igualdade de pontuação, prevalece o maior número de vitórias; depois, segundos lugares, terceiros lugares e assim sucessivamente.</p></article>
+      </div>
+
+      <div class="regulation-prizes">
+        <div class="section-head"><div><p class="kicker">Premiação</p><h2 class="section-title">Ranking 2026/27.</h2></div></div>
+        <div class="prize-grid"><article class="rule-card prize-card glass"><h3>1º lugar</h3><p>R$ 2.000,00</p></article><article class="rule-card prize-card glass"><h3>2º lugar</h3><p>R$ 1.500,00</p></article><article class="rule-card prize-card glass"><h3>3º lugar</h3><p>R$ 1.000,00</p></article><article class="rule-card prize-card glass"><h3>4º lugar</h3><p>R$ 500,00</p></article></div>
+        <article class="rule-card glass regulation-finalists"><h3>Finalistas</h3><p>Os 9 finalistas participam de um freeroll com R$ 1.000,00 GTD, sem rebuy/addon.</p></article>
+      </div>
+
+      <div class="regulation-details">
+        <details class="rule-details" open><summary>4.3 — Ranking mensal, bônus e premiação</summary><div class="details-body"><p>Além do ranking geral, há uma classificação mensal por etapas ligadas aos torneios especiais de domingo. Cada etapa começa no domingo especial que a inaugura e termina antes do próximo.</p><p>A pontuação mensal soma pontos por colocação e presença, sem multiplicador. Para disputar o bônus, o jogador precisa ter 100% de presença efetiva nos torneios válidos da etapa.</p><p>O melhor elegível recebe 10 pontos extras no ranking geral. Se o líder não tiver presença integral, o bônus passa ao melhor classificado que tiver. Em empate absoluto entre elegíveis, os 10 pontos são divididos igualmente. Se ninguém cumprir a presença integral, o bônus não é concedido nem acumulado.</p><p>A premiação própria de cada etapa pode variar e será divulgada pelo clube. Torneios cancelados não contam; reagendamentos entram na etapa da data em que forem efetivamente realizados.</p></div></details>
+        <details class="rule-details"><summary>Período e torneios especiais</summary><div class="details-body"><p>O 3º Caligulas Ranking começa em 11 de outubro de 2026 e termina em 12 de abril de 2027.</p><p>Os torneios especiais de domingo estão previstos para 11/10/26, 15/11/26, 13/12/26, 17/01/27, 14/02/27, 14/03/27 e 11/04/27.</p></div></details>
+        <details class="rule-details"><summary>Reagendamento ou cancelamento</summary><div class="details-body"><p>A organização poderá cancelar, encerrar, reagendar ou suspender torneios quando circunstâncias externas comprometerem o evento. Torneios cancelados não integram a pontuação nem a exigência de presença do mensal.</p></div></details>
+        <details class="rule-details"><summary>Premiação, decisões e aceite</summary><div class="details-body"><p>Dúvidas, divergências e situações não previstas são decididas pelo Caligulas Poker Clube. A participação implica concordância com o regulamento e cessão de imagem nos moldes previstos.</p></div></details>
       </div>
     </div>
-
-    <div class="regulation-grid two">
-      <article class="rule-card glass" data-reveal>
-        <p class="kicker">Segunda &amp; quarta</p>
-        <h3>Pontuação regular</h3>
-        <div class="points-grid">
-          <div class="point-pill"><strong>15</strong><span>1º</span></div>
-          <div class="point-pill"><strong>12</strong><span>2º</span></div>
-          <div class="point-pill"><strong>10</strong><span>3º</span></div>
-          <div class="point-pill"><strong>8</strong><span>4º</span></div>
-          <div class="point-pill"><strong>7</strong><span>5º</span></div>
-          <div class="point-pill"><strong>6</strong><span>6º</span></div>
-          <div class="point-pill"><strong>5</strong><span>7º</span></div>
-          <div class="point-pill"><strong>4</strong><span>8º</span></div>
-          <div class="point-pill"><strong>3</strong><span>9º</span></div>
-        </div>
-        <p class="rule-presence-note">Presença: +1 ponto.</p>
-      </article>
-
-      <article class="rule-card glass" data-reveal>
-        <p class="kicker">Abertura &amp; domingos</p>
-        <h3>Pontuação especial</h3>
-        <div class="points-grid">
-          <div class="point-pill"><strong>20</strong><span>1º</span></div>
-          <div class="point-pill"><strong>18</strong><span>2º</span></div>
-          <div class="point-pill"><strong>16</strong><span>3º</span></div>
-          <div class="point-pill"><strong>14</strong><span>4º</span></div>
-          <div class="point-pill"><strong>13</strong><span>5º</span></div>
-          <div class="point-pill"><strong>12</strong><span>6º</span></div>
-          <div class="point-pill"><strong>11</strong><span>7º</span></div>
-          <div class="point-pill"><strong>10</strong><span>8º</span></div>
-          <div class="point-pill"><strong>9</strong><span>9º</span></div>
-        </div>
-      </article>
-    </div>
-
-    <div class="regulation-grid two regulation-secondary">
-      <article class="rule-card glass" data-reveal>
-        <p class="kicker">Jogador frequente</p>
-        <h3>Fator</h3>
-        <div class="factor-list">
-          <div class="factor-row"><span>10 a 14 torneios</span><strong>1,1x</strong></div>
-          <div class="factor-row"><span>15 a 19 torneios</span><strong>1,2x</strong></div>
-          <div class="factor-row"><span>20 a 24 torneios</span><strong>1,3x</strong></div>
-          <div class="factor-row"><span>25 a 29 torneios</span><strong>1,4x</strong></div>
-          <div class="factor-row"><span>30 a 35 torneios</span><strong>1,5x</strong></div>
-          <div class="factor-row"><span>36 ou mais</span><strong>2,0x</strong></div>
-        </div>
-      </article>
-
-      <article class="rule-card glass" data-reveal>
-        <p class="kicker">Critérios</p>
-        <h3>Desempate</h3>
-        <p>Em igualdade de pontuação, prevalece o maior número de vitórias. Persistindo o empate, compara-se o número de segundos lugares e, sucessivamente, as demais colocações.</p>
-      </article>
-    </div>
-
-    <div class="regulation-prizes">
-      <div class="section-head">
-        <div>
-          <p class="kicker">Premiação</p>
-          <h2 class="section-title">Ranking 2026.</h2>
-        </div>
-      </div>
-      <div class="prize-grid">
-        <article class="rule-card prize-card glass"><h3>1º lugar</h3><p>R$ 1.500,00</p></article>
-        <article class="rule-card prize-card glass"><h3>2º lugar</h3><p>R$ 1.200,00</p></article>
-        <article class="rule-card prize-card glass"><h3>3º lugar</h3><p>R$ 1.000,00</p></article>
-        <article class="rule-card prize-card glass"><h3>4º lugar</h3><p>R$ 500,00</p></article>
-      </div>
-      <article class="rule-card glass regulation-finalists">
-        <h3>Finalistas</h3>
-        <p>Os 9 finalistas participam de um freeroll de R$ 1.000 GTD, sem rebuy/addon.</p>
-      </article>
-    </div>
-
-    <div class="regulation-details">
-      <details class="rule-details">
-        <summary>Período e torneios especiais</summary>
-        <div class="details-body">
-          <p>O regulamento informa início em 17 de maio e término em 14 de setembro de 2026.</p>
-          <p>As datas indicadas para abertura e torneios de domingo são 17/05, 21/06, 12/07, 16/08 e 13/09.</p>
-        </div>
-      </details>
-      <details class="rule-details">
-        <summary>Reagendamento ou cancelamento</summary>
-        <div class="details-body">
-          <p>A organização poderá cancelar, encerrar, reagendar ou suspender torneios quando circunstâncias externas comprometerem o evento, com devolução dos valores de inscrição aos jogadores já inscritos quando aplicável.</p>
-        </div>
-      </details>
-      <details class="rule-details">
-        <summary>Acordos e decisões da organização</summary>
-        <div class="details-body">
-          <p>O regulamento admite acordo entre participantes. Dúvidas, divergências e situações não previstas são decididas pelo Caligulas Poker Clube.</p>
-        </div>
-      </details>
-      <details class="rule-details">
-        <summary>Imagem e aceite</summary>
-        <div class="details-body">
-          <p>O regulamento prevê cessão de imagem dos participantes nos moldes do evento e considera a participação como aceite das regras.</p>
-        </div>
-      </details>
-    </div>
-  </div>
-</section>
+  </section>
 </main>
-<footer class="site-footer" id="contato">
-  <div class="container">
-    <div class="footer-main">
-      <img class="footer-logo"
-           src="assets/img/perf/brand/logo-caligulas-white-360.webp"
-           srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w"
-           sizes="158px" width="360" height="168"
-           alt="Caligulas Poker Live" loading="lazy" decoding="async">
-      <div class="footer-contact">
-        <h2>Contato</h2>
-        <div class="contact-list">
-          <a class="contact-link" data-whatsapp href="https://wa.me/5535988369317">
-            <span data-icon="whatsapp" aria-hidden="true"></span>
-            <span>+55 35 9 8836-9317</span>
-          </a>
-          <a class="contact-link" data-instagram href="https://www.instagram.com/caligulaspokerlive/">
-            <span data-icon="instagram" aria-hidden="true"></span>
-            <span>@caligulaspokerlive</span>
-          </a>
-          <a class="contact-link" data-email href="mailto:caligulaspoker@hotmail.com">
-            <span data-icon="mail" aria-hidden="true"></span>
-            <span>caligulaspoker@hotmail.com</span>
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <div>© <span class="js-year"></span> Caligulas Poker Live · 18+ · Jogue com responsabilidade</div>
-      <a class="creator-credit" href="https://custommind.com.br/" target="_blank" rel="noopener" aria-label="Site desenvolvido pela Custom Mind">
-        <span>Site desenvolvido por</span>
-        <img src="assets/img/perf/brand/custom-mind-260.webp" width="260" height="76" alt="Custom Mind — Software Solutions" loading="lazy" decoding="async">
-      </a>
-    </div>
-  </div>
-</footer>
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada">
-  <button class="btn btn-icon lightbox-close" data-close-lightbox type="button" aria-label="Fechar">×</button>
-  <img id="lightboxImg" src="" alt="">
-</div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="config.js"></script>
-<script src="assets/js/ranking-fallback.js"></script>
-<script src="assets/js/api.js"></script>
-<script src="assets/js/site.js"></script>
-<script src="assets/js/ranking-page.js"></script>
+
+<footer class="site-footer" id="contato"><div class="container"><div class="footer-main"><img class="footer-logo" src="assets/img/perf/brand/logo-caligulas-white-360.webp" srcset="assets/img/perf/brand/logo-caligulas-white-360.webp 360w, assets/img/perf/brand/logo-caligulas-white-720.webp 720w" sizes="158px" width="360" height="168" alt="Caligulas Poker Live" loading="lazy" decoding="async"><div class="footer-contact"><h2>Contato</h2><div class="contact-list"><a class="contact-link" data-whatsapp href="https://wa.me/5535988369317"><span data-icon="whatsapp" aria-hidden="true"></span><span>+55 35 9 8836-9317</span></a><a class="contact-link" data-instagram href="https://www.instagram.com/caligulaspokerlive/"><span data-icon="instagram" aria-hidden="true"></span><span>@caligulaspokerlive</span></a><a class="contact-link" data-email href="mailto:caligulaspoker@hotmail.com"><span data-icon="mail" aria-hidden="true"></span><span>caligulaspoker@hotmail.com</span></a></div></div></div><div class="footer-bottom"><div>© <span class="js-year"></span> Caligulas Poker Live · 18+ · Jogue com responsabilidade</div><a class="creator-credit" href="https://custommind.com.br/" target="_blank" rel="noopener" aria-label="Site desenvolvido pela Custom Mind"><span>Site desenvolvido por</span><img src="assets/img/perf/brand/custom-mind-260.webp" width="260" height="76" alt="Custom Mind — Software Solutions" loading="lazy" decoding="async"></a></div></div></footer>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada"><button class="btn btn-icon lightbox-close" data-close-lightbox type="button" aria-label="Fechar">×</button><img id="lightboxImg" src="" alt=""></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="config.js"></script><script src="assets/js/ranking-fallback.js"></script><script src="assets/js/api.js"></script><script src="assets/js/site.js"></script><script src="assets/js/ranking-page.js"></script>
 </body>
 </html>
