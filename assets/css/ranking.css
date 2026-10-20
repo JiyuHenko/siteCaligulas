@@ -104,3 +104,107 @@
   pointer-events: none;
 }
 .page-hero-actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Ranking 2026/27: tabs, bonus and monthly stage */
+.ranking-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0 0 28px;
+  padding:6px;
+  width:fit-content;
+  max-width:100%;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:rgba(255,255,255,.025);
+}
+.ranking-tab{
+  border:0;
+  border-radius:999px;
+  padding:11px 18px;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:.78rem;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.ranking-tab:hover{color:var(--text);transform:translateY(-1px)}
+.ranking-tab.active{
+  background:var(--gold);
+  color:#080705;
+}
+[data-ranking-panel][hidden]{display:none!important}
+.ranking-formula-note{
+  margin:18px 0 0;
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  color:var(--muted);
+  font-size:.82rem;
+  line-height:1.6;
+}
+.ranking-formula-note strong{color:var(--text)}
+.monthly-stage-card{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:22px;
+  margin:0 0 24px;
+  padding:22px 24px;
+  border:1px solid var(--line);
+  border-radius:18px;
+}
+.monthly-stage-card h2{margin:4px 0 5px;font-size:clamp(1.3rem,3vw,2rem)}
+.monthly-stage-card p{margin:0;color:var(--muted)}
+.monthly-bonus-pill{
+  flex:0 1 360px;
+  padding:12px 14px;
+  border:1px solid var(--line-gold);
+  border-radius:14px;
+  color:var(--text);
+  font-size:.8rem;
+  line-height:1.5;
+}
+.eligibility-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:5px 9px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--muted);
+  font-size:.7rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.eligibility-badge.ok{
+  border-color:var(--line-gold);
+  color:var(--gold);
+}
+.monthly-rule-card{margin-top:26px;padding:24px}
+.monthly-rule-card>p{margin:0;color:var(--muted);line-height:1.7}
+.monthly-rule-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:18px;
+}
+.monthly-rule-item{
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.018);
+}
+.monthly-rule-item strong{display:block;margin-bottom:6px;color:var(--text)}
+.monthly-rule-item span{color:var(--muted);font-size:.82rem;line-height:1.55}
+@media(max-width:760px){
+  .ranking-tabs{width:100%;border-radius:16px}
+  .ranking-tab{flex:1 1 0;padding-inline:12px}
+  .monthly-stage-card{align-items:flex-start;flex-direction:column;padding:18px}
+  .monthly-bonus-pill{flex-basis:auto;width:100%}
+  .monthly-rule-grid{grid-template-columns:1fr}
+}
