@@ -82,6 +82,7 @@
       const u=new URL(cfg.appsScriptUrl);u.searchParams.set("action","ranking");u.searchParams.set("_",Date.now());
       const r=await fetch(u,{cache:"no-store"});const data=await r.json();
       if(!data.ok)throw new Error(data.message||"Falha ao carregar ranking.");
+      if(Number(data.schemaVersion||0)<4)throw new Error("Backend do ranking ainda não foi migrado para a v4.");
       return withNormalizedRanking(data,data.source||"google-sheets");
     }catch(err){
       console.warn("Ranking remoto indisponível; usando fallback.",err);
