@@ -618,7 +618,7 @@
     renderAll();
   }
 
-  function deletePlayer(id) { const row = state.draftRows.find(item => item.id === id); if (!row) return; if (state.tournaments.some(event => event.entries.some(entry => entry.playerId === id))) return toast('Jogador vinculado a torneios registrados. Edite ou remova esses torneios antes.', 'error'); if (!confirm(`Excluir ${row.name} do rascunho?`)) return; state.draftRows = state.draftRows.filter(item => item.id !== id); renderAll(); }
+  function deletePlayer(id) { const row = state.draftRows.find(item => item.id === id); if (!row) return; if (state.publishedRows.some(item => item.id === id) && monthlyChangedPlayerIds().includes(id)) return toast('Publique ou descarte as alterações mensais deste jogador antes de excluí-lo.', 'error'); if (state.tournaments.some(event => event.entries.some(entry => entry.playerId === id))) return toast('Jogador vinculado a torneios registrados. Edite ou remova esses torneios antes.', 'error'); if (!confirm(`Excluir ${row.name} do rascunho?`)) return; state.draftRows = state.draftRows.filter(item => item.id !== id); renderAll(); }
   function revertPlayer(id) {
     const baseline = state.publishedRows.find(item => item.id === id);
     if (baseline) {
