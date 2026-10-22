@@ -895,7 +895,7 @@
     $('#monthlyDashboard').hidden = tab !== 'monthly';
     $('#tournamentsDashboard').hidden = tab !== 'tournaments';
     $('#stagesDashboard').hidden = tab !== 'stages';
-    $('[data-admin-tab]').forEach(button => {
+    $$('[data-admin-tab]').forEach(button => {
       const active = button.dataset.adminTab === tab;
       button.classList.toggle('is-active', active);
       if (active) button.setAttribute('aria-current', 'page');
