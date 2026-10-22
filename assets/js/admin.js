@@ -392,8 +392,8 @@
   function renderPlayers() {
     const rows = filteredRows(); const tbody = $('#playersTableBody'); const mobile = $('#mobilePlayerList');
     if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Nenhum jogador.</td></tr>'; mobile.innerHTML = '<div class="empty-state">Nenhum jogador.</div>'; return; }
-    tbody.innerHTML = rows.map(row => `<tr class="${changedPlayerIds().includes(row.id) ? 'is-modified' : ''}"><td><strong>${esc(row.name)}</strong></td><td>${fmt(row.points)}</td><td>${row.presences}</td><td>${fmtFactor(row.factor)}</td><td>${fmt(row.bonus)}</td><td><strong class="gold">${fmt(row.finalPoints)}</strong></td><td>${playerActions(row)}</td></tr>`).join('');
-    mobile.innerHTML = rows.map(row => `<article class="player-card ${changedPlayerIds().includes(row.id) ? 'is-modified' : ''}"><div class="player-card-head"><strong>${esc(row.name)}</strong><span>${fmt(row.finalPoints)}</span></div><div class="player-stats"><span>${fmt(row.points)} pts</span><span>${row.presences} pres.</span><span>${fmtFactor(row.factor)}</span><span>bônus ${fmt(row.bonus)}</span></div>${playerActions(row)}</article>`).join('');
+    tbody.innerHTML = rows.map(row => `<tr class="${generalChangedPlayerIds().includes(row.id) ? 'is-modified' : ''}"><td><strong>${esc(row.name)}</strong></td><td>${fmt(row.points)}</td><td>${row.presences}</td><td>${fmtFactor(row.factor)}</td><td>${fmt(row.bonus)}</td><td><strong class="gold">${fmt(row.finalPoints)}</strong></td><td>${playerActions(row)}</td></tr>`).join('');
+    mobile.innerHTML = rows.map(row => `<article class="player-card ${generalChangedPlayerIds().includes(row.id) ? 'is-modified' : ''}"><div class="player-card-head"><strong>${esc(row.name)}</strong><span>${fmt(row.finalPoints)}</span></div><div class="player-stats"><span>${fmt(row.points)} pts</span><span>${row.presences} pres.</span><span>${fmtFactor(row.factor)}</span><span>bônus ${fmt(row.bonus)}</span></div>${playerActions(row)}</article>`).join('');
   }
 
   function filteredMonthlyRows() {
@@ -1036,6 +1036,11 @@
       historyPage = next;
       renderHistory();
     });
+    $('#monthlyPlayerSearch').addEventListener('input', renderMonthlyPlayers);
+    $('#monthlySaveLocalBtn').addEventListener('click', saveLocalDraft);
+    $('#monthlyDiscardBtn').addEventListener('click', discardMonthlyDraft);
+    $('#publishMonthlyBtn').addEventListener('click', () => publishDraft('monthly'));
+    $('#saveMonthlyPlayerBtn').addEventListener('click', saveMonthlyPlayerFromModal);
     $('#managementTabs').addEventListener('click', event => {
       const tab = event.target.closest('[data-admin-tab]');
       if (tab) activateManagementTab(tab.dataset.adminTab);
@@ -1064,13 +1069,17 @@
         $('#loginForm').addEventListener('submit', async event => { event.preventDefault(); const status = $('#loginStatus'); status.textContent = 'Entrando...'; try { await login($('#passwordInput').value); status.textContent = ''; } catch (error) { status.textContent = error.message || 'Não foi possível entrar.'; } });
     $('#logoutBtn').addEventListener('click', () => logout()); $('#openTournamentBtn').addEventListener('click', () => openTournamentModal()); $('#addPlayerBtn').addEventListener('click', () => openPlayerModal()); $('#savePlayerBtn').addEventListener('click', savePlayerFromModal);
     $('#saveLocalBtn').addEventListener('click', saveLocalDraft); $('#exportBtn').addEventListener('click', exportDraft); $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
-    $('#importFileInput').addEventListener('change', event => { importDraftFile(event.target.files?.[0]); event.target.value = ''; }); $('#discardDraftBtn').addEventListener('click', discardDraft); $('#publishBtn').addEventListener('click', publishDraft); $('#playerSearch').addEventListener('input', renderPlayers);
+    $('#importFileInput').addEventListener('change', event => { importDraftFile(event.target.files?.[0]); event.target.value = ''; }); $('#discardDraftBtn').addEventListener('click', discardDraft); $('#publishBtn').addEventListener('click', () => publishDraft('general')); $('#playerSearch').addEventListener('input', renderPlayers);
     $('#addModifierBtn').addEventListener('click', addModifier); $('#resetModifiersBtn').addEventListener('click', resetModifiers); $('#finalizeMonthlyBtn').addEventListener('click', finalizeMonthlyDraft);
     $('#tournamentSearch').addEventListener('input', renderParticipants); $('#tournamentType').addEventListener('change', renderTournamentPreview); 
     $('#participantList').addEventListener('change', event => { const participant = event.target.closest('[data-participant-id]'); if (!participant) return; const id = participant.dataset.participantId; const checkbox = participant.querySelector('[data-presence-id]'); const select = participant.querySelector('[data-placement-id]'); if (event.target.matches('[data-placement-id]') && select.value) checkbox.checked = true; tournamentEntries.set(id, { presence: checkbox.checked, placement: select.value ? Number(select.value) : null }); renderTournamentPreview(); });
     $('#applyTournamentBtn').addEventListener('click', applyTournament);
 
     document.addEventListener('click', event => {
+      const editMonthly = event.target.closest('[data-edit-monthly]');
+      if (editMonthly) return openMonthlyPlayerModal(editMonthly.dataset.editMonthly);
+      const revertMonthly = event.target.closest('[data-revert-monthly]');
+      if (revertMonthly) return revertMonthlyPlayer(revertMonthly.dataset.revertMonthly);
       const edit = event.target.closest('[data-edit-player]'); if (edit) { const row = state.draftRows.find(item => item.id === edit.dataset.editPlayer); if (row) openPlayerModal(row); return; }
       const revert = event.target.closest('[data-revert-player]'); if (revert) return revertPlayer(revert.dataset.revertPlayer);
       const del = event.target.closest('[data-delete-player]'); if (del) return deletePlayer(del.dataset.deletePlayer);
