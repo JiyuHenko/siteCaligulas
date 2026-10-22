@@ -747,12 +747,106 @@
     clearLocalDraft(); renderAll();
   }
 
-  async function publishDraft() {
-    if (!hasDraftChanges()) return; if (!confirm('Publicar este rascunho no ranking do site?')) return;
-    const btn = $('#publishBtn'); btn.disabled = true; btn.textContent = 'Publicando...';
-    try { const data = await api({ action: 'publish', token: state.token, baseVersion: state.version, rows: state.draftRows, modifiers: state.draftModifiers, monthlyState: state.draftMonthlyState }); absorbPublished(data); toast('Ranking geral e mensal publicados.'); }
-    catch (error) { handleApiError(error); }
-    finally { btn.textContent = 'Publicar ranking'; btn.disabled = !hasDraftChanges(); }
+  // Publish only the selected ranking. The v5 API accepts complete rows, so each
+  // request merges the chosen draft fields with the last published other ranking.
+  function scopedPublishRows(scope) {
+    const published = new Map(state.publishedRows.map(row => [row.id, row]));
+    if (scope === 'monthly') {
+      const drafts = new Map(state.draftRows.map(row => [row.id, row]));
+      return state.publishedRows.map(row => {
+        const result = clone(row);
+        const draft = drafts.get(row.id);
+        if (draft) MONTHLY_FIELDS.forEach(field => { result[field] = clone(draft[field]); });
+        return result;
+      });
+    }
+    return state.draftRows.map(row => {
+      const result = clone(row);
+      const base = published.get(row.id);
+      if (base) MONTHLY_FIELDS.forEach(field => { result[field] = clone(base[field]); });
+      return result;
+    });
+  }
+
+  // Keep unpublished changes from the other tab after the server increments
+  // its version, rather than silently losing them on refresh or publish.
+  function recoverOtherDraft(scope, previous) {
+    const originalBase = new Map(previous.publishedRows.map(row => [row.id, row]));
+    const oldDraft = new Map(previous.draftRows.map(row => [row.id, row]));
+    if (scope === 'monthly') {
+      state.draftRows = state.draftRows.filter(row => !originalBase.has(row.id) || oldDraft.has(row.id));
+      state.draftRows.forEach(row => {
+        const draft = oldDraft.get(row.id);
+        if (draft && originalBase.has(row.id) && !sameGeneralFields(originalBase.get(row.id), draft)) {
+          GENERAL_FIELDS.forEach(field => { row[field] = clone(draft[field]); });
+        }
+      });
+      previous.draftRows.filter(row => !originalBase.has(row.id))
+        .forEach(row => state.draftRows.push(clone(row)));
+      state.draftModifiers = clone(previous.draftModifiers);
+      state.draftMonthlyState = clone(previous.draftMonthlyState);
+    } else {
+      state.draftRows.forEach(row => {
+        const before = originalBase.get(row.id);
+        const draft = oldDraft.get(row.id);
+        if (before && draft && !sameMonthlyFields(before, draft)) {
+          MONTHLY_FIELDS.forEach(field => { row[field] = clone(draft[field]); });
+        }
+      });
+    }
+    state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
+    if (hasDraftChanges()) saveDraftWithoutToast();
+    else clearLocalDraft();
+    renderAll();
+  }
+
+  async function publishDraft(scope = 'general') {
+    const monthly = scope === 'monthly';
+    const dirty = monthly ? hasMonthlyDraftChanges() : hasGeneralDraftChanges();
+    if (!dirty) return;
+    if (monthly && state.draftMonthlyState?.finalized) {
+      return toast('Etapa já finalizada. Não é possível publicar alterações mensais.', 'error');
+    }
+    if (!monthly && !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState) && hasMonthlyDraftChanges()) {
+      return toast('Publique primeiro as alterações mensais antes de finalizar a etapa.', 'error');
+    }
+    if (!monthly) {
+      const draftIds = new Set(state.draftRows.map(row => row.id));
+      if (monthlyChangedPlayerIds().some(id => !draftIds.has(id))) {
+        return toast('Revise as alterações mensais de jogadores excluídos antes de publicar.', 'error');
+      }
+    }
+    const label = monthly ? 'mensal' : 'geral';
+    if (!confirm(`Publicar somente o ranking ${label}?`)) return;
+
+    const btn = $(monthly ? '#publishMonthlyBtn' : '#publishBtn');
+    const title = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Publicando...';
+    const previous = {
+      publishedRows: clone(state.publishedRows),
+      draftRows: clone(state.draftRows),
+      draftModifiers: clone(state.draftModifiers),
+      draftMonthlyState: clone(state.draftMonthlyState)
+    };
+    try {
+      const data = await api({
+        action: 'publish',
+        token: state.token,
+        baseVersion: state.version,
+        rows: scopedPublishRows(scope),
+        modifiers: monthly ? state.publishedModifiers : state.draftModifiers,
+        monthlyState: monthly ? state.publishedMonthlyState : state.draftMonthlyState
+      });
+      absorbPublished(data);
+      recoverOtherDraft(scope, previous);
+      toast(`Ranking ${label} publicado. Alterações do outro ranking foram preservadas.`);
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      btn.textContent = title;
+      btn.disabled = !(monthly ? hasMonthlyDraftChanges() : hasGeneralDraftChanges());
+    }
   }
 
   async function previewHistory(id) {
@@ -772,13 +866,33 @@
   }
 
   async function deleteHistory(id) { const item = state.history.find(history => history.id === id); if (!confirm(`Excluir definitivamente a versão ${item?.version ?? ''} do histórico?`)) return; try { const data = await api({ action: 'deleteHistory', token: state.token, historyId: id }); state.history = data.history || []; renderHistory(); toast('Histórico excluído.'); } catch (error) { handleApiError(error); } }
-  function discardDraft() { if (hasDraftChanges() && !confirm('Descartar todas as alterações do rascunho?')) return; state.draftRows = clone(state.publishedRows); state.draftModifiers = clone(state.publishedModifiers); state.draftMonthlyState = clone(state.publishedMonthlyState); clearLocalDraft(); renderAll(); }
+  function discardDraft() {
+    if (!hasGeneralDraftChanges()) return;
+    if (!confirm('Descartar somente as alterações do ranking geral?')) return;
+    const editedMonthly = new Map(state.draftRows.map(row => [row.id, row]));
+    state.draftRows = clone(state.publishedRows);
+    state.draftRows.forEach(row => {
+      const before = state.publishedRows.find(item => item.id === row.id);
+      const old = editedMonthly.get(row.id);
+      if (before && old && !sameMonthlyFields(before, old)) {
+        MONTHLY_FIELDS.forEach(field => { row[field] = clone(old[field]); });
+      }
+    });
+    state.draftModifiers = clone(state.publishedModifiers);
+    state.draftMonthlyState = clone(state.publishedMonthlyState);
+    renderAll();
+    if (hasDraftChanges()) saveDraftWithoutToast();
+    else clearLocalDraft();
+    toast('Alterações do geral descartadas.');
+  }
+
 
   function activateManagementTab(tab) {
-    if (!['players','tournaments','stages'].includes(tab)) return;
+    if (!['players','monthly','tournaments','stages'].includes(tab)) return;
     activeManagementTab = tab;
     $('#adminToolbar').hidden = tab !== 'players';
     $('#playersDashboard').hidden = tab !== 'players';
+    $('#monthlyDashboard').hidden = tab !== 'monthly';
     $('#tournamentsDashboard').hidden = tab !== 'tournaments';
     $('#stagesDashboard').hidden = tab !== 'stages';
     $('[data-admin-tab]').forEach(button => {
