@@ -201,6 +201,42 @@
     };
   }
 
+  const MONTHLY_FIELDS = ['monthlyPoints', 'monthlyPresences', 'monthlyFinishes'];
+  const GENERAL_FIELDS = ['name', 'points', 'presences', 'bonus', 'finishes'];
+
+  function sameMonthlyFields(a, b) {
+    return Boolean(a && b
+      && round1(a.monthlyPoints) === round1(b.monthlyPoints)
+      && Number(a.monthlyPresences) === Number(b.monthlyPresences)
+      && JSON.stringify(cleanFinishes(a.monthlyFinishes)) === JSON.stringify(cleanFinishes(b.monthlyFinishes)));
+  }
+
+  function sameGeneralFields(a, b) {
+    return Boolean(a && b && GENERAL_FIELDS.every(field =>
+      JSON.stringify(field === 'finishes' ? cleanFinishes(a[field]) : a[field]) ===
+      JSON.stringify(field === 'finishes' ? cleanFinishes(b[field]) : b[field])));
+  }
+
+  function monthlyChangedPlayerIds() {
+    const baseline = new Map(state.publishedRows.map(row => [row.id, row]));
+    return state.draftRows.filter(row => baseline.has(row.id)
+      && !sameMonthlyFields(baseline.get(row.id), row)).map(row => row.id);
+  }
+
+  function generalChangedPlayerIds() {
+    const baseline = new Map(state.publishedRows.map(row => [row.id, row]));
+    const draft = new Map(state.draftRows.map(row => [row.id, row]));
+    return [...new Set([...baseline.keys(), ...draft.keys()])].filter(id =>
+      !baseline.has(id) || !draft.has(id) || !sameGeneralFields(baseline.get(id), draft.get(id)));
+  }
+
+  function hasMonthlyDraftChanges() { return monthlyChangedPlayerIds().length > 0; }
+  function hasGeneralDraftChanges() {
+    return generalChangedPlayerIds().length > 0
+      || !modifiersEqual(state.publishedModifiers, state.draftModifiers)
+      || !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
+  }
+
   const sameRow = (a, b) => Boolean(a && b && JSON.stringify(comparableRow(a)) === JSON.stringify(comparableRow(b)));
   const modifiersEqual = (a, b) => JSON.stringify(normalizeModifiers(a)) === JSON.stringify(normalizeModifiers(b));
   const monthlyStateEqual = (a, b) => JSON.stringify(normalizeMonthlyState(a)) === JSON.stringify(normalizeMonthlyState(b));
@@ -333,7 +369,7 @@
     state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
     state.draftMonthlyState = normalizeMonthlyState(state.draftMonthlyState || state.publishedMonthlyState || {});
     $('#versionBadge').textContent = 'v' + state.version;
-    renderPlayers(); renderTopPreview(); renderMonthlyPreview(); renderModifiers(); renderHistory(); renderDraftState(); renderMonthlyStatePanel(); renderTournamentRecords(); renderStageEditor();
+    renderPlayers(); renderMonthlyPlayers(); renderTopPreview(); renderMonthlyPreview(); renderModifiers(); renderHistory(); renderDraftState(); renderMonthlyDraftState(); renderMonthlyStatePanel(); renderTournamentRecords(); renderStageEditor();
   }
 
   function filteredRows() {
@@ -343,7 +379,7 @@
 
   function playerActions(row) {
     const baseline = state.publishedRows.find(item => item.id === row.id);
-    const modified = !sameRow(baseline, row);
+    const modified = Boolean(baseline && !sameGeneralFields(baseline, row)) || !baseline;
     return `<div class="row-actions">${modified ? `<button class="mini-button warning" data-revert-player="${esc(row.id)}" type="button">Remover modificação</button>` : ''}<button class="mini-button" data-edit-player="${esc(row.id)}" type="button">Editar</button><button class="mini-button danger" data-delete-player="${esc(row.id)}" type="button">Excluir</button></div>`;
   }
 
@@ -352,6 +388,124 @@
     if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Nenhum jogador.</td></tr>'; mobile.innerHTML = '<div class="empty-state">Nenhum jogador.</div>'; return; }
     tbody.innerHTML = rows.map(row => `<tr class="${changedPlayerIds().includes(row.id) ? 'is-modified' : ''}"><td><strong>${esc(row.name)}</strong></td><td>${fmt(row.points)}</td><td>${row.presences}</td><td>${fmtFactor(row.factor)}</td><td>${fmt(row.bonus)}</td><td><strong class="gold">${fmt(row.finalPoints)}</strong></td><td>${playerActions(row)}</td></tr>`).join('');
     mobile.innerHTML = rows.map(row => `<article class="player-card ${changedPlayerIds().includes(row.id) ? 'is-modified' : ''}"><div class="player-card-head"><strong>${esc(row.name)}</strong><span>${fmt(row.finalPoints)}</span></div><div class="player-stats"><span>${fmt(row.points)} pts</span><span>${row.presences} pres.</span><span>${fmtFactor(row.factor)}</span><span>bônus ${fmt(row.bonus)}</span></div>${playerActions(row)}</article>`).join('');
+  }
+
+  function filteredMonthlyRows() {
+    const query = ($('#monthlyPlayerSearch').value || '').trim().toLocaleLowerCase('pt-BR');
+    return state.draftRows.slice().sort(compareMonthlyRows).filter(row => !query || row.name.toLocaleLowerCase('pt-BR').includes(query));
+  }
+
+  function renderMonthlyPlayers() {
+    const rows = filteredMonthlyRows();
+    const all = state.draftRows.slice().sort(compareMonthlyRows);
+    const modified = new Set(monthlyChangedPlayerIds());
+    const finished = Boolean(state.draftMonthlyState?.finalized);
+    const tbody = $('#monthlyPlayersTableBody');
+    const cards = $('#monthlyMobilePlayerList');
+    const action = row => `<div class="row-actions">
+      ${modified.has(row.id) ? `<button class="mini-button warning" type="button" data-revert-monthly="${esc(row.id)}">Desfazer</button>` : ''}
+      <button class="mini-button" type="button" data-edit-monthly="${esc(row.id)}" ${finished || !state.publishedRows.some(item => item.id === row.id) ? 'disabled' : ''}>Editar</button>
+    </div>`;
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Nenhum jogador encontrado.</td></tr>';
+      cards.innerHTML = '<div class="empty-state">Nenhum jogador encontrado.</div>';
+      return;
+    }
+    tbody.innerHTML = rows.map(row => `
+      <tr class="${modified.has(row.id) ? 'is-modified' : ''}">
+        <td>${all.indexOf(row) + 1}º</td>
+        <td><strong>${esc(row.name)}</strong></td>
+        <td>${fmt(row.monthlyPoints)}</td>
+        <td>${row.monthlyPresences}</td>
+        <td><strong class="gold">${fmt(row.monthlyFinalPoints)}</strong></td>
+        <td>${action(row)}</td>
+      </tr>`).join('');
+    cards.innerHTML = rows.map(row => `
+      <article class="player-card ${modified.has(row.id) ? 'is-modified' : ''}">
+        <div class="player-card-head"><strong>${esc(row.name)}</strong><span>${fmt(row.monthlyFinalPoints)} pts</span></div>
+        <div class="player-stats"><span>${fmt(row.monthlyPoints)} pontos</span><span>${row.monthlyPresences} presenças</span></div>
+        ${action(row)}
+      </article>`).join('');
+  }
+
+  function renderMonthlyDraftState() {
+    const changed = monthlyChangedPlayerIds().length;
+    const status = $('#monthlyDraftState');
+    status.textContent = changed ? 'Alterações pendentes' : 'Sem alterações';
+    status.classList.toggle('dirty', changed > 0);
+    const finalized = Boolean(state.draftMonthlyState?.finalized);
+    $('#publishMonthlyBtn').disabled = !changed || finalized;
+    $('#monthlyPublishSummary').textContent = changed
+      ? `${changed} jogador${changed === 1 ? '' : 'es'} com pontuação mensal alterada`
+      : 'Nenhuma alteração mensal pendente';
+    $('#monthlyPublishSubline').textContent = finalized
+      ? 'Etapa já finalizada. Resultados mensais bloqueados.'
+      : changed ? 'As alterações mensais só aparecem no site após publicar.'
+        : 'Somente a etapa mensal atual é alterada nesta aba.';
+    const stage = stageById(state.draftMonthlyState?.stageId);
+    $('#monthlyEditorStage').textContent = stage
+      ? `${stage.label} · ${fmtDateOnly(stage.start)} a ${fmtDateOnly(stage.end)}`
+      : 'Etapa mensal atual';
+  }
+
+  function openMonthlyPlayerModal(id) {
+    const row = state.draftRows.find(item => item.id === id);
+    if (!row) return;
+    if (state.draftMonthlyState?.finalized) return toast('A etapa já foi finalizada. Não é possível editar os resultados mensais.', 'error');
+    if (!state.publishedRows.some(item => item.id === id)) return toast('Publique primeiro o jogador novo no ranking geral.', 'error');
+    $('#monthlyPlayerIdInput').value = row.id;
+    $('#monthlyPlayerModalTitle').textContent = row.name;
+    const stage = stageById(state.draftMonthlyState?.stageId);
+    $('#monthlyPlayerStageInfo').textContent = stage ? `${stage.label} · ${fmtDateOnly(stage.start)} a ${fmtDateOnly(stage.end)}` : '';
+    $('#monthlyPointsInput').value = row.monthlyPoints;
+    $('#monthlyPresencesInput').value = row.monthlyPresences;
+    $('#monthlyFinishInputs').innerHTML = cleanFinishes(row.monthlyFinishes).map((value, i) =>
+      `<label class="field compact-field"><span>${i + 1}º lugares</span><input type="number" min="0" step="1" value="${value}" data-monthly-finish-input="${i}"></label>`).join('');
+    $('#monthlyPlayerModal').showModal();
+    setTimeout(() => $('#monthlyPointsInput').focus(), 50);
+  }
+
+  function saveMonthlyPlayerFromModal() {
+    const row = state.draftRows.find(item => item.id === $('#monthlyPlayerIdInput').value);
+    if (!row) return toast('Jogador não encontrado.', 'error');
+    if (state.draftMonthlyState?.finalized) return toast('Etapa mensal já finalizada.', 'error');
+    const pointsField = $('#monthlyPointsInput');
+    const presenceField = $('#monthlyPresencesInput');
+    const points = Number(pointsField.value);
+    const presences = Number(presenceField.value);
+    if (!pointsField.value.trim() || !Number.isFinite(points) || points < 0 ||
+        !presenceField.value.trim() || !Number.isInteger(presences) || presences < 0) {
+      return toast('Informe pontos válidos e presenças inteiras, sem valores negativos.', 'error');
+    }
+    const finishes = $('[data-monthly-finish-input]').map(field => Number(field.value));
+    if (finishes.some(value => !Number.isInteger(value) || value < 0)) return toast('As colocações precisam ser números inteiros e não negativos.', 'error');
+    row.monthlyPoints = round1(points);
+    row.monthlyPresences = presences;
+    row.monthlyFinishes = finishes;
+    $('#monthlyPlayerModal').close();
+    renderAll();
+    toast('Pontuação mensal alterada no rascunho.');
+  }
+
+  function revertMonthlyPlayer(id) {
+    const base = state.publishedRows.find(row => row.id === id);
+    const row = state.draftRows.find(row => row.id === id);
+    if (!base || !row) return;
+    MONTHLY_FIELDS.forEach(field => { row[field] = clone(base[field]); });
+    renderAll();
+    toast('Alteração mensal desfeita.');
+  }
+
+  function discardMonthlyDraft() {
+    if (!hasMonthlyDraftChanges()) return;
+    if (!confirm('Descartar somente as alterações mensais deste rascunho?')) return;
+    state.draftRows.forEach(row => {
+      const base = state.publishedRows.find(item => item.id === row.id);
+      if (base) MONTHLY_FIELDS.forEach(field => { row[field] = clone(base[field]); });
+    });
+    renderAll();
+    saveDraftWithoutToast();
+    toast('Alterações mensais descartadas.');
   }
 
   function renderTopList(rows, target, monthly = false) {
