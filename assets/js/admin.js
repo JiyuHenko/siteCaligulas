@@ -334,8 +334,14 @@
 
   function showDashboard() { $('#loginView').hidden = true; $('#dashboard').hidden = false; }
 
+  function saveDraftWithoutToast() {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      baseVersion: state.version, savedAt: new Date().toISOString(),
+      rows: state.draftRows, modifiers: state.draftModifiers, monthlyState: state.draftMonthlyState
+    }));
+  }
   function saveLocalDraft() {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ baseVersion: state.version, savedAt: new Date().toISOString(), rows: state.draftRows, modifiers: state.draftModifiers, monthlyState: state.draftMonthlyState }));
+    saveDraftWithoutToast();
     toast('Rascunho salvo neste navegador.');
   }
 
@@ -564,46 +570,68 @@
   }
 
   function renderDraftState() {
-    const changed = changedPlayerIds();
+    const changed = generalChangedPlayerIds();
     const modifierChanged = !modifiersEqual(state.publishedModifiers, state.draftModifiers);
-    const monthlyChanged = !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
-    const dirty = changed.length > 0 || modifierChanged || monthlyChanged;
+    const stageChanged = !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
+    const dirty = changed.length > 0 || modifierChanged || stageChanged;
     $('#draftState').textContent = dirty ? 'Alterações pendentes' : 'Sem alterações';
-    $('#draftState').classList.toggle('dirty', dirty); $('#publishBtn').disabled = !dirty;
+    $('#draftState').classList.toggle('dirty', dirty);
+    $('#publishBtn').disabled = !dirty;
     const parts = [];
     if (changed.length) parts.push(`${changed.length} jogador${changed.length === 1 ? '' : 'es'} alterado${changed.length === 1 ? '' : 's'}`);
     if (modifierChanged) parts.push('fatores alterados');
-    if (monthlyChanged) parts.push('etapa mensal alterada');
-    $('#publishSummary').textContent = parts.length ? parts.join(' · ') : 'Nenhuma alteração pendente';
-    $('#publishSubline').textContent = dirty ? 'As mudanças só chegam ao site depois de publicar.' : `Publicado em ${fmtDate(state.updatedAt)}.`;
+    if (stageChanged) parts.push('etapa mensal para finalização');
+    $('#publishSummary').textContent = parts.length ? parts.join(' · ') : 'Nenhuma alteração geral pendente';
+    $('#publishSubline').textContent = dirty
+      ? 'Publica somente o geral e eventuais alterações de finalização da etapa.'
+      : `Publicado em ${fmtDate(state.updatedAt)}.`;
   }
 
   function openPlayerModal(row = null) {
     $('#playerModalTitle').textContent = row ? 'Editar jogador' : 'Adicionar jogador';
     $('#playerIdInput').value = row?.id || ''; $('#playerNameInput').value = row?.name || '';
     $('#playerPointsInput').value = row?.points ?? 0; $('#playerPresencesInput').value = row?.presences ?? 0; $('#playerBonusInput').value = row?.bonus ?? 0;
-    $('#playerMonthlyPointsInput').value = row?.monthlyPoints ?? 0; $('#playerMonthlyPresencesInput').value = row?.monthlyPresences ?? 0;
     $('#finishInputs').innerHTML = cleanFinishes(row?.finishes).map((value, i) => `<label class="field compact-field"><span>${i + 1}º lugares</span><input type="number" min="0" step="1" value="${value}" data-finish-input="${i}"></label>`).join('');
-    $('#monthlyFinishInputs').innerHTML = cleanFinishes(row?.monthlyFinishes).map((value, i) => `<label class="field compact-field"><span>${i + 1}º lugares</span><input type="number" min="0" step="1" value="${value}" data-monthly-finish-input="${i}"></label>`).join('');
     $('#playerModal').showModal(); setTimeout(() => $('#playerNameInput').focus(), 50);
   }
 
   function savePlayerFromModal() {
-    const id = $('#playerIdInput').value || uid(); const name = $('#playerNameInput').value.trim();
+    const id = $('#playerIdInput').value || uid();
+    const name = $('#playerNameInput').value.trim();
     if (!name) return toast('Informe o nome do jogador.', 'error');
+    const existing = state.draftRows.find(item => item.id === id);
     const row = {
       id, name,
-      points: Math.max(0, Number($('#playerPointsInput').value) || 0), presences: Math.max(0, Math.floor(Number($('#playerPresencesInput').value) || 0)), bonus: Math.max(0, Number($('#playerBonusInput').value) || 0),
+      points: Math.max(0, Number($('#playerPointsInput').value) || 0),
+      presences: Math.max(0, Math.floor(Number($('#playerPresencesInput').value) || 0)),
+      bonus: Math.max(0, Number($('#playerBonusInput').value) || 0),
       finishes: $$('[data-finish-input]').map(input => Math.max(0, Math.floor(Number(input.value) || 0))),
-      monthlyPoints: Math.max(0, Number($('#playerMonthlyPointsInput').value) || 0), monthlyPresences: Math.max(0, Math.floor(Number($('#playerMonthlyPresencesInput').value) || 0)),
-      monthlyFinishes: $$('[data-monthly-finish-input]').map(input => Math.max(0, Math.floor(Number(input.value) || 0))), active: true
+      monthlyPoints: existing?.monthlyPoints ?? 0,
+      monthlyPresences: existing?.monthlyPresences ?? 0,
+      monthlyFinishes: cleanFinishes(existing?.monthlyFinishes),
+      active: true
     };
-    const index = state.draftRows.findIndex(item => item.id === id); if (index >= 0) state.draftRows[index] = row; else state.draftRows.push(row);
-    state.draftRows = calculateRows(state.draftRows, state.draftModifiers); $('#playerModal').close(); renderAll();
+    const index = state.draftRows.findIndex(item => item.id === id);
+    if (index >= 0) state.draftRows[index] = row;
+    else state.draftRows.push(row);
+    $('#playerModal').close();
+    renderAll();
   }
 
   function deletePlayer(id) { const row = state.draftRows.find(item => item.id === id); if (!row) return; if (state.tournaments.some(event => event.entries.some(entry => entry.playerId === id))) return toast('Jogador vinculado a torneios registrados. Edite ou remova esses torneios antes.', 'error'); if (!confirm(`Excluir ${row.name} do rascunho?`)) return; state.draftRows = state.draftRows.filter(item => item.id !== id); renderAll(); }
-  function revertPlayer(id) { const baseline = state.publishedRows.find(item => item.id === id); if (baseline) { const index = state.draftRows.findIndex(item => item.id === id); if (index >= 0) state.draftRows[index] = clone(baseline); else state.draftRows.push(clone(baseline)); } else state.draftRows = state.draftRows.filter(item => item.id !== id); state.draftRows = calculateRows(state.draftRows, state.draftModifiers); renderAll(); toast('Modificação removida.'); }
+  function revertPlayer(id) {
+    const baseline = state.publishedRows.find(item => item.id === id);
+    if (baseline) {
+      const current = state.draftRows.find(item => item.id === id);
+      if (current) GENERAL_FIELDS.forEach(field => { current[field] = clone(baseline[field]); });
+      else state.draftRows.push(clone(baseline));
+    } else {
+      state.draftRows = state.draftRows.filter(item => item.id !== id);
+    }
+    renderAll();
+    toast('Modificação do geral removida.');
+  }
+
 
   function openTournamentModal(eventRecord = null) {
     if (hasDraftChanges()) return toast('Publique ou descarte o rascunho dos jogadores antes de registrar ou alterar torneios.', 'error');
