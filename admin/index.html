@@ -38,16 +38,17 @@
       </div>
 
       <nav class="management-tabs" id="managementTabs" aria-label="Seções do painel">
-        <button type="button" class="management-tab is-active" data-admin-tab="players" aria-current="page">Jogadores</button>
+        <button type="button" class="management-tab is-active" data-admin-tab="players" aria-current="page">Ranking geral</button>
+        <button type="button" class="management-tab" data-admin-tab="monthly">Ranking mensal</button>
         <button type="button" class="management-tab" data-admin-tab="tournaments">Torneios</button>
         <button type="button" class="management-tab" data-admin-tab="stages">Etapas mensais</button>
       </nav>
       <div class="dashboard-grid" id="playersDashboard">
         <section class="panel ranking-editor-panel">
-          <div class="panel-head"><div><p class="eyebrow">Rascunho</p><h2>Jogadores</h2></div><div class="draft-state" id="draftState">Sem alterações</div></div>
+          <div class="panel-head"><div><p class="eyebrow">Rascunho geral</p><h2>Jogadores</h2></div><div class="draft-state" id="draftState">Sem alterações</div></div>
           <div class="table-wrap"><table class="editor-table"><thead><tr><th>Jogador</th><th>Pontos</th><th>Presenças</th><th>Fator</th><th>Bônus</th><th>Final</th><th></th></tr></thead><tbody id="playersTableBody"></tbody></table></div>
           <div class="mobile-player-list" id="mobilePlayerList"></div>
-          <div class="publish-bar"><div><strong id="publishSummary">Nenhuma alteração pendente</strong><span id="publishSubline">O ranking publicado permanece inalterado.</span></div><button class="button primary publish-button" id="publishBtn" type="button">Publicar ranking</button></div>
+          <div class="publish-bar"><div><strong id="publishSummary">Nenhuma alteração pendente</strong><span id="publishSubline">O ranking publicado permanece inalterado.</span></div><button class="button primary publish-button" id="publishBtn" type="button">Publicar geral</button></div>
         </section>
 
         <aside class="side-stack">
@@ -79,6 +80,33 @@
           </section>
         </aside>
       </div>
+      <section id="monthlyDashboard" class="management-page monthly-editor panel" hidden>
+        <div class="panel-head monthly-editor-head">
+          <div>
+            <p class="eyebrow">Rascunho mensal</p>
+            <h2>Classificação da etapa</h2>
+            <p class="monthly-editor-stage" id="monthlyEditorStage">Etapa atual</p>
+          </div>
+          <span class="draft-state" id="monthlyDraftState">Sem alterações</span>
+        </div>
+        <div class="monthly-editor-toolbar">
+          <input class="search" id="monthlyPlayerSearch" type="search" placeholder="Buscar jogador" aria-label="Buscar jogador no mensal">
+          <button class="button ghost" id="monthlySaveLocalBtn" type="button">Salvar rascunho</button>
+          <button class="button ghost" id="monthlyDiscardBtn" type="button">Descartar alterações mensais</button>
+        </div>
+        <div class="table-wrap monthly-editor-table-wrap">
+          <table class="editor-table monthly-editor-table">
+            <thead><tr><th>Pos.</th><th>Jogador</th><th>Colocação</th><th>Presenças</th><th>Total</th><th></th></tr></thead>
+            <tbody id="monthlyPlayersTableBody"></tbody>
+          </table>
+        </div>
+        <div class="mobile-player-list monthly-editor-mobile" id="monthlyMobilePlayerList"></div>
+        <div class="monthly-editor-notice">Este rascunho altera somente a etapa mensal atual. Pontos e presenças do geral permanecem intactos. Para registrar torneios válidos e contar presenças para o bônus, use a aba Torneios.</div>
+        <div class="publish-bar">
+          <div><strong id="monthlyPublishSummary">Nenhuma alteração pendente</strong><span id="monthlyPublishSubline">Ranking mensal publicado.</span></div>
+          <button class="button primary publish-button" id="publishMonthlyBtn" type="button">Publicar mensal</button>
+        </div>
+      </section>
       <section id="tournamentsDashboard" class="management-page panel" hidden>
         <div class="panel-head">
           <div><p class="eyebrow">Registro de eventos</p><h2>Torneios</h2></div>
@@ -137,8 +165,22 @@
       <div class="field-grid"><label class="field"><span>Pontos gerais</span><input id="playerPointsInput" type="number" min="0" step="0.1" value="0"></label><label class="field"><span>Presenças gerais</span><input id="playerPresencesInput" type="number" min="0" step="1" value="0"></label></div>
       <label class="field"><span>Bônus acumulado</span><input id="playerBonusInput" type="number" min="0" step="0.1" value="0"></label>
       <details class="finishes-details"><summary>Colocações gerais para desempate</summary><div class="finish-grid" id="finishInputs"></div></details>
-      <div class="monthly-fields"><p>Use estes campos também para corrigir ou fazer o backfill da etapa mensal atual, se necessário.</p><div class="field-grid"><label class="field"><span>Pontos mensais por colocação</span><input id="playerMonthlyPointsInput" type="number" min="0" step="0.1" value="0"></label><label class="field"><span>Presenças mensais</span><input id="playerMonthlyPresencesInput" type="number" min="0" step="1" value="0"></label></div><details class="finishes-details"><summary>Colocações mensais para desempate</summary><div class="finish-grid" id="monthlyFinishInputs"></div></details></div>
       <div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="playerModal">Cancelar</button><button class="button primary" id="savePlayerBtn" type="button">Salvar no rascunho</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="monthlyPlayerModal">
+    <form method="dialog" class="modal-shell" id="monthlyPlayerForm">
+      <div class="modal-head"><div><p class="eyebrow">Etapa mensal</p><h2 id="monthlyPlayerModalTitle">Editar jogador</h2></div><button class="icon-button close-modal" type="button" data-close-dialog="monthlyPlayerModal" aria-label="Fechar">×</button></div>
+      <input id="monthlyPlayerIdInput" type="hidden">
+      <div class="monthly-edit-badge" id="monthlyPlayerStageInfo"></div>
+      <div class="field-grid">
+        <label class="field"><span>Pontos por colocação</span><input id="monthlyPointsInput" type="number" min="0" step="0.1" required></label>
+        <label class="field"><span>Presenças da etapa</span><input id="monthlyPresencesInput" type="number" min="0" step="1" required></label>
+      </div>
+      <details class="finishes-details"><summary>Colocações mensais para desempate</summary><div class="finish-grid" id="monthlyFinishInputs"></div></details>
+      <p class="monthly-modal-note">O total mensal é a soma dos pontos por colocação e das presenças, sem multiplicador. A quantidade de torneios válidos é controlada pelo cadastro de torneios.</p>
+      <div class="modal-actions"><button class="button ghost" type="button" data-close-dialog="monthlyPlayerModal">Cancelar</button><button class="button primary" id="saveMonthlyPlayerBtn" type="button">Salvar no rascunho mensal</button></div>
     </form>
   </dialog>
 

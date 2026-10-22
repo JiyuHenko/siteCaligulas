@@ -173,3 +173,47 @@ input:focus,select:focus{border-color:rgba(226,201,133,.58);box-shadow:0 0 0 3px
 .tournament-entry .tournament-settings[style]{border-bottom:1px solid var(--line)}
 @media(max-width:760px){.management-tabs{width:100%;margin:12px 0}.management-tab{flex:1 1 100px;padding:10px}.tournament-record-list,.stage-editor-list{padding-inline:14px}.management-hint{margin-inline:14px}.stage-editor-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stage-editor-row>.field:first-child{grid-column:1/-1}.stage-editor-row .mini-button{grid-column:1/-1}.management-actions{padding:14px}.stage-next-actions{margin-inline:14px}.tournament-attribution{grid-template-columns:1fr}.tournament-attribution>.field,.tournament-attribution>p{grid-column:auto}}
 @media(max-width:480px){.management-tab{font-size:.73rem}.stage-editor-row{grid-template-columns:1fr}.stage-editor-row>.field:first-child,.stage-editor-row .mini-button{grid-column:auto}.tournament-record{align-items:stretch}.tournament-record-actions{width:100%}.tournament-record-actions .mini-button{flex:1}.tournament-attribution{padding:10px}}
+
+/* Independent monthly-ranking draft editor */
+.monthly-editor{margin-top:0;padding:0;min-width:0}
+.monthly-editor-head{align-items:flex-start}
+.monthly-editor-head .monthly-editor-stage{
+  margin:10px 0 0;color:var(--muted);font-size:.8rem;line-height:1.5
+}
+.monthly-editor-toolbar{
+  padding:0 22px 18px;display:flex;align-items:center;gap:9px;flex-wrap:wrap
+}
+.monthly-editor-toolbar .search{margin-right:auto;flex:1 1 240px}
+.monthly-editor-toolbar .button{font-size:.76rem}
+.monthly-editor-table-wrap{margin:0}
+.monthly-editor-table{min-width:700px}
+.monthly-editor-table th:first-child,.monthly-editor-table td:first-child{width:58px;color:var(--gold)}
+.monthly-editor-table th:last-child,.monthly-editor-table td:last-child{text-align:right}
+.monthly-editor .row-actions{justify-content:flex-end}
+.monthly-editor .row-actions .mini-button:disabled{opacity:.38;cursor:not-allowed}
+.monthly-editor-notice{
+  margin:18px 22px 0;padding:13px 16px;
+  border:1px solid var(--line);border-radius:14px;
+  color:var(--muted);background:rgba(255,255,255,.016);
+  font-size:.76rem;line-height:1.6
+}
+.monthly-edit-badge{
+  margin:0 0 18px;padding:12px 14px;
+  border:1px solid var(--line-gold);border-radius:12px;
+  color:var(--gold);font-size:.8rem;font-weight:700
+}
+.monthly-modal-note{color:var(--muted);line-height:1.6;font-size:.77rem;margin:16px 0 0}
+.monthly-editor-mobile{display:none}
+@media(max-width:760px){
+  .monthly-editor-toolbar{padding:0 14px 14px}
+  .monthly-editor-toolbar .search{flex-basis:100%;max-width:none}
+  .monthly-editor-table-wrap{display:none}
+  .monthly-editor-mobile{display:grid}
+  .monthly-editor-notice{margin:14px}
+  .monthly-editor-head{padding:18px 14px}
+  .monthly-editor .publish-bar{padding:14px}
+}
+@media(max-width:480px){
+  .monthly-editor-toolbar .button{flex:1 1 120px}
+  .monthly-editor-mobile .player-card .row-actions .mini-button{min-width:80px}
+}
