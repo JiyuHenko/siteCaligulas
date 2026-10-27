@@ -9,44 +9,45 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/admin.css">
-  <style>
-    .modifier-panel>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;min-height:74px;user-select:none}.modifier-panel>summary::-webkit-details-marker{display:none}.modifier-summary-title{min-width:0}.modifier-summary-title .eyebrow{margin-bottom:5px}.modifier-summary-title h2{font-size:1.25rem}.modifier-summary-action{display:flex;align-items:center;gap:9px;flex:0 0 auto;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.modifier-chevron{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--gold);line-height:1;transition:transform .24s cubic-bezier(.2,.8,.2,1),border-color .18s ease,background .18s ease}.modifier-chevron svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.modifier-panel>summary:hover .modifier-chevron{border-color:var(--line-gold);background:rgba(226,201,133,.045)}.modifier-panel[open]>summary{border-bottom:1px solid var(--line)}.modifier-panel[open] .modifier-chevron{transform:rotate(180deg)}.modifier-content{padding-top:12px}.modifier-intro{display:flex;align-items:center;justify-content:flex-end;padding:0 14px 10px}.modifier-intro .icon-button{flex:0 0 auto}
-    .tournament-settings{grid-template-columns:minmax(180px,.8fr) minmax(180px,.8fr) minmax(220px,1fr)!important}.monthly-fields{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.monthly-fields>p{margin:0 0 10px;color:var(--muted);font-size:.8rem}.editor-table th:nth-child(5),.editor-table td:nth-child(5){white-space:nowrap}
-    @media(max-width:760px){.tournament-settings{grid-template-columns:1fr!important}}@media(max-width:500px){.modifier-panel>summary{min-height:68px;padding:13px 14px}.modifier-summary-title h2{font-size:1.12rem}.modifier-summary-action>span:first-child{display:none}.modifier-intro{padding-inline:12px}}
-  </style>
+  <link rel="stylesheet" href="../assets/css/admin.css?v=6">
 </head>
 <body>
   <main class="admin-shell">
     <section class="login-view" id="loginView">
       <div class="login-card">
         <img class="admin-logo" src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live">
-        <p class="eyebrow">Área restrita</p><h1>Painel administrativo.</h1><p class="lead">Gerencie o ranking geral e o ranking mensal.</p>
-        <form id="loginForm" class="stack" autocomplete="off"><label class="field"><span>Senha</span><input id="passwordInput" type="password" autocomplete="current-password" required></label><button class="button primary" type="submit">Entrar</button></form>
+        <p class="eyebrow">Área restrita</p><h1>O jogo em ordem.</h1><p class="lead">Gerencie jogadores, torneios e etapas do ranking Caligulas.</p>
+        <form id="loginForm" class="stack" autocomplete="off"><label class="field"><span>Senha do administrador</span><input id="passwordInput" type="password" autocomplete="current-password" required></label><button class="button primary" type="submit">Acessar painel</button></form>
         <div class="inline-status" id="loginStatus" role="status"></div>
       </div>
     </section>
 
     <section class="dashboard" id="dashboard" hidden>
       <header class="admin-header">
-        <div class="brand-row"><img src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live"><div><p class="eyebrow">3º Ranking 2026/27</p><h1>Gerenciar ranking</h1><p>Ranking geral, etapa mensal e bônus em um único fluxo.</p></div></div>
-        <div class="header-actions"><span class="version-badge" id="versionBadge">v—</span><button class="button ghost" id="logoutBtn" type="button">Sair</button></div>
+        <div class="brand-row"><img src="../assets/img/perf/brand/logo-caligulas-white-360.webp" alt="Caligulas Poker Live"><div><p class="eyebrow">Central do administrador · 2026/27</p><h1>Gerenciar ranking</h1><p>Jogadores, resultados e etapas. Tudo sob seu controle.</p></div></div>
+        <div class="header-actions"><span class="version-badge" id="versionBadge">v—</span><a class="button ghost public-ranking-link" href="../ranking.html" target="_blank" rel="noopener">Ver ranking <span aria-hidden="true">↗</span></a><button class="button ghost" id="logoutBtn" type="button">Sair</button></div>
       </header>
 
-      <div class="toolbar" id="adminToolbar">
-        <button class="button primary" id="openTournamentBtn" type="button">Registrar torneio</button><button class="button" id="addPlayerBtn" type="button">Adicionar jogador</button><button class="button" id="saveLocalBtn" type="button">Salvar rascunho</button><button class="button" id="exportBtn" type="button">Exportar</button><button class="button" id="importBtn" type="button">Importar</button><input id="importFileInput" type="file" accept="application/json,.json" hidden><button class="button ghost" id="discardDraftBtn" type="button">Descartar rascunho</button><div class="toolbar-spacer"></div><input id="playerSearch" class="search" type="search" placeholder="Buscar jogador">
-      </div>
+      <section class="workspace-bar" aria-label="Rascunho e publicação">
+        <div class="workspace-status"><span class="status-dot" aria-hidden="true"></span><div><strong>Seu espaço de edição</strong><span id="autosaveStatus" role="status" aria-live="polite">As alterações ficam no rascunho até você publicar.</span></div></div>
+        <div class="workspace-actions"><button class="button ghost" id="saveLocalBtn" type="button">Salvar rascunho</button><button class="button primary" id="publishAllBtn" type="button">Publicar tudo</button></div>
+        <details class="backup-menu"><summary>Backup e recuperação <span aria-hidden="true">⌄</span></summary><div class="backup-menu-body"><p>Exporte uma cópia antes de fazer ajustes maiores. A importação carrega os dados no rascunho para revisão.</p><div class="backup-actions"><button class="button" id="exportBtn" type="button">Exportar JSON</button><button class="button" id="importBtn" type="button">Importar JSON</button><input id="importFileInput" type="file" accept="application/json,.json" hidden><button class="button ghost danger-soft" id="discardDraftBtn" type="button">Descartar todo o rascunho</button></div></div></details>
+      </section>
 
       <nav class="management-tabs" id="managementTabs" aria-label="Seções do painel">
-        <button type="button" class="management-tab is-active" data-admin-tab="players" aria-current="page">Ranking geral</button>
-        <button type="button" class="management-tab" data-admin-tab="monthly">Ranking mensal</button>
-        <button type="button" class="management-tab" data-admin-tab="tournaments">Torneios</button>
-        <button type="button" class="management-tab" data-admin-tab="stages">Etapas mensais</button>
+        <button type="button" class="management-tab is-active" data-admin-tab="players" aria-current="page" aria-controls="playersDashboard"><span class="tab-number" aria-hidden="true">01</span> Ranking geral</button>
+        <button type="button" class="management-tab" data-admin-tab="monthly" aria-controls="monthlyDashboard"><span class="tab-number" aria-hidden="true">02</span> Ranking mensal</button>
+        <button type="button" class="management-tab" data-admin-tab="tournaments" aria-controls="tournamentsDashboard"><span class="tab-number" aria-hidden="true">03</span> Torneios</button>
+        <button type="button" class="management-tab" data-admin-tab="stages" aria-controls="stagesDashboard"><span class="tab-number" aria-hidden="true">04</span> Etapas mensais</button>
       </nav>
+      <div class="toolbar" id="adminToolbar">
+        <div class="toolbar-actions"><button class="button primary" id="openTournamentBtn" type="button">Registrar torneio</button><button class="button" id="addPlayerBtn" type="button">Adicionar jogador</button></div><label class="search-field"><span class="sr-only">Buscar jogador no geral</span><input id="playerSearch" class="search" type="search" placeholder="Buscar jogador no geral"></label>
+      </div>
       <div class="dashboard-grid" id="playersDashboard">
         <section class="panel ranking-editor-panel">
-          <div class="panel-head"><div><p class="eyebrow">Rascunho geral</p><h2>Jogadores</h2></div><div class="draft-state" id="draftState">Sem alterações</div></div>
-          <div class="table-wrap"><table class="editor-table"><thead><tr><th>Jogador</th><th>Pontos</th><th>Presenças</th><th>Fator</th><th>Bônus</th><th>Final</th><th></th></tr></thead><tbody id="playersTableBody"></tbody></table></div>
+          <div class="panel-head"><div><p class="eyebrow">Rascunho geral</p><h2>Classificação geral</h2></div><div class="draft-state" id="draftState" role="status">Sem alterações</div></div>
+          <p class="panel-note">Edite pontos, presenças, bônus e desempates de cada jogador. O total considera os fatores de frequência.</p>
+          <div class="table-wrap"><table class="editor-table"><caption class="sr-only">Jogadores do ranking geral e suas pontuações</caption><thead><tr><th scope="col">Jogador</th><th scope="col">Pontos</th><th scope="col">Presenças</th><th scope="col">Fator</th><th scope="col">Bônus</th><th scope="col">Final</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead><tbody id="playersTableBody"></tbody></table></div>
           <div class="mobile-player-list" id="mobilePlayerList"></div>
           <div class="publish-bar"><div><strong id="publishSummary">Nenhuma alteração pendente</strong><span id="publishSubline">O ranking publicado permanece inalterado.</span></div><button class="button primary publish-button" id="publishBtn" type="button">Publicar geral</button></div>
         </section>
@@ -64,6 +65,7 @@
             <div class="top-list" id="monthlyPreview" aria-label="Classificação da etapa mensal"></div>
             <div class="monthly-stage-actions">
               <button class="button" id="finalizeMonthlyBtn" type="button">Finalizar etapa mensal</button>
+              <button class="button ghost" id="reopenMonthlyBtn" type="button" hidden>Reabrir etapa</button>
             </div>
           </section>
 
@@ -87,21 +89,27 @@
             <h2>Classificação da etapa</h2>
             <p class="monthly-editor-stage" id="monthlyEditorStage">Etapa atual</p>
           </div>
-          <span class="draft-state" id="monthlyDraftState">Sem alterações</span>
+          <span class="draft-state" id="monthlyDraftState" role="status">Sem alterações</span>
+        </div>
+        <div class="monthly-controls">
+          <div class="monthly-count-control"><div><p class="eyebrow">Bônus por frequência</p><h3>Torneios válidos da etapa</h3><p id="monthlyCountHelp">Ajuste a quantidade usada para calcular a presença necessária ao bônus mensal.</p><div class="monthly-state-status" id="monthlyStateStatus" role="status" aria-live="polite"></div></div><label class="field count-field"><span>Quantidade de torneios</span><input id="monthlyTournamentCountInput" type="number" min="0" step="1" value="0" inputmode="numeric" aria-describedby="monthlyCountHelp"></label></div>
+          <div class="monthly-copy-control"><div><strong>Usar o geral como base</strong><p>Copia os pontos, as presenças e os desempates do geral para o rascunho mensal atual.</p></div><button class="button" id="monthlySyncGeneralBtn" type="button">Copiar geral para o mensal</button></div>
         </div>
         <div class="monthly-editor-toolbar">
-          <input class="search" id="monthlyPlayerSearch" type="search" placeholder="Buscar jogador" aria-label="Buscar jogador no mensal">
+          <button class="button primary" id="monthlyAddPlayerBtn" type="button">Adicionar jogador no mensal</button>
+          <input class="search" id="monthlyPlayerSearch" type="search" placeholder="Buscar jogador no mensal" aria-label="Buscar jogador no mensal">
           <button class="button ghost" id="monthlySaveLocalBtn" type="button">Salvar rascunho</button>
           <button class="button ghost" id="monthlyDiscardBtn" type="button">Descartar alterações mensais</button>
         </div>
         <div class="table-wrap monthly-editor-table-wrap">
           <table class="editor-table monthly-editor-table">
-            <thead><tr><th>Pos.</th><th>Jogador</th><th>Colocação</th><th>Presenças</th><th>Total</th><th></th></tr></thead>
+            <caption class="sr-only">Jogadores da etapa mensal e suas pontuações</caption><thead><tr><th scope="col">Pos.</th><th scope="col">Jogador</th><th scope="col">Pontos de colocação</th><th scope="col">Presenças</th><th scope="col">Total</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
             <tbody id="monthlyPlayersTableBody"></tbody>
           </table>
         </div>
         <div class="mobile-player-list monthly-editor-mobile" id="monthlyMobilePlayerList"></div>
-        <div class="monthly-editor-notice">Este rascunho altera somente a etapa mensal atual. Pontos e presenças do geral permanecem intactos. Para registrar torneios válidos e contar presenças para o bônus, use a aba Torneios.</div>
+        <div class="monthly-editor-notice"><strong>Como funciona o mensal</strong><span>Total = pontos de colocação + presenças, sem multiplicador. Faça correções diretamente aqui ou registre um torneio para lançar os resultados de todos os participantes.</span></div>
+        <div class="monthly-lifecycle-actions"><p>Encerre a etapa quando os resultados e os torneios válidos estiverem conferidos.</p><button class="button ghost" id="reopenMonthlyFromTabBtn" type="button" hidden>Reabrir etapa para correção</button><button class="button" id="finalizeMonthlyFromTabBtn" type="button">Encerrar etapa</button></div>
         <div class="publish-bar">
           <div><strong id="monthlyPublishSummary">Nenhuma alteração pendente</strong><span id="monthlyPublishSubline">Ranking mensal publicado.</span></div>
           <button class="button primary publish-button" id="publishMonthlyBtn" type="button">Publicar mensal</button>
@@ -112,7 +120,7 @@
           <div><p class="eyebrow">Registro de eventos</p><h2>Torneios</h2></div>
           <button class="button primary" id="newTournamentBtn" type="button">Novo torneio</button>
         </div>
-        <p class="management-hint">Torneios lançados pela versão atual aparecem aqui. Eventos antigos não podem ser reconstruídos automaticamente a partir dos pontos acumulados. Para registrá-los somente no mensal, desmarque a opção de aplicar ao geral.</p>
+        <p class="management-hint">Lance todos os participantes de uma vez e escolha em quais rankings o resultado deve contar. Eventos registrados aparecem aqui para consulta e correção. Para lançar um evento já contabilizado no geral, aplique somente ao mensal.</p>
         <div class="tournament-record-list" id="tournamentRecordList"></div>
       </section>
       <section id="stagesDashboard" class="management-page panel" hidden>
@@ -170,16 +178,18 @@
   </dialog>
 
   <dialog class="modal" id="monthlyPlayerModal">
-    <form method="dialog" class="modal-shell" id="monthlyPlayerForm">
+    <form method="dialog" class="modal-shell" id="monthlyPlayerForm" novalidate>
       <div class="modal-head"><div><p class="eyebrow">Etapa mensal</p><h2 id="monthlyPlayerModalTitle">Editar jogador</h2></div><button class="icon-button close-modal" type="button" data-close-dialog="monthlyPlayerModal" aria-label="Fechar">×</button></div>
       <input id="monthlyPlayerIdInput" type="hidden">
       <div class="monthly-edit-badge" id="monthlyPlayerStageInfo"></div>
+      <label class="field monthly-name-field"><span>Jogador</span><input id="monthlyPlayerNameInput" list="monthlyPlayerNames" maxlength="100" autocomplete="off" placeholder="Escolha um jogador ou digite um novo nome" required><datalist id="monthlyPlayerNames"></datalist><small>Selecione pelo nome ou cadastre um jogador diretamente nesta etapa.</small></label>
       <div class="field-grid">
-        <label class="field"><span>Pontos por colocação</span><input id="monthlyPointsInput" type="number" min="0" step="0.1" required></label>
-        <label class="field"><span>Presenças da etapa</span><input id="monthlyPresencesInput" type="number" min="0" step="1" required></label>
+        <label class="field"><span>Pontos por colocação</span><input id="monthlyPointsInput" type="number" min="0" step="0.1" value="0" inputmode="decimal" required></label>
+        <label class="field"><span>Presenças da etapa</span><input id="monthlyPresencesInput" type="number" min="0" step="1" value="0" inputmode="numeric" required></label>
       </div>
       <details class="finishes-details"><summary>Colocações mensais para desempate</summary><div class="finish-grid" id="monthlyFinishInputs"></div></details>
-      <p class="monthly-modal-note">O total mensal é a soma dos pontos por colocação e das presenças, sem multiplicador. A quantidade de torneios válidos é controlada pelo cadastro de torneios.</p>
+      <p class="monthly-modal-note">Você pode registrar só a presença: mantenha os pontos em zero. O total soma pontos de colocação e presenças. Ajuste os torneios válidos no painel mensal.</p>
+      <div id="monthlyFormStatus" class="inline-status form-status" role="alert" aria-live="assertive"></div>
       <div class="modal-actions"><button class="button ghost" type="button" data-close-dialog="monthlyPlayerModal">Cancelar</button><button class="button primary" id="saveMonthlyPlayerBtn" type="button">Salvar no rascunho mensal</button></div>
     </form>
   </dialog>
@@ -189,6 +199,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="../config.js"></script><script src="../assets/js/admin.js"></script>
+  <script src="../config.js"></script><script src="../assets/js/admin.js?v=6"></script>
 </body>
 </html>

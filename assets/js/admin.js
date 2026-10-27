@@ -41,6 +41,11 @@
     history: [],
     tournaments: [],
     stages: [],
+    publishedStages: [],
+    publishedTournaments: [],
+    importedBackup: null,
+    newMonthlyPlayerIds: [],
+    publishing: false,
     previewHistoryId: null
   };
 
@@ -99,8 +104,9 @@
   }
 
   function normalizeStages(value) {
-    return (Array.isArray(value) ? value : MONTHLY_STAGES).map(stage => ({
+    return (Array.isArray(value) && value.length ? value : MONTHLY_STAGES).map(stage => ({
       ...stage,
+      id: dateKey(stage.id) || String(stage.id || ''),
       start: dateKey(stage.start),
       end: dateKey(stage.end)
     }));
@@ -177,7 +183,8 @@
   }
 
   function normalizeMonthlyState(value) {
-    const stage = MONTHLY_STAGES.find(item => item.id === value?.stageId) || stageForDate(localDateKey()) || MONTHLY_STAGES[0];
+    const id = dateKey(value?.stageId) || value?.stageId;
+    const stage = MONTHLY_STAGES.find(item => item.id === id) || stageForDate(localDateKey()) || MONTHLY_STAGES[0];
     return {
       stageId: stage.id,
       tournamentCount: Math.max(0, Math.floor(Number(value?.tournamentCount) || 0)),
@@ -220,21 +227,26 @@
   function monthlyChangedPlayerIds() {
     const baseline = new Map(state.publishedRows.map(row => [row.id, row]));
     return state.draftRows.filter(row => baseline.has(row.id)
-      && !sameMonthlyFields(baseline.get(row.id), row)).map(row => row.id);
+      ? !sameMonthlyFields(baseline.get(row.id), row)
+      : state.newMonthlyPlayerIds.includes(row.id) || hasMonthlyValues(row)).map(row => row.id);
+  }
+
+  function hasMonthlyValues(row) {
+    return row.monthlyPoints > 0 || row.monthlyPresences > 0 || cleanFinishes(row.monthlyFinishes).some(Boolean);
   }
 
   function generalChangedPlayerIds() {
     const baseline = new Map(state.publishedRows.map(row => [row.id, row]));
     const draft = new Map(state.draftRows.map(row => [row.id, row]));
     return [...new Set([...baseline.keys(), ...draft.keys()])].filter(id =>
-      !baseline.has(id) || !draft.has(id) || !sameGeneralFields(baseline.get(id), draft.get(id)));
+      (!baseline.has(id) && !state.newMonthlyPlayerIds.includes(id)) || !draft.has(id)
+      || (baseline.has(id) && !sameGeneralFields(baseline.get(id), draft.get(id))));
   }
 
-  function hasMonthlyDraftChanges() { return monthlyChangedPlayerIds().length > 0; }
+  function hasMonthlyDraftChanges() { return monthlyChangedPlayerIds().length > 0 || !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState); }
   function hasGeneralDraftChanges() {
     return generalChangedPlayerIds().length > 0
-      || !modifiersEqual(state.publishedModifiers, state.draftModifiers)
-      || !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
+      || !modifiersEqual(state.publishedModifiers, state.draftModifiers);
   }
 
   const sameRow = (a, b) => Boolean(a && b && JSON.stringify(comparableRow(a)) === JSON.stringify(comparableRow(b)));
@@ -249,7 +261,7 @@
   }
 
   function hasDraftChanges() {
-    return changedPlayerIds().length > 0 || !modifiersEqual(state.publishedModifiers, state.draftModifiers) || !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
+    return Boolean(state.importedBackup) || changedPlayerIds().length > 0 || !modifiersEqual(state.publishedModifiers, state.draftModifiers) || !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
   }
 
   function stageForDate(date) { return MONTHLY_STAGES.find(stage => date >= stage.start && date <= stage.end) || null; }
@@ -294,20 +306,30 @@
 
   async function loadAdminState() {
     const data = await api({ action: 'adminState', token: state.token });
-    if (Number(data.schemaVersion || 0) < 5) throw new Error('Backend ainda está na v4. Atualize o Apps Script e execute migrateV4ToV5() antes de usar este painel.');
+    if (Number(data.schemaVersion || 0) < 6) throw new Error('Atualize o Code.gs para a v6, execute migrateV5ToV6() e publique uma nova versão da implantação antes de usar este painel.');
     state.version = Number(data.version) || 1;
     state.updatedAt = data.updatedAt || null;
     const incomingModifiers = Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS;
     state.publishedModifiers = normalizeModifiers(incomingModifiers);
     state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers);
-    state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {});
     state.history = Array.isArray(data.history) ? data.history : []; historyPage = 1;
     state.stages = normalizeStages(data.stages);
     MONTHLY_STAGES = clone(state.stages);
-    state.tournaments = Array.isArray(data.tournaments) ? data.tournaments : [];
+    state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {});
+    state.tournaments = normalizeTournaments(data.tournaments);
+    state.publishedStages = clone(state.stages);
+    state.publishedTournaments = clone(state.tournaments);
+    state.importedBackup = null; state.newMonthlyPlayerIds = []; state.conflictingDraft = null;
 
     const saved = readLocalDraft();
     if (saved && saved.baseVersion === state.version) {
+      state.importedBackup = saved.importedBackup || null;
+      state.newMonthlyPlayerIds = saved.newMonthlyPlayerIds || [];
+      if (state.importedBackup) {
+        state.stages = normalizeStages(state.importedBackup.stages);
+        state.tournaments = normalizeTournaments(state.importedBackup.tournaments);
+        MONTHLY_STAGES = clone(state.stages);
+      }
       state.draftModifiers = normalizeModifiers(saved.modifiers || state.publishedModifiers);
       state.draftRows = calculateRows(saved.rows || state.publishedRows, state.draftModifiers);
       state.draftMonthlyState = normalizeMonthlyState(saved.monthlyState || state.publishedMonthlyState);
@@ -316,7 +338,11 @@
       state.draftModifiers = clone(state.publishedModifiers);
       state.draftRows = clone(state.publishedRows);
       state.draftMonthlyState = clone(state.publishedMonthlyState);
-      if (saved) localStorage.removeItem(DRAFT_KEY);
+      if (saved) {
+        // Keep an older draft recoverable through the export control.
+        state.conflictingDraft = saved;
+        toast('Há um rascunho de outra versão. Use Exportar para guardá-lo antes de importar novamente.', 'error');
+      }
     }
 
     showDashboard();
@@ -335,26 +361,64 @@
   function showDashboard() { $('#loginView').hidden = true; $('#dashboard').hidden = false; }
 
   function saveDraftWithoutToast() {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({
-      baseVersion: state.version, savedAt: new Date().toISOString(),
-      rows: state.draftRows, modifiers: state.draftModifiers, monthlyState: state.draftMonthlyState
-    }));
+    try {
+      if (state.conflictingDraft) return false;
+      if (!hasDraftChanges()) { clearLocalDraft(); return true; }
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        schemaVersion: 6, baseVersion: state.version, savedAt: new Date().toISOString(),
+        rows: state.draftRows, modifiers: state.draftModifiers, monthlyState: state.draftMonthlyState,
+        importedBackup: state.importedBackup, newMonthlyPlayerIds: state.newMonthlyPlayerIds
+      }));
+      $('#autosaveStatus').textContent = 'Rascunho salvo automaticamente neste navegador';
+      return true;
+    } catch (_) {
+      $('#autosaveStatus').textContent = 'Não foi possível salvar neste navegador. Exporte uma cópia do rascunho.';
+      return false;
+    }
   }
   function saveLocalDraft() {
-    saveDraftWithoutToast();
-    toast('Rascunho salvo neste navegador.');
+    toast(saveDraftWithoutToast() ? 'Rascunho salvo neste navegador.' : 'Use Exportar para guardar o rascunho em arquivo.');
   }
 
   function readLocalDraft() { try { const raw = localStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch (_) { return null; } }
-  function clearLocalDraft() { localStorage.removeItem(DRAFT_KEY); }
+  function clearLocalDraft() { try { if (!state.conflictingDraft) localStorage.removeItem(DRAFT_KEY); } catch (_) {} }
+
+  function normalizeTournaments(value) {
+    return (Array.isArray(value) ? clone(value) : []).map(item => ({
+      ...item, date: dateKey(item.date), stageId: dateKey(item.stageId) || String(item.stageId || '')
+    }));
+  }
+
+  function backupPayload() {
+    return { kind: 'caligulas-ranking-backup', schemaVersion: 6, exportedAt: new Date().toISOString(),
+      baseVersion: state.version, metadataMode: 'replace', rows: state.draftRows, modifiers: state.draftModifiers,
+      ...(state.importedBackup?.pendingFinalization ? { pendingFinalization: true } : {}),
+      monthlyState: state.draftMonthlyState, stages: state.stages, tournaments: state.tournaments };
+  }
 
   function exportDraft() {
-    const payload = { exportedAt: new Date().toISOString(), baseVersion: state.version, rows: state.draftRows, modifiers: state.draftModifiers, monthlyState: state.draftMonthlyState };
+    const conflict = state.conflictingDraft;
+    const payload = conflict ? {
+      kind: 'caligulas-ranking-backup', schemaVersion: 6,
+      exportedAt: new Date().toISOString(), baseVersion: conflict.baseVersion,
+      rows: conflict.rows, modifiers: conflict.modifiers, monthlyState: conflict.monthlyState,
+      metadataMode: conflict.importedBackup?.metadataMode || conflict.metadataMode || 'preserve',
+      ...(conflict.pendingFinalization || conflict.importedBackup?.pendingFinalization ? { pendingFinalization: true } : {}),
+      ...(conflict.importedBackup ? { stages: conflict.importedBackup.stages, tournaments: conflict.importedBackup.tournaments }
+        : Array.isArray(conflict.stages) && Array.isArray(conflict.tournaments) ? { stages: conflict.stages, tournaments: conflict.tournaments } : {})
+    } : backupPayload();
+    // A draft close has not awarded its bonus yet. Export an open snapshot,
+    // with the pending intent explicit, rather than an invalid closed backup.
+    if (payload.monthlyState?.finalized && !payload.monthlyState.bonusAwardedAt) {
+      payload.monthlyState = { ...payload.monthlyState, finalized: false, bonusRecipients: [], bonusAwardedAt: null };
+      payload.pendingFinalization = true;
+    }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `caligulas-ranking-v4-rascunho-v${state.version}.json`;
+    a.href = url; a.download = `caligulas-ranking-v6-${conflict ? 'rascunho-anterior' : 'backup'}-v${payload.baseVersion || state.version}.json`;
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    if (conflict) { state.conflictingDraft = null; saveDraftWithoutToast(); toast('Rascunho anterior exportado. Você pode importá-lo para revisar.'); }
   }
 
   async function importDraftFile(file) {
@@ -363,10 +427,61 @@
       const parsed = JSON.parse(await file.text());
       const rows = Array.isArray(parsed) ? parsed : parsed.rows;
       if (!Array.isArray(rows)) throw new Error('Arquivo sem lista de jogadores.');
-      state.draftModifiers = normalizeModifiers(parsed.modifiers || state.draftModifiers);
+      if (Number(parsed.schemaVersion || 0) > 6) throw new Error('Este backup usa uma versão mais nova do painel.');
+      const ids = new Set();
+      const names = new Set();
+      rows.forEach(row => {
+        if (!row || typeof row.id !== 'string' || !row.id.trim() || ids.has(row.id)) throw new Error('Há jogador sem identificação ou com ID repetido.');
+        if (typeof row.name !== 'string' || !row.name.trim() || row.name.length > 100 || names.has(nameKey(row.name))) throw new Error('Há nome vazio, repetido ou com mais de 100 caracteres.');
+        if (row.active === false) throw new Error('O arquivo contém jogadores inativos. Revise o backup antes de importar.');
+        ids.add(row.id); names.add(nameKey(row.name));
+        ['points','presences','bonus','monthlyPoints','monthlyPresences'].forEach(field => {
+          const value = row[field] ?? 0;
+          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (/Presences|^presences$/.test(field) && !Number.isInteger(value))) throw new Error(`Valor inválido de ${field} para ${row.name}.`);
+        });
+        ['finishes','monthlyFinishes'].forEach(field => {
+          if (row[field] !== undefined && (!Array.isArray(row[field]) || row[field].length !== 9 || row[field].some(v => typeof v !== 'number' || !Number.isInteger(v) || v < 0))) throw new Error(`Colocações inválidas de ${row.name}.`);
+        });
+      });
+      const modifiers = parsed.modifiers ?? state.draftModifiers;
+      if (!Array.isArray(modifiers) || modifiers.some(item => !item || !Number.isInteger(item.minPresences) || item.minPresences < 0 || !Number.isFinite(item.factor) || item.factor <= 0) || new Set(modifiers.map(item => item.minPresences)).size !== modifiers.length) throw new Error('Modificadores inválidos ou repetidos.');
+      const mode = parsed.metadataMode || (Array.isArray(parsed.stages) && Array.isArray(parsed.tournaments) ? 'replace' : 'preserve');
+      if (!['preserve','replace'].includes(mode)) throw new Error('Modo de restauração inválido.');
+      if (mode === 'replace' && (!Array.isArray(parsed.stages) || !parsed.stages.length || !Array.isArray(parsed.tournaments))) throw new Error('Backup completo sem etapas ou torneios.');
+      const stages = mode === 'replace' ? normalizeStages(parsed.stages) : clone(state.publishedStages);
+      const tournaments = mode === 'replace' ? normalizeTournaments(parsed.tournaments) : clone(state.publishedTournaments);
+      const stageIds = new Set();
+      stages.forEach(stage => {
+        if (!stage.id || stageIds.has(stage.id) || typeof stage.label !== 'string' || !stage.label.trim() || !stage.start || !stage.end || stage.start > stage.end) throw new Error('Há etapa inválida, repetida ou sem datas válidas.');
+        stageIds.add(stage.id);
+      });
+      const orderedStages = stages.slice().sort((a, b) => a.start.localeCompare(b.start));
+      if (orderedStages.some((stage, i) => i > 0 && stage.start <= orderedStages[i - 1].end)) throw new Error('As datas das etapas se sobrepõem.');
+      const eventIds = new Set();
+      tournaments.forEach(event => {
+        if (!event.id || eventIds.has(event.id) || !event.date || !['regular','special'].includes(event.type) || !Array.isArray(event.entries) || !event.entries.length || (event.applyMonthly && !stageIds.has(event.stageId))) throw new Error('Há torneio inválido ou sem participantes no backup.');
+        eventIds.add(event.id);
+        const participants = new Set();
+        event.entries.forEach(entry => {
+          if (!entry || !ids.has(entry.playerId) || participants.has(entry.playerId) || (entry.placement != null && (!Number.isInteger(entry.placement) || entry.placement < 0 || entry.placement > 9))) throw new Error('Há participante ou colocação inválida nos torneios do backup.');
+          participants.add(entry.playerId);
+        });
+      });
+      const monthly = parsed.monthlyState || state.publishedMonthlyState;
+      const stageId = dateKey(monthly.stageId) || monthly.stageId;
+      if (!stages.some(stage => stage.id === stageId)) throw new Error('A etapa do backup não existe. Importe um backup completo ou confira as etapas cadastradas.');
+      if (!Number.isInteger(monthly.tournamentCount) || monthly.tournamentCount < 0) throw new Error('Quantidade de torneios válidos inválida.');
+      if (mode === 'preserve' && stageId !== state.publishedMonthlyState.stageId) throw new Error('O backup é de outra etapa. Use um backup completo para restaurar outra etapa.');
+      if (monthly.tournamentCount < tournaments.filter(event => event.applyMonthly && event.stageId === stageId).length) throw new Error('O total de torneios é menor que os eventos cadastrados nesta etapa.');
+      if (!confirm(`Importar ${rows.length} jogadores e substituir o rascunho atual? Os dados publicados só mudarão ao clicar em Publicar tudo.`)) return;
+      state.draftModifiers = normalizeModifiers(modifiers);
       state.draftRows = calculateRows(rows, state.draftModifiers);
-      state.draftMonthlyState = normalizeMonthlyState(parsed.monthlyState || state.draftMonthlyState);
-      renderAll(); toast('Rascunho importado. Revise antes de publicar.');
+      state.stages = stages; MONTHLY_STAGES = clone(stages); state.tournaments = tournaments;
+      state.draftMonthlyState = normalizeMonthlyState({ ...monthly, stageId });
+      state.importedBackup = { metadataMode: mode, stages, tournaments, pendingFinalization: Boolean(parsed.pendingFinalization) };
+      state.newMonthlyPlayerIds = [];
+      state.conflictingDraft = null;
+      renderAll(); toast(parsed.pendingFinalization ? 'Backup importado. Publique tudo e encerre a etapa novamente para calcular o bônus.' : 'Backup importado no rascunho. Confira os rankings e clique em Publicar tudo.');
     } catch (error) { toast(error.message || 'Arquivo inválido.', 'error'); }
   }
 
@@ -376,7 +491,13 @@
     state.draftMonthlyState = normalizeMonthlyState(state.draftMonthlyState || state.publishedMonthlyState || {});
     $('#versionBadge').textContent = 'v' + state.version;
     renderPlayers(); renderMonthlyPlayers(); renderTopPreview(); renderMonthlyPreview(); renderModifiers(); renderHistory(); renderDraftState(); renderMonthlyDraftState(); renderMonthlyStatePanel(); renderTournamentRecords(); renderStageEditor();
+    $('#publishAllBtn').disabled = state.publishing || !hasDraftChanges();
+    $('#publishAllBtn').textContent = state.importedBackup ? 'Publicar backup importado' : 'Publicar tudo';
+    if (!hasDraftChanges()) $('#autosaveStatus').textContent = `Tudo publicado · ${fmtDate(state.updatedAt)}`;
+    saveDraftWithoutToast();
   }
+
+  function nameKey(value) { return String(value).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').replace(/\s+/g, ' '); }
 
   function filteredRows() {
     const q = ($('#playerSearch').value || '').trim().toLocaleLowerCase('pt-BR');
@@ -410,7 +531,7 @@
     const cards = $('#monthlyMobilePlayerList');
     const action = row => `<div class="row-actions">
       ${modified.has(row.id) ? `<button class="mini-button warning" type="button" data-revert-monthly="${esc(row.id)}">Desfazer</button>` : ''}
-      <button class="mini-button" type="button" data-edit-monthly="${esc(row.id)}" ${finished || !state.publishedRows.some(item => item.id === row.id) ? 'disabled' : ''}>Editar</button>
+      <button class="mini-button" type="button" data-edit-monthly="${esc(row.id)}" ${finished ? 'disabled' : ''}>Editar</button>
     </div>`;
     if (!rows.length) {
       tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Nenhum jogador encontrado.</td></tr>';
@@ -436,17 +557,19 @@
 
   function renderMonthlyDraftState() {
     const changed = monthlyChangedPlayerIds().length;
+    const metaChanged = !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
+    const dirty = changed > 0 || metaChanged;
     const status = $('#monthlyDraftState');
-    status.textContent = changed ? 'Alterações pendentes' : 'Sem alterações';
-    status.classList.toggle('dirty', changed > 0);
+    status.textContent = dirty ? 'Alterações pendentes' : 'Sem alterações';
+    status.classList.toggle('dirty', dirty);
     const finalized = Boolean(state.draftMonthlyState?.finalized);
-    $('#publishMonthlyBtn').disabled = !changed || finalized;
-    $('#monthlyPublishSummary').textContent = changed
-      ? `${changed} jogador${changed === 1 ? '' : 'es'} com pontuação mensal alterada`
+    $('#publishMonthlyBtn').disabled = state.publishing || !dirty || Boolean(state.importedBackup);
+    $('#monthlyPublishSummary').textContent = dirty
+      ? [changed ? `${changed} jogador${changed === 1 ? '' : 'es'} alterado${changed === 1 ? '' : 's'}` : '', metaChanged ? 'configuração da etapa alterada' : ''].filter(Boolean).join(' · ')
       : 'Nenhuma alteração mensal pendente';
-    $('#monthlyPublishSubline').textContent = finalized
-      ? 'Etapa já finalizada. Resultados mensais bloqueados.'
-      : changed ? 'As alterações mensais só aparecem no site após publicar.'
+    $('#monthlyPublishSubline').textContent = state.importedBackup ? 'Backup em revisão. Use Publicar tudo para importar o conjunto completo.'
+      : finalized ? (state.publishedMonthlyState.finalized ? 'Etapa encerrada. Reabra para corrigir os resultados.' : 'Encerramento no rascunho. Publique o mensal para calcular o bônus.')
+      : dirty ? 'As alterações mensais só aparecem no site após publicar.'
         : 'Somente a etapa mensal atual é alterada nesta aba.';
     const stage = stageById(state.draftMonthlyState?.stageId);
     $('#monthlyEditorStage').textContent = stage
@@ -454,37 +577,46 @@
       : 'Etapa mensal atual';
   }
 
-  function openMonthlyPlayerModal(id) {
+  function openMonthlyPlayerModal(id = '') {
     const row = state.draftRows.find(item => item.id === id);
-    if (!row) return;
     if (state.draftMonthlyState?.finalized) return toast('A etapa já foi finalizada. Não é possível editar os resultados mensais.', 'error');
-    if (!state.publishedRows.some(item => item.id === id)) return toast('Publique primeiro o jogador novo no ranking geral.', 'error');
-    $('#monthlyPlayerIdInput').value = row.id;
-    $('#monthlyPlayerModalTitle').textContent = row.name;
+    $('#monthlyPlayerIdInput').value = row?.id || '';
+    $('#monthlyPlayerModalTitle').textContent = row ? 'Editar mensal · ' + row.name : 'Adicionar jogador no mensal';
+    $('#monthlyPlayerNameInput').value = row?.name || '';
+    $('#monthlyPlayerNameInput').readOnly = Boolean(row);
+    $('#monthlyPlayerNames').innerHTML = state.draftRows.map(item => `<option value="${esc(item.name)}"></option>`).join('');
+    $('#monthlyFormStatus').textContent = '';
     const stage = stageById(state.draftMonthlyState?.stageId);
     $('#monthlyPlayerStageInfo').textContent = stage ? `${stage.label} · ${fmtDateOnly(stage.start)} a ${fmtDateOnly(stage.end)}` : '';
-    $('#monthlyPointsInput').value = row.monthlyPoints;
-    $('#monthlyPresencesInput').value = row.monthlyPresences;
-    $('#monthlyFinishInputs').innerHTML = cleanFinishes(row.monthlyFinishes).map((value, i) =>
+    $('#monthlyPointsInput').value = row?.monthlyPoints ?? 0;
+    $('#monthlyPresencesInput').value = row?.monthlyPresences ?? 0;
+    $('#monthlyFinishInputs').innerHTML = cleanFinishes(row?.monthlyFinishes).map((value, i) =>
       `<label class="field compact-field"><span>${i + 1}º lugares</span><input type="number" min="0" step="1" value="${value}" data-monthly-finish-input="${i}"></label>`).join('');
     $('#monthlyPlayerModal').showModal();
-    setTimeout(() => $('#monthlyPointsInput').focus(), 50);
+    setTimeout(() => $(row ? '#monthlyPointsInput' : '#monthlyPlayerNameInput').focus(), 50);
   }
 
   function saveMonthlyPlayerFromModal() {
-    const row = state.draftRows.find(item => item.id === $('#monthlyPlayerIdInput').value);
-    if (!row) return toast('Jogador não encontrado.', 'error');
-    if (state.draftMonthlyState?.finalized) return toast('Etapa mensal já finalizada.', 'error');
+    const fail = message => { $('#monthlyFormStatus').textContent = message; return toast(message, 'error'); };
+    const name = $('#monthlyPlayerNameInput').value.trim();
+    if (!name || name.length > 100) return fail('Informe um nome com até 100 caracteres.');
+    let row = state.draftRows.find(item => item.id === $('#monthlyPlayerIdInput').value);
+    if (!row) row = state.draftRows.find(item => nameKey(item.name) === nameKey(name));
+    if (state.draftMonthlyState?.finalized) return fail('Etapa mensal já finalizada.');
     const pointsField = $('#monthlyPointsInput');
     const presenceField = $('#monthlyPresencesInput');
     const points = Number(pointsField.value);
     const presences = Number(presenceField.value);
     if (!pointsField.value.trim() || !Number.isFinite(points) || points < 0 ||
         !presenceField.value.trim() || !Number.isInteger(presences) || presences < 0) {
-      return toast('Informe pontos válidos e presenças inteiras, sem valores negativos.', 'error');
+      return fail('Informe pontos válidos e presenças inteiras, sem valores negativos.');
     }
-    const finishes = $('[data-monthly-finish-input]').map(field => Number(field.value));
-    if (finishes.some(value => !Number.isInteger(value) || value < 0)) return toast('As colocações precisam ser números inteiros e não negativos.', 'error');
+    const finishes = $$('[data-monthly-finish-input]').map(field => Number(field.value));
+    if (finishes.some(value => !Number.isInteger(value) || value < 0)) return fail('As colocações precisam ser números inteiros e não negativos.');
+    if (!row) {
+      row = { id: uid(), name, points: 0, presences: 0, bonus: 0, finishes: cleanFinishes([]), active: true };
+      state.draftRows.push(row); state.newMonthlyPlayerIds.push(row.id);
+    }
     row.monthlyPoints = round1(points);
     row.monthlyPresences = presences;
     row.monthlyFinishes = finishes;
@@ -493,22 +625,38 @@
     toast('Pontuação mensal alterada no rascunho.');
   }
 
+  function selectMonthlyPlayerByName() {
+    if ($('#monthlyPlayerIdInput').value) return;
+    const row = state.draftRows.find(item => nameKey(item.name) === nameKey($('#monthlyPlayerNameInput').value));
+    $('#monthlyPointsInput').value = row?.monthlyPoints ?? 0;
+    $('#monthlyPresencesInput').value = row?.monthlyPresences ?? 0;
+    $$('[data-monthly-finish-input]').forEach((input, i) => { input.value = row?.monthlyFinishes?.[i] || 0; });
+  }
+
   function revertMonthlyPlayer(id) {
     const base = state.publishedRows.find(row => row.id === id);
     const row = state.draftRows.find(row => row.id === id);
-    if (!base || !row) return;
-    MONTHLY_FIELDS.forEach(field => { row[field] = clone(base[field]); });
+    if (!row) return;
+    if (base) MONTHLY_FIELDS.forEach(field => { row[field] = clone(base[field]); });
+    else if (state.newMonthlyPlayerIds.includes(id)) state.draftRows = state.draftRows.filter(item => item.id !== id);
+    else { row.monthlyPoints = 0; row.monthlyPresences = 0; row.monthlyFinishes = cleanFinishes([]); }
+    state.newMonthlyPlayerIds = state.newMonthlyPlayerIds.filter(item => item !== id);
     renderAll();
     toast('Alteração mensal desfeita.');
   }
 
   function discardMonthlyDraft() {
+    if (state.importedBackup) return toast('O backup é um conjunto completo. Use Descartar rascunho para cancelar a importação.', 'error');
     if (!hasMonthlyDraftChanges()) return;
     if (!confirm('Descartar somente as alterações mensais deste rascunho?')) return;
     state.draftRows.forEach(row => {
       const base = state.publishedRows.find(item => item.id === row.id);
       if (base) MONTHLY_FIELDS.forEach(field => { row[field] = clone(base[field]); });
+      else { row.monthlyPoints = 0; row.monthlyPresences = 0; row.monthlyFinishes = cleanFinishes([]); }
     });
+    state.draftRows = state.draftRows.filter(row => !state.newMonthlyPlayerIds.includes(row.id));
+    state.newMonthlyPlayerIds = [];
+    state.draftMonthlyState = clone(state.publishedMonthlyState);
     renderAll();
     saveDraftWithoutToast();
     toast('Alterações mensais descartadas.');
@@ -541,7 +689,7 @@
       <article class="history-item">
         <div>
           <strong>Versão ${item.version}</strong>
-          <span>${fmtDate(item.createdAt)} · ${item.total} jogador${item.total === 1 ? '' : 'es'}${item.restorable === false ? ' · legado v3' : ''}</span>
+          <span>${fmtDate(item.createdAt)} · ${item.total} jogador${item.total === 1 ? '' : 'es'}${item.restorable === false ? ' · somente leitura' : ''}</span>
         </div>
         <div class="history-actions">
           <button class="mini-button" data-preview-history="${esc(item.id)}" type="button">Visualizar</button>
@@ -565,25 +713,77 @@
     $('#monthlyTournamentCount').textContent = `${ms.tournamentCount} torneio${ms.tournamentCount === 1 ? '' : 's'} válido${ms.tournamentCount === 1 ? '' : 's'}`;
     const recipients = Array.isArray(ms.bonusRecipients) ? ms.bonusRecipients : [];
     $('#monthlyStageStatus').textContent = ms.finalized ? (recipients.length ? `Finalizada · bônus publicado para ${recipients.map(item => item.name).join(', ')}` : 'Finalizada · sem elegível ao bônus') : 'Em andamento';
-    $('#finalizeMonthlyBtn').disabled = ms.finalized || ms.tournamentCount < 1;
+    $('#finalizeMonthlyBtn').disabled = Boolean(state.importedBackup) || ms.finalized || ms.tournamentCount < 1;
     $('#finalizeMonthlyBtn').textContent = ms.finalized ? 'Etapa finalizada' : 'Finalizar etapa mensal';
+    $('#finalizeMonthlyFromTabBtn').disabled = Boolean(state.importedBackup) || ms.finalized || ms.tournamentCount < 1;
+    $('#finalizeMonthlyFromTabBtn').textContent = ms.finalized ? 'Etapa encerrada' : 'Encerrar etapa';
+    const registered = state.tournaments.filter(event => event.applyMonthly && event.stageId === ms.stageId).length;
+    const input = $('#monthlyTournamentCountInput');
+    input.value = ms.tournamentCount; input.min = registered; input.disabled = ms.finalized;
+    $('#monthlyCountHelp').textContent = `${registered} torneio${registered === 1 ? '' : 's'} cadastrado${registered === 1 ? '' : 's'} nesta etapa. O total pode incluir torneios antigos lançados manualmente. Não some os mesmos resultados duas vezes.`;
+    const excessive = state.draftRows.filter(row => row.monthlyPresences > ms.tournamentCount);
+    $('#monthlyStateStatus').textContent = excessive.length
+      ? `${excessive.length} jogador${excessive.length === 1 ? '' : 'es'} com presenças acima do total de torneios. Confira antes de encerrar.`
+      : state.importedBackup ? 'Backup em revisão. A importação será aplicada ao publicar tudo.' : 'A contagem é salva no rascunho e publicada com o mensal.';
+    $('#monthlyAddPlayerBtn').disabled = ms.finalized;
+    $('#monthlySyncGeneralBtn').disabled = ms.finalized;
+    $('#reopenMonthlyBtn').hidden = !ms.finalized;
+    $('#reopenMonthlyBtn').textContent = state.publishedMonthlyState.finalized ? 'Reabrir etapa para correção' : 'Cancelar encerramento no rascunho';
+    $('#reopenMonthlyFromTabBtn').hidden = $('#reopenMonthlyBtn').hidden;
+    $('#reopenMonthlyFromTabBtn').textContent = $('#reopenMonthlyBtn').textContent;
+    $('#reopenMonthlyBtn').disabled = Boolean(state.importedBackup);
+    $('#reopenMonthlyFromTabBtn').disabled = Boolean(state.importedBackup);
+  }
+
+  function updateMonthlyTournamentCount() {
+    if (state.draftMonthlyState.finalized) return;
+    const input = $('#monthlyTournamentCountInput');
+    const count = Number(input.value);
+    const minimum = state.tournaments.filter(event => event.applyMonthly && event.stageId === state.draftMonthlyState.stageId).length;
+    if (!input.value.trim() || !Number.isInteger(count) || count < minimum) {
+      input.value = state.draftMonthlyState.tournamentCount;
+      return toast(`Informe um total inteiro de pelo menos ${minimum} torneios.`, 'error');
+    }
+    state.draftMonthlyState.tournamentCount = count;
+    renderAll();
+  }
+
+  function copyGeneralToMonthly() {
+    if (state.draftMonthlyState.finalized) return toast('Reabra a etapa antes de corrigir o mensal.', 'error');
+    if (!confirm('Copiar pontos, presenças e colocações do rascunho geral para o mensal? Use quando todo o geral pertencer à etapa atual. Bônus e fatores não entram no mensal.')) return;
+    state.draftRows.forEach(row => {
+      row.monthlyPoints = row.points; row.monthlyPresences = row.presences; row.monthlyFinishes = clone(row.finishes);
+    });
+    renderAll(); toast('Mensal alinhado com o geral no rascunho. Confira os torneios válidos antes de publicar.');
+  }
+
+  async function reopenMonthlyStage() {
+    if (state.importedBackup) return toast('Publique o backup antes de reabrir a etapa.', 'error');
+    if (!state.publishedMonthlyState.finalized) {
+      state.draftMonthlyState.finalized = false;
+      renderAll(); return toast('Encerramento cancelado no rascunho.');
+    }
+    if (hasDraftChanges()) return toast('Publique ou descarte o rascunho antes de reabrir a etapa.', 'error');
+    if (!confirm('Reabrir a etapa atual? O bônus concedido por ela será retirado do geral. Depois de corrigir os resultados, encerre e publique novamente.')) return;
+    try {
+      const data = await api({ action: 'reopenStage', token: state.token, baseVersion: state.version });
+      absorbPublished(data); toast('Etapa reaberta. O bônus anterior foi revertido.');
+    } catch (error) { handleApiError(error); }
   }
 
   function renderDraftState() {
     const changed = generalChangedPlayerIds();
     const modifierChanged = !modifiersEqual(state.publishedModifiers, state.draftModifiers);
-    const stageChanged = !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState);
-    const dirty = changed.length > 0 || modifierChanged || stageChanged;
+    const dirty = changed.length > 0 || modifierChanged;
     $('#draftState').textContent = dirty ? 'Alterações pendentes' : 'Sem alterações';
     $('#draftState').classList.toggle('dirty', dirty);
-    $('#publishBtn').disabled = !dirty;
+    $('#publishBtn').disabled = state.publishing || !dirty || Boolean(state.importedBackup);
     const parts = [];
     if (changed.length) parts.push(`${changed.length} jogador${changed.length === 1 ? '' : 'es'} alterado${changed.length === 1 ? '' : 's'}`);
     if (modifierChanged) parts.push('fatores alterados');
-    if (stageChanged) parts.push('etapa mensal para finalização');
     $('#publishSummary').textContent = parts.length ? parts.join(' · ') : 'Nenhuma alteração geral pendente';
     $('#publishSubline').textContent = dirty
-      ? 'Publica somente o geral e eventuais alterações de finalização da etapa.'
+      ? 'Publica os dados gerais. O rascunho mensal é preservado.'
       : `Publicado em ${fmtDate(state.updatedAt)}.`;
   }
 
@@ -599,6 +799,8 @@
     const id = $('#playerIdInput').value || uid();
     const name = $('#playerNameInput').value.trim();
     if (!name) return toast('Informe o nome do jogador.', 'error');
+    if (state.draftRows.some(item => item.id !== id && nameKey(item.name) === nameKey(name))) return toast('Já existe um jogador com esse nome. Edite o cadastro existente.', 'error');
+    if (!$('#playerForm').reportValidity()) return;
     const existing = state.draftRows.find(item => item.id === id);
     const row = {
       id, name,
@@ -614,6 +816,7 @@
     const index = state.draftRows.findIndex(item => item.id === id);
     if (index >= 0) state.draftRows[index] = row;
     else state.draftRows.push(row);
+    state.newMonthlyPlayerIds = state.newMonthlyPlayerIds.filter(item => item !== id);
     $('#playerModal').close();
     renderAll();
   }
@@ -721,10 +924,12 @@
   }
 
   function finalizeMonthlyDraft() {
+    if (state.importedBackup) return toast('Publique o backup antes de encerrar a etapa.', 'error');
     if (state.draftMonthlyState.finalized) return;
     if (state.draftMonthlyState.tournamentCount < 1) return toast('Não há torneios válidos nesta etapa.', 'error');
     const count = state.draftMonthlyState.tournamentCount;
-    const eligible = state.draftRows.filter(row => row.monthlyPresences >= count).sort(compareMonthlyRows);
+    if (state.draftRows.some(row => row.monthlyPresences > count)) return toast('Há presenças acima do total de torneios. Corrija a contagem antes de encerrar.', 'error');
+    const eligible = state.draftRows.filter(row => row.monthlyPresences === count).sort(compareMonthlyRows);
     const message = eligible.length ? `Finalizar a etapa? Ao publicar, o Apps Script calculará e somará o bônus de 10 pontos ao melhor jogador com 100% de presença.` : 'Finalizar a etapa sem conceder bônus? Nenhum jogador possui 100% de presença.';
     if (!confirm(message)) return;
     state.draftMonthlyState.finalized = true; state.draftMonthlyState.bonusRecipients = []; state.draftMonthlyState.bonusAwardedAt = null; renderAll(); toast('Etapa marcada para finalização. Publique para calcular o bônus.');
@@ -739,31 +944,36 @@
     state.version = data.version; state.updatedAt = data.updatedAt;
     state.publishedModifiers = normalizeModifiers(Array.isArray(data.modifiers) ? data.modifiers : DEFAULT_MODIFIERS); state.draftModifiers = clone(state.publishedModifiers);
     state.publishedRows = calculateRows(data.rows || [], state.publishedModifiers); state.draftRows = clone(state.publishedRows);
-    state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {}); state.draftMonthlyState = clone(state.publishedMonthlyState);
     state.history = data.history || []; historyPage = 1;
     state.stages = normalizeStages(data.stages);
     MONTHLY_STAGES = clone(state.stages);
-    state.tournaments = Array.isArray(data.tournaments) ? data.tournaments : [];
+    state.publishedMonthlyState = normalizeMonthlyState(data.monthlyState || data.monthly || {}); state.draftMonthlyState = clone(state.publishedMonthlyState);
+    state.tournaments = normalizeTournaments(data.tournaments);
+    state.publishedStages = clone(state.stages); state.publishedTournaments = clone(state.tournaments);
+    state.importedBackup = null; state.newMonthlyPlayerIds = [];
     clearLocalDraft(); renderAll();
   }
 
-  // Publish only the selected ranking. The v5 API accepts complete rows, so each
-  // request merges the chosen draft fields with the last published other ranking.
+  // Send complete rows for compatibility; v6 enforces scope again on the server.
   function scopedPublishRows(scope) {
+    if (scope === 'all') return clone(state.draftRows);
     const published = new Map(state.publishedRows.map(row => [row.id, row]));
     if (scope === 'monthly') {
       const drafts = new Map(state.draftRows.map(row => [row.id, row]));
-      return state.publishedRows.map(row => {
+      const rows = state.publishedRows.map(row => {
         const result = clone(row);
         const draft = drafts.get(row.id);
         if (draft) MONTHLY_FIELDS.forEach(field => { result[field] = clone(draft[field]); });
         return result;
       });
+      const monthlyNew = new Set(monthlyChangedPlayerIds());
+      return rows.concat(state.draftRows.filter(row => !published.has(row.id) && monthlyNew.has(row.id)));
     }
-    return state.draftRows.map(row => {
+    return state.draftRows.filter(row => published.has(row.id) || !state.newMonthlyPlayerIds.includes(row.id)).map(row => {
       const result = clone(row);
       const base = published.get(row.id);
       if (base) MONTHLY_FIELDS.forEach(field => { result[field] = clone(base[field]); });
+      else { result.monthlyPoints = 0; result.monthlyPresences = 0; result.monthlyFinishes = cleanFinishes([]); }
       return result;
     });
   }
@@ -777,23 +987,34 @@
       state.draftRows = state.draftRows.filter(row => !originalBase.has(row.id) || oldDraft.has(row.id));
       state.draftRows.forEach(row => {
         const draft = oldDraft.get(row.id);
-        if (draft && originalBase.has(row.id) && !sameGeneralFields(originalBase.get(row.id), draft)) {
-          GENERAL_FIELDS.forEach(field => { row[field] = clone(draft[field]); });
+        if (draft && (!originalBase.has(row.id) || !sameGeneralFields(originalBase.get(row.id), draft))) {
+          const before = originalBase.get(row.id);
+          GENERAL_FIELDS.forEach(field => {
+            if (field === 'bonus') {
+              // Closing the month may award a bonus while a general draft is
+              // pending. Keep that server award plus the operator's own delta.
+              row.bonus = round1(row.bonus + draft.bonus - (before?.bonus || 0));
+            } else if (!before || JSON.stringify(draft[field]) !== JSON.stringify(before[field])) {
+              row[field] = clone(draft[field]);
+            }
+          });
         }
       });
-      previous.draftRows.filter(row => !originalBase.has(row.id))
+      previous.draftRows.filter(row => !state.draftRows.some(item => item.id === row.id) && !originalBase.has(row.id))
         .forEach(row => state.draftRows.push(clone(row)));
       state.draftModifiers = clone(previous.draftModifiers);
-      state.draftMonthlyState = clone(previous.draftMonthlyState);
     } else {
       state.draftRows.forEach(row => {
         const before = originalBase.get(row.id);
         const draft = oldDraft.get(row.id);
-        if (before && draft && !sameMonthlyFields(before, draft)) {
+        if (draft && (!before || !sameMonthlyFields(before, draft))) {
           MONTHLY_FIELDS.forEach(field => { row[field] = clone(draft[field]); });
         }
       });
+      previous.draftRows.filter(row => previous.newMonthlyPlayerIds.includes(row.id) && !state.draftRows.some(item => item.id === row.id)).forEach(row => state.draftRows.push(clone(row)));
+      state.draftMonthlyState = clone(previous.draftMonthlyState);
     }
+    state.newMonthlyPlayerIds = previous.newMonthlyPlayerIds.filter(id => !state.publishedRows.some(row => row.id === id));
     state.draftRows = calculateRows(state.draftRows, state.draftModifiers);
     if (hasDraftChanges()) saveDraftWithoutToast();
     else clearLocalDraft();
@@ -801,51 +1022,51 @@
   }
 
   async function publishDraft(scope = 'general') {
+    if (state.publishing) return;
     const monthly = scope === 'monthly';
-    const dirty = monthly ? hasMonthlyDraftChanges() : hasGeneralDraftChanges();
+    const all = scope === 'all';
+    const dirty = all ? hasDraftChanges() : monthly ? hasMonthlyDraftChanges() : hasGeneralDraftChanges();
     if (!dirty) return;
-    if (monthly && state.draftMonthlyState?.finalized) {
-      return toast('Etapa já finalizada. Não é possível publicar alterações mensais.', 'error');
-    }
-    if (!monthly && !monthlyStateEqual(state.publishedMonthlyState, state.draftMonthlyState) && hasMonthlyDraftChanges()) {
-      return toast('Publique primeiro as alterações mensais antes de finalizar a etapa.', 'error');
-    }
-    if (!monthly) {
-      const draftIds = new Set(state.draftRows.map(row => row.id));
-      if (monthlyChangedPlayerIds().some(id => !draftIds.has(id))) {
-        return toast('Revise as alterações mensais de jogadores excluídos antes de publicar.', 'error');
-      }
-    }
-    const label = monthly ? 'mensal' : 'geral';
-    if (!confirm(`Publicar somente o ranking ${label}?`)) return;
+    if (!all && state.importedBackup) return toast('Use Publicar tudo para aplicar o backup completo.', 'error');
+    const label = all ? 'geral e mensal' : monthly ? 'mensal' : 'geral';
+    if (!confirm(state.importedBackup ? 'Publicar o backup importado? O estado atual será guardado no histórico antes da substituição.' : `Publicar ${all ? 'os rankings geral e mensal' : 'somente o ranking ' + label}?`)) return;
 
-    const btn = $(monthly ? '#publishMonthlyBtn' : '#publishBtn');
+    const btn = $(all ? '#publishAllBtn' : monthly ? '#publishMonthlyBtn' : '#publishBtn');
     const title = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Publicando...';
+    state.publishing = true; $('#dashboard').inert = true;
     const previous = {
       publishedRows: clone(state.publishedRows),
       draftRows: clone(state.draftRows),
       draftModifiers: clone(state.draftModifiers),
-      draftMonthlyState: clone(state.draftMonthlyState)
+      draftMonthlyState: clone(state.draftMonthlyState),
+      newMonthlyPlayerIds: clone(state.newMonthlyPlayerIds)
     };
+    const pendingFinalization = state.importedBackup?.pendingFinalization;
     try {
-      const data = await api({
+      const payload = state.importedBackup ? {
+        action: 'importBackup', token: state.token, baseVersion: state.version,
+        backup: { ...backupPayload(), metadataMode: state.importedBackup.metadataMode }
+      } : {
         action: 'publish',
+        ...(all ? {} : { scope }),
         token: state.token,
         baseVersion: state.version,
         rows: scopedPublishRows(scope),
         modifiers: monthly ? state.publishedModifiers : state.draftModifiers,
-        monthlyState: monthly ? state.publishedMonthlyState : state.draftMonthlyState
-      });
+        monthlyState: monthly || all ? state.draftMonthlyState : state.publishedMonthlyState
+      };
+      const data = await api(payload);
       absorbPublished(data);
-      recoverOtherDraft(scope, previous);
-      toast(`Ranking ${label} publicado. Alterações do outro ranking foram preservadas.`);
+      if (!all) recoverOtherDraft(scope, previous);
+      toast(all ? (pendingFinalization ? 'Backup publicado. Encerre a etapa novamente para calcular e publicar o bônus.' : 'Rankings publicados. O estado anterior está no histórico.') : `Ranking ${label} publicado. Rascunho do outro ranking preservado.`);
     } catch (error) {
       handleApiError(error);
     } finally {
       btn.textContent = title;
-      btn.disabled = !(monthly ? hasMonthlyDraftChanges() : hasGeneralDraftChanges());
+      state.publishing = false; $('#dashboard').inert = false;
+      renderAll();
     }
   }
 
@@ -860,6 +1081,7 @@
   }
 
   async function restoreHistory(id) {
+    if (hasDraftChanges()) return toast('Publique, exporte ou descarte o rascunho antes de restaurar o histórico.', 'error');
     const item = state.history.find(history => history.id === id); if (item?.restorable === false) return toast('Versões anteriores à v4 são somente leitura.', 'error');
     if (!confirm(`Restaurar a versão ${item?.version ?? ''}? O ranking atual será salvo no histórico antes da restauração.`)) return;
     try { const data = await api({ action: 'restore', token: state.token, baseVersion: state.version, historyId: id }); absorbPublished(data); $('#historyPreviewModal').close(); toast('Versão restaurada e publicada.'); } catch (error) { handleApiError(error); }
@@ -867,23 +1089,17 @@
 
   async function deleteHistory(id) { const item = state.history.find(history => history.id === id); if (!confirm(`Excluir definitivamente a versão ${item?.version ?? ''} do histórico?`)) return; try { const data = await api({ action: 'deleteHistory', token: state.token, historyId: id }); state.history = data.history || []; renderHistory(); toast('Histórico excluído.'); } catch (error) { handleApiError(error); } }
   function discardDraft() {
-    if (!hasGeneralDraftChanges()) return;
-    if (!confirm('Descartar somente as alterações do ranking geral?')) return;
-    const editedMonthly = new Map(state.draftRows.map(row => [row.id, row]));
+    if (!hasDraftChanges()) return;
+    if (!confirm('Descartar todas as alterações não publicadas do geral, do mensal e da importação?')) return;
     state.draftRows = clone(state.publishedRows);
-    state.draftRows.forEach(row => {
-      const before = state.publishedRows.find(item => item.id === row.id);
-      const old = editedMonthly.get(row.id);
-      if (before && old && !sameMonthlyFields(before, old)) {
-        MONTHLY_FIELDS.forEach(field => { row[field] = clone(old[field]); });
-      }
-    });
+    state.importedBackup = null; state.newMonthlyPlayerIds = [];
+    state.stages = clone(state.publishedStages); state.tournaments = clone(state.publishedTournaments); MONTHLY_STAGES = clone(state.stages);
     state.draftModifiers = clone(state.publishedModifiers);
     state.draftMonthlyState = clone(state.publishedMonthlyState);
     renderAll();
     if (hasDraftChanges()) saveDraftWithoutToast();
     else clearLocalDraft();
-    toast('Alterações do geral descartadas.');
+    toast('Rascunho descartado. Dados publicados recuperados.');
   }
 
 
@@ -964,7 +1180,7 @@
   }
 
   function addStageEditorRow() {
-    const rows = $('[data-stage-row]');
+    const rows = $$('[data-stage-row]');
     const last = rows[rows.length - 1];
     const start = last?.querySelector('[data-stage-end]')?.value || '2027-04-12';
     const date = new Date(start + 'T12:00:00Z');
@@ -980,12 +1196,12 @@
     if (id === state.draftMonthlyState?.stageId) return toast('Não é possível remover a etapa atual.', 'error');
     const activeEvents = state.tournaments.some(t => t.applyMonthly && t.stageId === id);
     if (activeEvents) return toast('Esta etapa possui torneios vinculados.', 'error');
-    const row = $('[data-stage-row]').find(element => element.dataset.stageRow === id);
+    const row = $$('[data-stage-row]').find(element => element.dataset.stageRow === id);
     row?.remove();
   }
 
   function readEditedStages() {
-    return $('[data-stage-row]').map(row => ({
+    return $$('[data-stage-row]').map(row => ({
       id: row.dataset.stageRow,
       label: row.querySelector('[data-stage-name]').value.trim(),
       start: row.querySelector('[data-stage-start]').value,
@@ -1028,6 +1244,17 @@
   }
 
   function bindEvents() {
+    $('#monthlyAddPlayerBtn').addEventListener('click', () => openMonthlyPlayerModal());
+    $('#monthlyPlayerNameInput').addEventListener('change', selectMonthlyPlayerByName);
+    $('#monthlyTournamentCountInput').addEventListener('change', updateMonthlyTournamentCount);
+    $('#monthlySyncGeneralBtn').addEventListener('click', copyGeneralToMonthly);
+    $('#publishAllBtn').addEventListener('click', () => publishDraft('all'));
+    $('#finalizeMonthlyFromTabBtn').addEventListener('click', finalizeMonthlyDraft);
+    $('#reopenMonthlyBtn').addEventListener('click', reopenMonthlyStage);
+    $('#reopenMonthlyFromTabBtn').addEventListener('click', reopenMonthlyStage);
+    $('#monthlyPlayerForm').addEventListener('submit', event => { event.preventDefault(); saveMonthlyPlayerFromModal(); });
+    $('#playerForm').addEventListener('submit', event => { event.preventDefault(); savePlayerFromModal(); });
+    $('#tournamentForm').addEventListener('submit', event => { event.preventDefault(); applyTournament(); });
     $('#historyPagination').addEventListener('click', event => {
       const target = event.target.closest('[data-history-page]');
       if (!target || target.disabled) return;

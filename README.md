@@ -48,6 +48,21 @@ O convite abre na primeira página pública acessada, uma vez por sessão da aba
 
 ## Ranking 2026/27
 
+O admin atual usa o **Apps Script v6** em `apps-script/Code.gs`. A atualização do backend precisa ocorrer antes da publicação do frontend: execute `migrateV5ToV6()` e atualize a implantação existente. O procedimento, formato dos backups e controles de edição estão em [docs/ranking-v6-backend.md](docs/ranking-v6-backend.md).
+
+O painel permite cadastrar jogadores diretamente no mensal, corrigir pontos/presenças/desempates e torneios válidos, publicar geral e mensal separadamente ou juntos, salvar rascunho automaticamente, restaurar backups completos e reabrir a etapa atual com estorno do bônus anterior.
+
+Para conferir as alterações localmente:
+
+```bash
+npm ci
+npm test
+npx playwright install chromium
+npm run test:e2e
+```
+
+Os testes de navegador executam o código real do Apps Script sobre uma planilha simulada e interceptam todas as requisições externas. Não acessam o ranking publicado.
+
 O ranking usa o site estático como frontend e um Google Apps Script + Google Sheets como backend.
 
 A versão 2026/27 acrescenta:

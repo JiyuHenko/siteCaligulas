@@ -1,0 +1,25 @@
+name: Ranking admin tests
+
+on:
+  pull_request:
+    paths: ['admin/**', 'assets/js/admin.js', 'assets/css/admin.css', 'apps-script/**', 'tests/**', 'package*.json', '.github/workflows/ranking-tests.yml']
+  push:
+    branches: [main]
+    paths: ['admin/**', 'assets/js/admin.js', 'assets/css/admin.css', 'apps-script/**', 'tests/**', 'package*.json', '.github/workflows/ranking-tests.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ranking:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
