@@ -1,5 +1,7 @@
 # Painel — Rascunho independente do ranking mensal
 
+> Este documento registra o fluxo antigo da v5. O painel v6 permite cadastrar jogadores diretamente no mensal, editar o contador e reabrir a etapa. Consulte [ranking-v6-backend.md](ranking-v6-backend.md) para o procedimento atual e a atualização necessária do Apps Script.
+
 ## Acesso
 
 No painel administrativo, abra a aba **Ranking mensal** (separada da aba **Etapas mensais**).
