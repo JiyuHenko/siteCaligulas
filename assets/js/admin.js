@@ -423,6 +423,8 @@
 
   async function importDraftFile(file) {
     if (!file) return;
+    if (state.publishing || state.importing) return;
+    state.importing = true; $('#dashboard').inert = true;
     try {
       const parsed = JSON.parse(await file.text());
       const rows = Array.isArray(parsed) ? parsed : parsed.rows;
@@ -483,6 +485,7 @@
       state.conflictingDraft = null;
       renderAll(); toast(parsed.pendingFinalization ? 'Backup importado. Publique tudo e encerre a etapa novamente para calcular o bônus.' : 'Backup importado no rascunho. Confira os rankings e clique em Publicar tudo.');
     } catch (error) { toast(error.message || 'Arquivo inválido.', 'error'); }
+    finally { state.importing = false; $('#dashboard').inert = state.publishing; }
   }
 
   function renderAll() {
@@ -1022,7 +1025,7 @@
   }
 
   async function publishDraft(scope = 'general') {
-    if (state.publishing) return;
+    if (state.publishing || state.importing) return;
     const monthly = scope === 'monthly';
     const all = scope === 'all';
     const dirty = all ? hasDraftChanges() : monthly ? hasMonthlyDraftChanges() : hasGeneralDraftChanges();

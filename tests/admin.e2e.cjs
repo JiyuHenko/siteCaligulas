@@ -115,6 +115,7 @@ async function main() {
       const before = backend.state();
       const backup = { schemaVersion: 6, kind: 'caligulas-ranking-backup', metadataMode: 'preserve', rows: before.rows.map(row => ({ ...row, monthlyPoints: row.points, monthlyPresences: row.presences, monthlyFinishes: row.finishes })), modifiers: before.modifiers, monthlyState: before.monthlyState };
       await page.locator('#importFileInput').setInputFiles({ name: 'corrected.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
+      await page.waitForFunction(() => document.querySelector('#publishAllBtn').textContent === 'Publicar backup importado' && !document.querySelector('#dashboard').inert);
       assert.equal(backend.state().version, before.version);
       assert.equal(await page.locator('#publishBtn').isDisabled(), true);
       await publish('publishAllBtn'); assert.equal(calls.at(-1).action, 'importBackup'); assert.equal(calls.at(-1).backup.metadataMode, 'preserve');
@@ -123,9 +124,11 @@ async function main() {
       const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
       assert.equal(exported.schemaVersion, 6); assert.equal(exported.metadataMode, 'replace'); assert.equal(exported.stages.length, 7); assert.deepEqual(exported.tournaments, []);
       await page.locator('#importFileInput').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ ...backup, rows: [backup.rows[0], backup.rows[0]] })) });
+      await page.waitForFunction(() => /ID repetido/.test(document.querySelector('#toast').textContent));
       assert.match(await page.locator('#toast').textContent(), /ID repetido/);
       assert.equal(await page.locator('#publishAllBtn').isDisabled(), true);
       await page.locator('#importFileInput').setInputFiles({ name: 'bad-events.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ ...exported, tournaments: [{ id: 'broken', date: '2026-10-26' }] })) });
+      await page.waitForFunction(() => /torneio inválido/.test(document.querySelector('#toast').textContent));
       assert.match(await page.locator('#toast').textContent(), /torneio inválido/);
       assert.equal(await page.locator('#publishAllBtn').isDisabled(), true);
       assert.equal(backend.state().version, before.version + 1);
@@ -145,6 +148,7 @@ async function main() {
       const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
       assert.equal(exported.metadataMode, 'replace'); assert.equal(exported.stages.at(-1).id, 'custom'); assert.deepEqual(exported.tournaments, []);
       await page.locator('#importFileInput').setInputFiles({ name: 'recovered.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
+      await page.waitForFunction(() => /Etapa extra/.test(document.querySelector('#monthlyEditorStage').textContent));
       assert.match(await page.locator('#monthlyEditorStage').textContent(), /Etapa extra/);
       assert.equal(await page.locator('#publishAllBtn').isDisabled(), false);
     });
@@ -157,6 +161,7 @@ async function main() {
       assert.equal(exported.pendingFinalization, true); assert.equal(exported.monthlyState.finalized, false);
       assert.equal(exported.rows[0].bonus, 0);
       await page.locator('#importFileInput').setInputFiles({ name: 'pending-close.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
+      await page.waitForFunction(() => document.querySelector('#publishAllBtn').textContent === 'Publicar backup importado' && !document.querySelector('#dashboard').inert);
       await publish('publishAllBtn'); assert.equal(backend.state().monthlyState.finalized, false);
       await page.locator('#finalizeMonthlyFromTabBtn').click(); await publish('publishMonthlyBtn');
       assert.equal(backend.state().rows[0].bonus, 10);
