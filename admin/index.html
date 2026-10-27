@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/admin.css?v=6">
+  <link rel="stylesheet" href="../assets/css/admin.css?v=6.1">
 </head>
 <body>
   <main class="admin-shell">
@@ -31,7 +31,7 @@
       <section class="workspace-bar" aria-label="Rascunho e publicação">
         <div class="workspace-status"><span class="status-dot" aria-hidden="true"></span><div><strong>Seu espaço de edição</strong><span id="autosaveStatus" role="status" aria-live="polite">As alterações ficam no rascunho até você publicar.</span></div></div>
         <div class="workspace-actions"><button class="button ghost" id="saveLocalBtn" type="button">Salvar rascunho</button><button class="button primary" id="publishAllBtn" type="button">Publicar tudo</button></div>
-        <details class="backup-menu"><summary>Backup e recuperação <span aria-hidden="true">⌄</span></summary><div class="backup-menu-body"><p>Exporte uma cópia antes de fazer ajustes maiores. A importação carrega os dados no rascunho para revisão.</p><div class="backup-actions"><button class="button" id="exportBtn" type="button">Exportar JSON</button><button class="button" id="importBtn" type="button">Importar JSON</button><input id="importFileInput" type="file" accept="application/json,.json" hidden><button class="button ghost danger-soft" id="discardDraftBtn" type="button">Descartar todo o rascunho</button></div></div></details>
+        <details class="backup-menu"><summary>Backup e recuperação <span aria-hidden="true">⌄</span></summary><div class="backup-menu-body"><div class="backup-actions"><button class="button" id="exportBtn" type="button">Exportar JSON</button><button class="button" id="importBtn" type="button">Importar JSON</button><input id="importFileInput" type="file" accept="application/json,.json" hidden><button class="button ghost danger-soft" id="discardDraftBtn" type="button">Descartar todo o rascunho</button></div></div></details>
       </section>
 
       <nav class="management-tabs" id="managementTabs" aria-label="Seções do painel">
@@ -46,7 +46,6 @@
       <div class="dashboard-grid" id="playersDashboard">
         <section class="panel ranking-editor-panel">
           <div class="panel-head"><div><p class="eyebrow">Rascunho geral</p><h2>Classificação geral</h2></div><div class="draft-state" id="draftState" role="status">Sem alterações</div></div>
-          <p class="panel-note">Edite pontos, presenças, bônus e desempates de cada jogador. O total considera os fatores de frequência.</p>
           <div class="table-wrap"><table class="editor-table"><caption class="sr-only">Jogadores do ranking geral e suas pontuações</caption><thead><tr><th scope="col">Jogador</th><th scope="col">Pontos</th><th scope="col">Presenças</th><th scope="col">Fator</th><th scope="col">Bônus</th><th scope="col">Final</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead><tbody id="playersTableBody"></tbody></table></div>
           <div class="mobile-player-list" id="mobilePlayerList"></div>
           <div class="publish-bar"><div><strong id="publishSummary">Nenhuma alteração pendente</strong><span id="publishSubline">O ranking publicado permanece inalterado.</span></div><button class="button primary publish-button" id="publishBtn" type="button">Publicar geral</button></div>
@@ -92,8 +91,8 @@
           <span class="draft-state" id="monthlyDraftState" role="status">Sem alterações</span>
         </div>
         <div class="monthly-controls">
-          <div class="monthly-count-control"><div><p class="eyebrow">Bônus por frequência</p><h3>Torneios válidos da etapa</h3><p id="monthlyCountHelp">Ajuste a quantidade usada para calcular a presença necessária ao bônus mensal.</p><div class="monthly-state-status" id="monthlyStateStatus" role="status" aria-live="polite"></div></div><label class="field count-field"><span>Quantidade de torneios</span><input id="monthlyTournamentCountInput" type="number" min="0" step="1" value="0" inputmode="numeric" aria-describedby="monthlyCountHelp"></label></div>
-          <div class="monthly-copy-control"><div><strong>Usar o geral como base</strong><p>Copia os pontos, as presenças e os desempates do geral para o rascunho mensal atual.</p></div><button class="button" id="monthlySyncGeneralBtn" type="button">Copiar geral para o mensal</button></div>
+          <div class="monthly-count-control"><div><p class="eyebrow">Bônus por frequência</p><h3>Torneios válidos da etapa</h3><p id="monthlyCountHelp"></p><div class="monthly-state-status" id="monthlyStateStatus" role="status" aria-live="polite"></div></div><label class="field count-field"><span>Quantidade de torneios</span><input id="monthlyTournamentCountInput" type="number" min="0" step="1" value="0" inputmode="numeric" aria-describedby="monthlyCountHelp"></label></div>
+          <div class="monthly-copy-control"><button class="button" id="monthlySyncGeneralBtn" type="button">Copiar geral para o mensal</button></div>
         </div>
         <div class="monthly-editor-toolbar">
           <button class="button primary" id="monthlyAddPlayerBtn" type="button">Adicionar jogador no mensal</button>
@@ -108,8 +107,7 @@
           </table>
         </div>
         <div class="mobile-player-list monthly-editor-mobile" id="monthlyMobilePlayerList"></div>
-        <div class="monthly-editor-notice"><strong>Como funciona o mensal</strong><span>Total = pontos de colocação + presenças, sem multiplicador. Faça correções diretamente aqui ou registre um torneio para lançar os resultados de todos os participantes.</span></div>
-        <div class="monthly-lifecycle-actions"><p>Encerre a etapa quando os resultados e os torneios válidos estiverem conferidos.</p><button class="button ghost" id="reopenMonthlyFromTabBtn" type="button" hidden>Reabrir etapa para correção</button><button class="button" id="finalizeMonthlyFromTabBtn" type="button">Encerrar etapa</button></div>
+        <div class="monthly-lifecycle-actions"><button class="button ghost" id="reopenMonthlyFromTabBtn" type="button" hidden>Reabrir etapa para correção</button><button class="button" id="finalizeMonthlyFromTabBtn" type="button">Encerrar etapa</button></div>
         <div class="publish-bar">
           <div><strong id="monthlyPublishSummary">Nenhuma alteração pendente</strong><span id="monthlyPublishSubline">Ranking mensal publicado.</span></div>
           <button class="button primary publish-button" id="publishMonthlyBtn" type="button">Publicar mensal</button>
@@ -120,19 +118,16 @@
           <div><p class="eyebrow">Registro de eventos</p><h2>Torneios</h2></div>
           <button class="button primary" id="newTournamentBtn" type="button">Novo torneio</button>
         </div>
-        <p class="management-hint">Lance todos os participantes de uma vez e escolha em quais rankings o resultado deve contar. Eventos registrados aparecem aqui para consulta e correção. Para lançar um evento já contabilizado no geral, aplique somente ao mensal.</p>
         <div class="tournament-record-list" id="tournamentRecordList"></div>
       </section>
       <section id="stagesDashboard" class="management-page panel" hidden>
         <div class="panel-head"><div><p class="eyebrow">Configuração</p><h2>Etapas mensais</h2></div></div>
-        <p class="management-hint">Defina a data inicial e final de cada etapa. As etapas não podem se sobrepor. Ajustar datas não altera silenciosamente a etapa de torneios já vinculados.</p>
         <div class="stage-editor-list" id="stageEditorList"></div>
         <div class="management-actions">
           <button class="button" id="addStageBtn" type="button">Adicionar etapa</button>
           <button class="button primary" id="saveStagesBtn" type="button">Salvar etapas</button>
         </div>
         <div class="stage-next-actions">
-          <p>Quando uma etapa terminar, finalize e publique o bônus antes de iniciar a seguinte.</p>
           <button class="button" id="advanceStageBtn" type="button">Ativar próxima etapa</button>
         </div>
       </section>
@@ -141,7 +136,7 @@
 
   <dialog class="modal tournament-modal" id="tournamentModal">
     <form method="dialog" class="modal-shell modal-wide" id="tournamentForm">
-      <div class="modal-head"><div><p class="eyebrow">Rascunho</p><h2>Registrar torneio</h2><p>Marque presença e informe a colocação. Colocações podem se repetir quando houver acordo.</p></div><button class="icon-button close-modal" type="button" data-close-dialog="tournamentModal" aria-label="Fechar">×</button></div>
+      <div class="modal-head"><div><p class="eyebrow">Rascunho</p><h2>Registrar torneio</h2></div><button class="icon-button close-modal" type="button" data-close-dialog="tournamentModal" aria-label="Fechar">×</button></div>
       <div class="tournament-grid">
         <section class="tournament-entry">
           <div class="tournament-settings">
@@ -153,7 +148,6 @@
             <label class="presence-check"><input id="tournamentGeneral" type="checkbox" checked><span>Aplicar ao ranking geral</span></label>
             <label class="presence-check"><input id="tournamentMonthly" type="checkbox" checked><span>Aplicar ao ranking mensal</span></label>
             <label class="field compact-field" id="monthlyStageField"><span>Etapa mensal</span><select id="tournamentStage"></select></label>
-            <p>Já contabilizado no geral? Desmarque “Aplicar ao ranking geral” para não somar duas vezes.</p>
           </div>
           <div class="tournament-settings" style="grid-template-columns:1fr!important">
             <label class="field compact-field"><span>Descrição (opcional)</span><input id="tournamentName" maxlength="120" placeholder="Ex.: Regular de quarta"> </label>
@@ -182,13 +176,12 @@
       <div class="modal-head"><div><p class="eyebrow">Etapa mensal</p><h2 id="monthlyPlayerModalTitle">Editar jogador</h2></div><button class="icon-button close-modal" type="button" data-close-dialog="monthlyPlayerModal" aria-label="Fechar">×</button></div>
       <input id="monthlyPlayerIdInput" type="hidden">
       <div class="monthly-edit-badge" id="monthlyPlayerStageInfo"></div>
-      <label class="field monthly-name-field"><span>Jogador</span><input id="monthlyPlayerNameInput" list="monthlyPlayerNames" maxlength="100" autocomplete="off" placeholder="Escolha um jogador ou digite um novo nome" required><datalist id="monthlyPlayerNames"></datalist><small>Selecione pelo nome ou cadastre um jogador diretamente nesta etapa.</small></label>
+      <label class="field monthly-name-field"><span>Jogador</span><input id="monthlyPlayerNameInput" list="monthlyPlayerNames" maxlength="100" autocomplete="off" placeholder="Escolha um jogador ou digite um novo nome" required><datalist id="monthlyPlayerNames"></datalist></label>
       <div class="field-grid">
         <label class="field"><span>Pontos por colocação</span><input id="monthlyPointsInput" type="number" min="0" step="0.1" value="0" inputmode="decimal" required></label>
         <label class="field"><span>Presenças da etapa</span><input id="monthlyPresencesInput" type="number" min="0" step="1" value="0" inputmode="numeric" required></label>
       </div>
       <details class="finishes-details"><summary>Colocações mensais para desempate</summary><div class="finish-grid" id="monthlyFinishInputs"></div></details>
-      <p class="monthly-modal-note">Você pode registrar só a presença: mantenha os pontos em zero. O total soma pontos de colocação e presenças. Ajuste os torneios válidos no painel mensal.</p>
       <div id="monthlyFormStatus" class="inline-status form-status" role="alert" aria-live="assertive"></div>
       <div class="modal-actions"><button class="button ghost" type="button" data-close-dialog="monthlyPlayerModal">Cancelar</button><button class="button primary" id="saveMonthlyPlayerBtn" type="button">Salvar no rascunho mensal</button></div>
     </form>
@@ -199,6 +192,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="../config.js"></script><script src="../assets/js/admin.js?v=6"></script>
+  <script src="../config.js"></script><script src="../assets/js/admin.js?v=6.1"></script>
 </body>
 </html>

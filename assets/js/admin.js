@@ -572,8 +572,7 @@
       : 'Nenhuma alteração mensal pendente';
     $('#monthlyPublishSubline').textContent = state.importedBackup ? 'Backup em revisão. Use Publicar tudo para importar o conjunto completo.'
       : finalized ? (state.publishedMonthlyState.finalized ? 'Etapa encerrada. Reabra para corrigir os resultados.' : 'Encerramento no rascunho. Publique o mensal para calcular o bônus.')
-      : dirty ? 'As alterações mensais só aparecem no site após publicar.'
-        : 'Somente a etapa mensal atual é alterada nesta aba.';
+      : '';
     const stage = stageById(state.draftMonthlyState?.stageId);
     $('#monthlyEditorStage').textContent = stage
       ? `${stage.label} · ${fmtDateOnly(stage.start)} a ${fmtDateOnly(stage.end)}`
@@ -723,11 +722,11 @@
     const registered = state.tournaments.filter(event => event.applyMonthly && event.stageId === ms.stageId).length;
     const input = $('#monthlyTournamentCountInput');
     input.value = ms.tournamentCount; input.min = registered; input.disabled = ms.finalized;
-    $('#monthlyCountHelp').textContent = `${registered} torneio${registered === 1 ? '' : 's'} cadastrado${registered === 1 ? '' : 's'} nesta etapa. O total pode incluir torneios antigos lançados manualmente. Não some os mesmos resultados duas vezes.`;
+    $('#monthlyCountHelp').textContent = `${registered} torneio${registered === 1 ? '' : 's'} cadastrado${registered === 1 ? '' : 's'} nesta etapa`;
     const excessive = state.draftRows.filter(row => row.monthlyPresences > ms.tournamentCount);
     $('#monthlyStateStatus').textContent = excessive.length
       ? `${excessive.length} jogador${excessive.length === 1 ? '' : 'es'} com presenças acima do total de torneios. Confira antes de encerrar.`
-      : state.importedBackup ? 'Backup em revisão. A importação será aplicada ao publicar tudo.' : 'A contagem é salva no rascunho e publicada com o mensal.';
+      : state.importedBackup ? 'Backup em revisão.' : '';
     $('#monthlyAddPlayerBtn').disabled = ms.finalized;
     $('#monthlySyncGeneralBtn').disabled = ms.finalized;
     $('#reopenMonthlyBtn').hidden = !ms.finalized;
@@ -786,7 +785,7 @@
     if (modifierChanged) parts.push('fatores alterados');
     $('#publishSummary').textContent = parts.length ? parts.join(' · ') : 'Nenhuma alteração geral pendente';
     $('#publishSubline').textContent = dirty
-      ? 'Publica os dados gerais. O rascunho mensal é preservado.'
+      ? ''
       : `Publicado em ${fmtDate(state.updatedAt)}.`;
   }
 
