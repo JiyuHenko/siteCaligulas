@@ -10,9 +10,13 @@
   const mobile = document.querySelector('#rankingMobile');
   const monthlyBody = document.querySelector('#monthlyTableBody');
   const monthlyMobile = document.querySelector('#monthlyRankingMobile');
+  const monthlyStageStatus = document.querySelector('#monthlyStageStatusLabel');
   const monthlyStage = document.querySelector('#monthlyStageLabel');
   const monthlyMeta = document.querySelector('#monthlyStageMeta');
+  const monthlyBonusInPlay = document.querySelector('#monthlyBonusInPlay');
   const monthlyBonus = document.querySelector('#monthlyBonusStatus');
+  const monthlyResults = document.querySelector('#monthlyResults');
+  const monthlyToggle = document.querySelector('#monthlyResultsToggle');
   const status = document.querySelector('#rankingPageStatus');
   const search = document.querySelector('#rankingSearch');
   const monthlySearch = document.querySelector('#monthlyRankingSearch');
@@ -81,17 +85,34 @@
     }
   }
 
-  function renderMonthly() {
-    const stage = monthly.stage || {};
-    if (monthlyStage) monthlyStage.textContent = `${stage.label || 'Etapa mensal'} · ${API.fmtDateOnly(stage.start)} a ${API.fmtDateOnly(stage.end)}`;
-    if (monthlyMeta) monthlyMeta.textContent = `${Number(monthly.tournamentCount) || 0} torneio${Number(monthly.tournamentCount) === 1 ? '' : 's'} válido${Number(monthly.tournamentCount) === 1 ? '' : 's'} na etapa`;
+  function setMonthlyResultsExpanded(expanded) {
+    if (monthlyResults) monthlyResults.hidden = !expanded;
+    if (monthlyToggle) {
+      monthlyToggle.setAttribute('aria-expanded', String(expanded));
+      monthlyToggle.textContent = expanded ? 'Ocultar resultado final' : 'Consultar resultado final';
+    }
+  }
+
+  function renderMonthlyStage() {
+    const stage = monthly.stage;
+    const finalized = monthly.finalized === true;
+    if (monthlyStageStatus) monthlyStageStatus.textContent = finalized ? 'Etapa encerrada' : stage ? 'Etapa atual' : 'Etapa mensal';
+    if (monthlyStage) monthlyStage.textContent = stage ? `${stage.label || 'Etapa mensal'} · ${API.fmtDateOnly(stage.start)} a ${API.fmtDateOnly(stage.end)}` : 'Ranking mensal';
+    const count = Number(monthly.tournamentCount) || 0;
+    if (monthlyMeta) monthlyMeta.textContent = stage ? `${count} ${count === 1 ? 'torneio válido' : 'torneios válidos'} na etapa` : 'Ranking mensal temporariamente indisponível.';
+    if (monthlyBonusInPlay) monthlyBonusInPlay.hidden = !stage || finalized;
     if (monthlyBonus) {
       const recipients = Array.isArray(monthly.bonusRecipients) ? monthly.bonusRecipients : [];
-      monthlyBonus.textContent = monthly.finalized
-        ? (recipients.length ? `Etapa finalizada · bônus concedido a ${recipients.map(item => item.name).join(', ')}` : 'Etapa finalizada · nenhum jogador cumpriu 100% de presença')
-        : 'Bônus de 10 pontos ainda em disputa';
+      monthlyBonus.hidden = !finalized;
+      monthlyBonus.textContent = recipients.length
+        ? `Bônus concedido: ${recipients.map(item => `${item.name} (${API.fmt(item.bonus)} pts)`).join(' · ')}`
+        : 'Nenhum jogador recebeu o bônus desta etapa.';
     }
+    if (monthlyToggle) monthlyToggle.hidden = !finalized;
+    setMonthlyResultsExpanded(Boolean(stage) && !finalized);
+  }
 
+  function renderMonthlyRows() {
     const query = (monthlySearch?.value || '').trim().toLocaleLowerCase('pt-BR');
     const all = Array.isArray(monthly.rows) ? monthly.rows : [];
     const filtered = all.filter(row => !query || row.name.toLocaleLowerCase('pt-BR').includes(query));
@@ -131,24 +152,27 @@
 
   tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab.dataset.rankingTab)));
   search?.addEventListener('input', renderGeneral);
-  monthlySearch?.addEventListener('input', renderMonthly);
+  monthlySearch?.addEventListener('input', renderMonthlyRows);
+  monthlyToggle?.addEventListener('click', () => setMonthlyResultsExpanded(monthlyResults.hidden));
 
   API.getRanking()
     .then(data => {
       const modifiers = Array.isArray(data.modifiers) ? data.modifiers : (API.DEFAULT_MODIFIERS || []);
       rows = API.normalizeRows(data.rows || [], modifiers);
-      monthly = API.normalizeMonthly(data.monthly || {});
+      const local = data.source === 'local-fallback';
+      monthly = local ? { rows: [] } : API.normalizeMonthly(data.monthly || {});
       renderModifiers(modifiers);
       if (status) {
-        const local = data.source === 'local-fallback';
         status.innerHTML = `<span class="live-dot ${local ? 'demo' : ''}"></span>${local ? 'Dados temporariamente indisponíveis' : 'Publicado em ' + API.fmtDate(data.updatedAt)}`;
       }
       renderGeneral();
-      renderMonthly();
+      renderMonthlyStage();
+      renderMonthlyRows();
       activateTab(location.hash === '#ranking-mensal' ? 'monthly' : 'general');
     })
     .catch(() => {
       if (tbody) tbody.innerHTML = '<tr><td colspan="7">Ranking temporariamente indisponível.</td></tr>';
-      if (monthlyBody) monthlyBody.innerHTML = '<tr><td colspan="6">Ranking mensal temporariamente indisponível.</td></tr>';
+      monthly = { rows: [] };
+      renderMonthlyStage();
     });
 })();

@@ -266,7 +266,20 @@
 
   function stageForDate(date) { return MONTHLY_STAGES.find(stage => date >= stage.start && date <= stage.end) || null; }
   function stageById(id) { return MONTHLY_STAGES.find(stage => stage.id === id) || null; }
-  function stageIndex(id) { return MONTHLY_STAGES.findIndex(stage => stage.id === id); }
+
+  function isPublishedStageClosed() {
+    return !state.importedBackup && state.publishedMonthlyState?.finalized
+      && state.draftMonthlyState?.stageId === state.publishedMonthlyState.stageId;
+  }
+
+  function nextPublishedStage() {
+    const index = state.publishedStages.findIndex(stage => stage.id === state.publishedMonthlyState?.stageId);
+    return index >= 0 ? state.publishedStages[index + 1] : undefined;
+  }
+
+  function canAdvanceStage() {
+    return Boolean(isPublishedStageClosed() && !hasMonthlyDraftChanges() && nextPublishedStage() && !state.publishing && !state.importing);
+  }
 
   function toast(message, type = '') {
     const el = $('#toast');
@@ -526,13 +539,14 @@
   }
 
   function renderMonthlyPlayers() {
-    const rows = filteredMonthlyRows();
-    const all = state.draftRows.slice().sort(compareMonthlyRows);
+    const closed = isPublishedStageClosed();
+    const all = (closed ? state.publishedRows.filter(hasMonthlyValues) : state.draftRows).slice().sort(compareMonthlyRows);
+    const rows = closed ? all : filteredMonthlyRows();
     const modified = new Set(monthlyChangedPlayerIds());
     const finished = Boolean(state.draftMonthlyState?.finalized);
     const tbody = $('#monthlyPlayersTableBody');
     const cards = $('#monthlyMobilePlayerList');
-    const action = row => `<div class="row-actions">
+    const action = row => closed ? '' : `<div class="row-actions">
       ${modified.has(row.id) ? `<button class="mini-button warning" type="button" data-revert-monthly="${esc(row.id)}">Desfazer</button>` : ''}
       <button class="mini-button" type="button" data-edit-monthly="${esc(row.id)}" ${finished ? 'disabled' : ''}>Editar</button>
     </div>`;
@@ -577,6 +591,28 @@
     $('#monthlyEditorStage').textContent = stage
       ? `${stage.label} · ${fmtDateOnly(stage.start)} a ${fmtDateOnly(stage.end)}`
       : 'Etapa mensal atual';
+    renderMonthlyClosedView();
+  }
+
+  function renderMonthlyClosedView() {
+    const closed = isPublishedStageClosed();
+    const results = $('#monthlyResultsEditor');
+    const toggle = $('#toggleMonthlyClosedResultsBtn');
+    const next = nextPublishedStage();
+    const advance = $('#advanceMonthlyFromTabBtn');
+    const showingFinal = closed && toggle.getAttribute('aria-expanded') === 'true';
+    $('#monthlyEditorTitle').textContent = closed ? 'Etapa encerrada' : 'Classificação da etapa';
+    $('#monthlyClosedActions').hidden = !closed;
+    $('#monthlyEditorControls').hidden = closed;
+    $('#monthlyEditorToolbar').hidden = closed;
+    $('#monthlyLifecycleActions').hidden = closed;
+    $('#monthlyPublishBar').hidden = closed && !hasMonthlyDraftChanges();
+    results.hidden = closed && !showingFinal;
+    toggle.setAttribute('aria-expanded', String(showingFinal));
+    toggle.textContent = showingFinal ? 'Ocultar resultado final' : 'Ver resultado final';
+    advance.hidden = !next;
+    advance.disabled = !canAdvanceStage();
+    advance.textContent = next ? `Ativar ${next.label}` : 'Ativar próxima etapa';
   }
 
   function openMonthlyPlayerModal(id = '') {
@@ -670,6 +706,9 @@
 
   function renderTopPreview() { renderTopList(state.draftRows, $('#topPreview')); }
   function renderMonthlyPreview() {
+    const closed = isPublishedStageClosed();
+    $('#monthlyAdminTitle').textContent = closed ? 'Etapa encerrada' : 'Etapa atual';
+    $('#monthlyPreview').hidden = closed;
     const rows = clone(state.draftRows).filter(row => row.monthlyPoints > 0 || row.monthlyPresences > 0).sort(compareMonthlyRows);
     renderTopList(rows, $('#monthlyPreview'), true);
   }
@@ -731,10 +770,8 @@
     $('#monthlySyncGeneralBtn').disabled = ms.finalized;
     $('#reopenMonthlyBtn').hidden = !ms.finalized;
     $('#reopenMonthlyBtn').textContent = state.publishedMonthlyState.finalized ? 'Reabrir etapa para correção' : 'Cancelar encerramento no rascunho';
-    $('#reopenMonthlyFromTabBtn').hidden = $('#reopenMonthlyBtn').hidden;
-    $('#reopenMonthlyFromTabBtn').textContent = $('#reopenMonthlyBtn').textContent;
     $('#reopenMonthlyBtn').disabled = Boolean(state.importedBackup);
-    $('#reopenMonthlyFromTabBtn').disabled = Boolean(state.importedBackup);
+    $('#cancelMonthlyCloseBtn').hidden = !ms.finalized || state.publishedMonthlyState.finalized || Boolean(state.importedBackup);
   }
 
   function updateMonthlyTournamentCount() {
@@ -1038,13 +1075,7 @@
     btn.disabled = true;
     btn.textContent = 'Publicando...';
     state.publishing = true; $('#dashboard').inert = true;
-    const previous = {
-      publishedRows: clone(state.publishedRows),
-      draftRows: clone(state.draftRows),
-      draftModifiers: clone(state.draftModifiers),
-      draftMonthlyState: clone(state.draftMonthlyState),
-      newMonthlyPlayerIds: clone(state.newMonthlyPlayerIds)
-    };
+    const previous = snapshotDraft();
     const pendingFinalization = state.importedBackup?.pendingFinalization;
     try {
       const payload = state.importedBackup ? {
@@ -1072,11 +1103,29 @@
     }
   }
 
+  function snapshotDraft() {
+    return {
+      publishedRows: clone(state.publishedRows),
+      draftRows: clone(state.draftRows),
+      draftModifiers: clone(state.draftModifiers),
+      draftMonthlyState: clone(state.draftMonthlyState),
+      newMonthlyPlayerIds: clone(state.newMonthlyPlayerIds)
+    };
+  }
+
   async function previewHistory(id) {
     try {
       const data = await api({ action: 'historySnapshot', token: state.token, historyId: id }); state.previewHistoryId = id;
       $('#historyPreviewTitle').textContent = `Versão ${data.history.version}`; $('#historyPreviewMeta').textContent = `${fmtDate(data.history.createdAt)} · ${data.history.total} jogadores${data.history.schemaVersion < 5 ? ' · histórico legado (v4 ou anterior)' : ''}`;
       $('#historyRankingPreview').innerHTML = data.rows.map((row, index) => `<div class="history-rank-row"><span>${index + 1}</span><strong>${esc(row.name)}</strong><em>${fmt(row.finalPoints)}</em></div>`).join('') || '<div class="empty-state">Ranking vazio.</div>';
+      const monthlyArchive = $('#historyMonthlyArchive');
+      monthlyArchive.hidden = !data.monthlyState?.finalized;
+      monthlyArchive.open = false;
+      const archivedStage = stageById(data.monthlyState?.stageId);
+      $('#historyMonthlyArchiveTitle').textContent = archivedStage ? `Resultado mensal · ${archivedStage.label}` : 'Resultado mensal';
+      $('#historyMonthlyPreview').innerHTML = data.monthlyState?.finalized ? data.rows.filter(hasMonthlyValues).sort(compareMonthlyRows).map((row, index) =>
+        `<div class="history-rank-row"><span>${index + 1}</span><strong>${esc(row.name)}</strong><em>${fmt(row.monthlyFinalPoints)}</em></div>`
+      ).join('') || '<div class="empty-state">Nenhuma pontuação mensal registrada.</div>' : '';
       $('#historyModifierPreview').innerHTML = ['<div class="history-mod-row"><span>0+ presenças</span><strong>1,0x</strong></div>', ...(data.modifiers || []).map(rule => `<div class="history-mod-row"><span>${rule.minPresences}+ presenças</span><strong>${fmtFactor(rule.factor)}</strong></div>`)].join('');
       $('#restoreFromPreviewBtn').hidden = data.history.schemaVersion < 5; $('#historyPreviewModal').showModal();
     } catch (error) { handleApiError(error); }
@@ -1165,11 +1214,10 @@
     const list = $('#stageEditorList');
     if (!list) return;
     list.innerHTML = (state.stages || []).map(item => stageEditorMarkup(item)).join('');
-    const index = state.stages.findIndex(st => st.id === state.draftMonthlyState?.stageId);
-    const hasNext = index >= 0 && index < state.stages.length - 1;
+    const next = nextPublishedStage();
     const button = $('#advanceStageBtn');
-    button.disabled = !hasNext || !state.draftMonthlyState?.finalized;
-    button.textContent = hasNext ? 'Ativar ' + state.stages[index + 1].label : 'Última etapa';
+    button.disabled = !canAdvanceStage();
+    button.textContent = next ? 'Ativar ' + next.label : 'Última etapa';
   }
 
   function stageEditorMarkup(item) {
@@ -1236,13 +1284,24 @@
   }
 
   async function advanceMonthlyStage() {
-    if (hasDraftChanges()) return toast('Publique ou descarte o rascunho antes de avançar.', 'error');
-    if (!state.draftMonthlyState.finalized) return toast('Finalize a etapa atual e publique antes de avançar.', 'error');
-    if (!confirm('Ativar a próxima etapa? A pontuação mensal da etapa anterior será zerada e torneios já registrados para a próxima serão aplicados. O geral será preservado.')) return;
+    if (!canAdvanceStage()) return;
+    const next = nextPublishedStage();
+    if (!confirm(`Ativar ${next.label}? O resultado da etapa encerrada fica no histórico. O novo mensal começa com os torneios já vinculados a ${next.label}. O ranking geral fica como está.`)) return;
+    const previous = snapshotDraft();
+    state.publishing = true; $('#dashboard').inert = true;
+    let activated = false;
     try {
       const data = await api({action:'advanceStage',token:state.token,baseVersion:state.version});
-      absorbPublished(data); activateManagementTab('stages'); toast('Próxima etapa ativada.');
+      absorbPublished(data);
+      recoverOtherDraft('monthly', previous);
+      activateManagementTab('monthly'); activated = true;
+      toast(`${next.label} ativada.`);
     } catch (error) { handleApiError(error); }
+    finally {
+      state.publishing = false; $('#dashboard').inert = false;
+      renderAll();
+      if (activated) $('#monthlyEditorTitle').focus();
+    }
   }
 
   function bindEvents() {
@@ -1252,8 +1311,15 @@
     $('#monthlySyncGeneralBtn').addEventListener('click', copyGeneralToMonthly);
     $('#publishAllBtn').addEventListener('click', () => publishDraft('all'));
     $('#finalizeMonthlyFromTabBtn').addEventListener('click', finalizeMonthlyDraft);
+    $('#advanceMonthlyFromTabBtn').addEventListener('click', advanceMonthlyStage);
+    $('#toggleMonthlyClosedResultsBtn').addEventListener('click', event => {
+      const button = event.currentTarget;
+      button.setAttribute('aria-expanded', String(button.getAttribute('aria-expanded') !== 'true'));
+      renderMonthlyClosedView();
+    });
     $('#reopenMonthlyBtn').addEventListener('click', reopenMonthlyStage);
     $('#reopenMonthlyFromTabBtn').addEventListener('click', reopenMonthlyStage);
+    $('#cancelMonthlyCloseBtn').addEventListener('click', reopenMonthlyStage);
     $('#monthlyPlayerForm').addEventListener('submit', event => { event.preventDefault(); saveMonthlyPlayerFromModal(); });
     $('#playerForm').addEventListener('submit', event => { event.preventDefault(); savePlayerFromModal(); });
     $('#tournamentForm').addEventListener('submit', event => { event.preventDefault(); applyTournament(); });

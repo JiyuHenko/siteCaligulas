@@ -332,6 +332,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 .monthly-lifecycle-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 22px 18px}
 .monthly-lifecycle-actions>p{margin:0;color:var(--muted);font-size:.72rem;line-height:1.6}
 .monthly-lifecycle-actions .button{flex:0 0 auto;font-size:.7rem}
+.monthly-closed-actions{display:flex;flex-wrap:wrap;gap:10px;padding:4px 22px 22px}
 .monthly-name-field{margin-bottom:16px}
 .field>small{font-size:.69rem;line-height:1.6;color:var(--muted);font-weight:400;letter-spacing:0}
 .form-status{margin-top:12px;min-height:0;line-height:1.6;border-radius:12px}
@@ -428,6 +429,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
   .monthly-lifecycle-actions{padding:0 14px 16px;align-items:flex-start;gap:14px}
   .monthly-lifecycle-actions>p{font-size:.67rem}
   .monthly-lifecycle-actions .button{font-size:.67rem;min-height:38px;max-width:125px;padding:8px 10px}
+  .monthly-closed-actions{padding:4px 14px 18px}
   .modal{border-radius:20px;max-height:calc(100dvh - 20px)}
   .modal-shell{padding:20px}
   .modal-head h2{font-size:1.45rem}
@@ -468,6 +470,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
   .monthly-edit-badge{padding:10px 12px;font-size:.7rem;line-height:1.6}
   .monthly-lifecycle-actions{flex-direction:column}
   .monthly-lifecycle-actions .button{max-width:none;width:100%}
+  .monthly-closed-actions .button{width:100%}
   .toast{max-width:calc(100vw - 28px);width:max-content;font-size:.71rem}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

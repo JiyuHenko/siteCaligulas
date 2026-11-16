@@ -18,17 +18,21 @@ async function main() {
   const origin = `http://127.0.0.1:${server.address().port}`;
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
   let checks = 0;
-  async function scenario(name, fn) {
-    const backend = createHarness();
+  async function scenario(name, fn, options) {
+    const backend = createHarness(options);
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage();
+    await context.addInitScript(() => sessionStorage.setItem('caligulas:whatsapp-welcome:v1', '1'));
     const errors = [];
     const calls = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('dialog', dialog => dialog.accept());
-    await page.route('**/*', route => {
+    await context.route('**/*', route => {
       if (route.request().url().startsWith(origin)) return route.continue();
       if (route.request().url().startsWith('https://script.google.com/')) {
+        if (route.request().method() === 'GET') {
+          return route.fulfill({ json: JSON.parse(backend.context.doGet({ parameter: { action: 'ranking' } }).content) });
+        }
         const input = JSON.parse(route.request().postData()); calls.push(input);
         return route.fulfill({ json: backend.post(input) });
       }
@@ -166,6 +170,65 @@ async function main() {
       await page.locator('#finalizeMonthlyFromTabBtn').click(); await publish('publishMonthlyBtn');
       assert.equal(backend.state().rows[0].bonus, 10);
     });
+    await scenario('published closure hides old results and advances from monthly without losing general edits', async ({ page, backend, tab, publish, editGeneral, calls }) => {
+      const publicPage = await page.context().newPage();
+      const publicErrors = [];
+      publicPage.on('pageerror', error => publicErrors.push(error.message));
+      await editGeneral(31);
+      await tab('monthly');
+      await page.locator('#finalizeMonthlyFromTabBtn').click();
+      assert.equal(await page.locator('#advanceMonthlyFromTabBtn').isVisible(), false);
+      assert.equal(await page.locator('#monthlyResultsEditor').isVisible(), true);
+      await publish('publishMonthlyBtn');
+      const closedVersion = backend.state().version;
+      assert.equal(backend.state().monthlyState.finalized, true);
+      assert.equal(await page.locator('#monthlyEditorTitle').textContent(), 'Etapa encerrada');
+      assert.equal(await page.locator('#monthlyResultsEditor').isVisible(), false);
+      await page.locator('#toggleMonthlyClosedResultsBtn').click();
+      assert.equal(await page.locator('#monthlyResultsEditor').isVisible(), true);
+      assert.match(await page.locator('#monthlyPlayersTableBody').textContent(), /Ana/);
+      assert.equal(await page.locator('[data-edit-monthly]').count(), 0);
+      await publicPage.goto(origin + '/ranking.html#ranking-mensal');
+      await publicPage.waitForFunction(() => document.querySelector('#monthlyStageStatusLabel').textContent === 'Etapa encerrada');
+      assert.equal(await publicPage.locator('#monthlyResults').isVisible(), false);
+      await publicPage.locator('#monthlyResultsToggle').click();
+      assert.match(await publicPage.locator('#monthlyTableBody').textContent(), /Ana/);
+      await page.reload(); await page.waitForSelector('#dashboard:not([hidden])'); await tab('monthly');
+      assert.equal(await page.locator('#monthlyResultsEditor').isVisible(), false);
+      assert.equal(await page.locator('#advanceMonthlyFromTabBtn').textContent(), 'Ativar Etapa 2');
+      await publish('advanceMonthlyFromTabBtn');
+      assert.equal(calls.at(-1).action, 'advanceStage');
+      assert.equal(calls.at(-1).baseVersion, closedVersion);
+      assert.match(await page.locator('#monthlyEditorStage').textContent(), /Etapa 2/);
+      const after = backend.state();
+      assert.equal(after.monthlyState.stageId, '2026-11-15');
+      assert.equal(after.monthlyState.tournamentCount, 1);
+      assert.deepEqual([after.rows[0].points, after.rows[0].bonus, after.rows[0].monthlyPoints, after.rows[0].monthlyPresences], [26, 10, 15, 1]);
+      const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('caligulas_admin_draft_v4')));
+      assert.deepEqual([saved.baseVersion, saved.rows[0].points, saved.rows[0].monthlyPoints], [after.version, 31, 15]);
+      await publicPage.reload();
+      await publicPage.waitForFunction(() => /Etapa 2/.test(document.querySelector('#monthlyStageLabel').textContent));
+      assert.equal(await publicPage.locator('#monthlyStageStatusLabel').textContent(), 'Etapa atual');
+      assert.equal(await publicPage.locator('#monthlyResults').isVisible(), true);
+      assert.equal(await publicPage.locator('#monthlyResultsToggle').isVisible(), false);
+      await publicPage.route('https://script.google.com/**', route => route.abort());
+      await publicPage.reload();
+      await publicPage.waitForFunction(() => document.querySelector('#monthlyStageMeta').textContent.includes('temporariamente indisponível'));
+      assert.equal(await publicPage.locator('#monthlyStageStatusLabel').textContent(), 'Etapa mensal');
+      assert.equal(await publicPage.locator('#monthlyResults').isVisible(), false);
+      assert.deepEqual(publicErrors, []);
+      await tab('players');
+      await page.locator('[data-preview-history]').first().click();
+      await page.locator('#historyMonthlyArchiveTitle').click();
+      assert.match(await page.locator('#historyMonthlyArchiveTitle').textContent(), /Etapa 1/);
+      assert.match(await page.locator('#historyMonthlyPreview').textContent(), /30/);
+    }, { tournaments: [{ id: 't_second', date: '2026-11-15', type: 'regular', name: 'Torneio da Etapa 2', applyGeneral: false, applyMonthly: true, stageId: '2026-11-15', entries: [{ playerId: 'p_a', presence: true, placement: 1 }] }] });
+    await scenario('closed last stage does not offer another stage', async ({ page, tab, publish }) => {
+      await tab('monthly'); await page.locator('#finalizeMonthlyFromTabBtn').click(); await publish('publishMonthlyBtn');
+      assert.equal(await page.locator('#monthlyEditorTitle').textContent(), 'Etapa encerrada');
+      assert.equal(await page.locator('#advanceMonthlyFromTabBtn').isVisible(), false);
+      assert.equal(await page.locator('#toggleMonthlyClosedResultsBtn').isVisible(), true);
+    }, { stages: [{ id: '2026-10-11', label: 'Etapa única', start: '2026-10-11', end: '2026-11-14' }] });
     await scenario('stage controls and tournament create, edit, delete preserve manual count', async ({ page, backend, tab, publish }) => {
       await tab('stages'); await page.locator('[data-stage-remove]').last().click(); await page.locator('#addStageBtn').click(); await publish('saveStagesBtn');
       assert.equal(backend.state().stages.length, 7);

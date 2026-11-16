@@ -24,7 +24,7 @@ A leitura da estrutura v5 já funciona com o código v6. A primeira gravação v
 - A presença vale um ponto no mensal. O geral continua `(pontos × fator) + presenças + bônus`. Nenhum import reaplica os torneios já incluídos nos totais.
 - O bônus exige presença em exatamente todos os torneios válidos. A finalização bloqueia quando alguém tem mais presenças que o contador, calcula os desempates pelas colocações e divide os dez pontos entre empatados conforme a regra anterior de arredondamento para uma casa decimal.
 - **Reabrir etapa** estorna os valores exatos do bônus registrados nos beneficiários, mantém a pontuação mensal e retorna a etapa ao andamento. Se o bônus geral foi alterado manualmente e ficou insuficiente para o estorno, a operação é bloqueada com identificação do jogador. Reabrir duas vezes não desconta duas vezes.
-- Etapas anteriores continuam protegidas. Alterar a etapa ativa usa a ação de avanço; restauração de backup completo pode recuperar um estado histórico de forma auditada.
+- Depois de publicar o encerramento, a aba **Ranking mensal** recolhe a classificação final e oferece **Ativar [nome da próxima etapa]**. A ativação conserva o geral, inicializa o novo mensal com os torneios já vinculados à próxima etapa e arquiva o resultado anterior para consulta no **Histórico**. A última etapa fica encerrada, com o resultado final disponível.
 
 ## Backups e migração de arquivos
 

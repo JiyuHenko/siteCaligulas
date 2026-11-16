@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/admin.css?v=6.1">
+  <link rel="stylesheet" href="../assets/css/admin.css?v=6.2">
 </head>
 <body>
   <main class="admin-shell">
@@ -84,31 +84,38 @@
       <section id="monthlyDashboard" class="management-page monthly-editor panel" hidden>
         <div class="panel-head monthly-editor-head">
           <div>
-            <p class="eyebrow">Rascunho mensal</p>
-            <h2>Classificação da etapa</h2>
+            <p class="eyebrow">Ranking mensal</p>
+            <h2 id="monthlyEditorTitle" tabindex="-1">Classificação da etapa</h2>
             <p class="monthly-editor-stage" id="monthlyEditorStage">Etapa atual</p>
           </div>
           <span class="draft-state" id="monthlyDraftState" role="status">Sem alterações</span>
         </div>
-        <div class="monthly-controls">
+        <div class="monthly-closed-actions" id="monthlyClosedActions" hidden>
+          <button class="button primary" id="advanceMonthlyFromTabBtn" type="button" hidden>Ativar próxima etapa</button>
+          <button class="button" id="toggleMonthlyClosedResultsBtn" type="button" aria-expanded="false" aria-controls="monthlyResultsEditor">Ver resultado final</button>
+          <button class="button ghost" id="reopenMonthlyFromTabBtn" type="button">Reabrir etapa para correção</button>
+        </div>
+        <div class="monthly-controls" id="monthlyEditorControls">
           <div class="monthly-count-control"><div><p class="eyebrow">Bônus por frequência</p><h3>Torneios válidos da etapa</h3><p id="monthlyCountHelp"></p><div class="monthly-state-status" id="monthlyStateStatus" role="status" aria-live="polite"></div></div><label class="field count-field"><span>Quantidade de torneios</span><input id="monthlyTournamentCountInput" type="number" min="0" step="1" value="0" inputmode="numeric" aria-describedby="monthlyCountHelp"></label></div>
           <div class="monthly-copy-control"><button class="button" id="monthlySyncGeneralBtn" type="button">Copiar geral para o mensal</button></div>
         </div>
-        <div class="monthly-editor-toolbar">
+        <div class="monthly-editor-toolbar" id="monthlyEditorToolbar">
           <button class="button primary" id="monthlyAddPlayerBtn" type="button">Adicionar jogador no mensal</button>
           <input class="search" id="monthlyPlayerSearch" type="search" placeholder="Buscar jogador no mensal" aria-label="Buscar jogador no mensal">
           <button class="button ghost" id="monthlySaveLocalBtn" type="button">Salvar rascunho</button>
           <button class="button ghost" id="monthlyDiscardBtn" type="button">Descartar alterações mensais</button>
         </div>
-        <div class="table-wrap monthly-editor-table-wrap">
-          <table class="editor-table monthly-editor-table">
-            <caption class="sr-only">Jogadores da etapa mensal e suas pontuações</caption><thead><tr><th scope="col">Pos.</th><th scope="col">Jogador</th><th scope="col">Pontos de colocação</th><th scope="col">Presenças</th><th scope="col">Total</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
-            <tbody id="monthlyPlayersTableBody"></tbody>
-          </table>
+        <div id="monthlyResultsEditor">
+          <div class="table-wrap monthly-editor-table-wrap">
+            <table class="editor-table monthly-editor-table">
+              <caption class="sr-only">Jogadores da etapa mensal e suas pontuações</caption><thead><tr><th scope="col">Pos.</th><th scope="col">Jogador</th><th scope="col">Pontos de colocação</th><th scope="col">Presenças</th><th scope="col">Total</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
+              <tbody id="monthlyPlayersTableBody"></tbody>
+            </table>
+          </div>
+          <div class="mobile-player-list monthly-editor-mobile" id="monthlyMobilePlayerList"></div>
         </div>
-        <div class="mobile-player-list monthly-editor-mobile" id="monthlyMobilePlayerList"></div>
-        <div class="monthly-lifecycle-actions"><button class="button ghost" id="reopenMonthlyFromTabBtn" type="button" hidden>Reabrir etapa para correção</button><button class="button" id="finalizeMonthlyFromTabBtn" type="button">Encerrar etapa</button></div>
-        <div class="publish-bar">
+        <div class="monthly-lifecycle-actions" id="monthlyLifecycleActions"><button class="button" id="finalizeMonthlyFromTabBtn" type="button">Encerrar etapa</button><button class="button ghost" id="cancelMonthlyCloseBtn" type="button" hidden>Cancelar encerramento no rascunho</button></div>
+        <div class="publish-bar" id="monthlyPublishBar">
           <div><strong id="monthlyPublishSummary">Nenhuma alteração pendente</strong><span id="monthlyPublishSubline">Ranking mensal publicado.</span></div>
           <button class="button primary publish-button" id="publishMonthlyBtn" type="button">Publicar mensal</button>
         </div>
@@ -188,10 +195,10 @@
   </dialog>
 
   <dialog class="modal history-preview-modal" id="historyPreviewModal">
-    <div class="modal-shell modal-wide"><div class="modal-head"><div><p class="eyebrow">Histórico</p><h2 id="historyPreviewTitle">Visualizar publicação</h2><p id="historyPreviewMeta"></p></div><button class="icon-button close-modal" type="button" data-close-dialog="historyPreviewModal" aria-label="Fechar">×</button></div><div class="history-preview-grid"><div><h3>Ranking</h3><div class="history-ranking" id="historyRankingPreview"></div></div><div><h3>Modificadores</h3><div class="history-modifiers" id="historyModifierPreview"></div></div></div><div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="historyPreviewModal">Fechar</button><button class="button primary" id="restoreFromPreviewBtn" type="button">Restaurar esta versão</button></div></div>
+    <div class="modal-shell modal-wide"><div class="modal-head"><div><p class="eyebrow">Histórico</p><h2 id="historyPreviewTitle">Visualizar publicação</h2><p id="historyPreviewMeta"></p></div><button class="icon-button close-modal" type="button" data-close-dialog="historyPreviewModal" aria-label="Fechar">×</button></div><div class="history-preview-grid"><div><h3>Ranking</h3><div class="history-ranking" id="historyRankingPreview"></div></div><div><h3>Modificadores</h3><div class="history-modifiers" id="historyModifierPreview"></div></div></div><details class="finishes-details" id="historyMonthlyArchive" hidden><summary id="historyMonthlyArchiveTitle">Resultado mensal</summary><div class="history-ranking" id="historyMonthlyPreview"></div></details><div class="modal-actions"><button class="button ghost close-modal" type="button" data-close-dialog="historyPreviewModal">Fechar</button><button class="button primary" id="restoreFromPreviewBtn" type="button">Restaurar esta versão</button></div></div>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="../config.js"></script><script src="../assets/js/admin.js?v=6.1"></script>
+  <script src="../config.js"></script><script src="../assets/js/admin.js?v=6.2"></script>
 </body>
 </html>

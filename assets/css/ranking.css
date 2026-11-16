@@ -159,6 +159,9 @@
   font-size:.8rem;
   line-height:1.5;
 }
+.monthly-result-toggle{flex:0 0 auto}
+.monthly-result-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.monthly-final-bonus{margin:0 0 16px;overflow-wrap:anywhere}
 .eligibility-badge{
   display:inline-flex;
   align-items:center;
@@ -196,5 +199,6 @@
   .ranking-tab{flex:1 1 0;padding-inline:12px}
   .monthly-stage-card{align-items:flex-start;flex-direction:column;padding:18px}
   .monthly-bonus-pill{flex-basis:auto;width:100%}
+  .monthly-result-toggle{width:100%}
   .monthly-rule-grid{grid-template-columns:1fr}
 }
